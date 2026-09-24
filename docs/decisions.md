@@ -110,3 +110,67 @@ the primary path, not a fallback. Building it first also makes it the fastest de
 (no network, no rate limits, deterministic) and reduces the Monitoring API to an optional
 adapter rather than a critical-path dependency. A `Generator` seam keeps the model provider
 equally swappable, which is what lets sample mode run with no credentials at all.
+
+## 2026-09-24 — An unsupported interpreter fails with one line, not thirteen
+
+**Decision:** `app/__init__.py` refuses to import on Python below 3.11 and prints the exact
+command that fixes it. `requirements.txt` states the requirement in a header comment; the
+README's quickstart and the Dockerfile both pin 3.11.
+
+**Why:** Found by the fresh-clone check, not by reasoning: this machine's `python3` is 3.9.6, and
+because pydantic evaluates annotations at runtime, `str | None` in the domain models surfaced as
+**thirteen** unrelated `TypeError`s during test collection. A judge on a stock macOS or Ubuntu
+`python3` would have hit exactly that wall and had no idea which of the thirteen errors was the
+real one. The guard converts a misleading failure into an actionable one, which is worth more
+than the line of code it costs.
+
+## 2026-09-24 — Evidence is generated, never written by hand
+
+**Decision:** Every file under `output_examples/` and `logs/samples/` is produced by
+`scripts/run_examples.sh` and the runs it starts. Hand-editing them is prohibited, and the
+`.gitignore` is written to match: working runs under `logs/` are ignored, `logs/samples/` is not.
+
+**Why:** The organisers score the logs as evidence of how the agent worked, which means a
+curated log is worse than useless — it is a fabricated trace, and the rules treat that as the
+most serious kind of dishonesty. Making the generator a committed script means the evidence can
+be regenerated and diffed, so a claim about the agent's behaviour is checkable rather than
+asserted.
+
+## 2026-09-24 — A published falsifier has to be executable
+
+**Decision:** The Skeptic gained a declared-purpose check. A cost finding whose evidence states
+a deliberate purpose (`by design`, `intentionally`, `do not delete`, `for now`, `left running`)
+is **rejected** and withdrawn, before any threshold logic runs.
+
+**Why:** The Scout attaches a `falsifier` to every candidate — the thing that would disprove it.
+Building scenario 3 exposed that for a resource declared *idle by design* nothing in the code
+could act on that falsifier, so the field was decoration and the scenario's correct answer was
+unreachable. Either the falsifier means something or it should not be published; the test
+`test_a_declared_purpose_withdraws_a_cost_finding` now pins it.
+
+## 2026-09-24 — No sponsor technology mounted, stated plainly
+
+**Decision:** Ship with no Zetaris, NVIDIA or Meterless integration, and say so in the README's
+"Where the sponsor technologies fit" table rather than implying an integration the code does not
+have.
+
+**Why:** The partner stack is unverified against HackOS and the layer was scoped out early so the
+critique loop and the honesty guarantees could actually be finished. A decorative integration
+would be inspectable in seconds and would cost more credibility than an honest "not mounted",
+especially since the rules score whether each sponsor technology is load-bearing. The seam is
+left in place — the `policy` source adapter and the `Generator` interface — so the work is
+additive rather than cosmetic if it is picked up at the 17 Oct checkpoint.
+
+## 2026-09-24 — The plan is corrected in place when the build proves it wrong
+
+**Decision:** When a task in
+`docs/superpowers/plans/2026-09-24-driftwatch-implementation.md` contradicted what the code
+needed, the plan was edited in the same commit as the fix, with the reason recorded.
+
+**Why:** Seven plan defects were found only by running the tests — two tasks' tests never
+hydrated their subjects, one asserted `"idle" not in reason` against a template that literally
+says "not an idle resource", one required a `class` attribute that is a Python keyword, one
+pinned a rounding artefact, and one rule field made its own promised output impossible. A plan
+that is silently out of step with the code is worse than no plan, because the next session
+trusts it; correcting it keeps it usable as the record of what was intended and why it changed.
+

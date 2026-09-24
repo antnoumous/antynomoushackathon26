@@ -229,6 +229,12 @@ example_3    precision 1.0    recall 1.0    verdicts 1.0    findings 4   status 
   cost arithmetic and the report still execute for real; only the judgement source changes. A test
   monkeypatches `socket.socket` to prove no network call happens
   (`tests/test_loop.py::test_sample_mode_makes_no_network_calls`).
+- **Packaging verification:** the fresh-clone path was verified end to end — a new clone, a
+  Python 3.11.16 venv, `pip install -r requirements.txt`, `pytest` (63 passed), a credential-free
+  `run.py`, and `POST /run` returning HTTP 200 in 20 ms. The `Dockerfile` was **not executed**:
+  there is no Docker daemon on the build machine. It runs the same verified command
+  (`python run.py --serve`) on `python:3.11-slim` with the same `0.0.0.0:8000` binding, but it is
+  offered unverified and should be treated as such.
 - **Determinism:** every figure in a report comes from `app/analysis.py`, and the Writer refuses to
   emit a number that no evidence supports.
 

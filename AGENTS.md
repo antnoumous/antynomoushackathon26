@@ -20,9 +20,9 @@ that does real work — not a chatbot, not a demo. Judged against published crit
 - The digest carries a **re-verification list** of facts where those drafts disagree with
   this file — partner stack, track names, bonus points. This file's versions came from the
   HackOS event pages and an organiser channel. Re-check on HackOS before the build window.
-- Recommended pre-submission layout lives in the digest §4. Not yet in the repo: `run.py`,
-  `Dockerfile`, `requirements.txt`, `app/`, `data/`, `scripts/`, `input_examples/`,
-  `output_examples/`, `logs/`.
+Recommended pre-submission layout lives in the digest §4. Present: `run.py`, `Dockerfile`,
+`requirements.txt`, `app/`, `data/`, `scripts/`, `input_examples/`, `output_examples/`, `logs/`
+(with committed samples under `logs/samples/`), `evals/`.
 
 ## State
 
@@ -35,9 +35,17 @@ that does real work — not a chatbot, not a demo. Judged against published crit
 - **Stack:** Python. Hand-rolled bounded agent loop, no orchestration framework. `oci` SDK on
   the live path, bundled JSON fixtures for sample mode. No UI. Reasoning in the spec §5.
 - **Budget:** ~20 h in the window; a frozen ~15 h must-ship list. Spec §11.
-- **Next step:** review the spec, then the implementation plan (writing-plans).
+- **Must-ship path: built and verified** (2026-09-24). Tasks 1–14 of the plan are complete:
+  63 tests green, and the fresh-clone path verified end to end — Python 3.11.16 venv,
+  `pip install -r requirements.txt`, credential-free `run.py`, `POST /run` returning HTTP 200 in
+  20 ms, and `evals/run_eval.py` scoring three scenarios at precision 1.0, recall 1.0, verdict
+  accuracy 1.0, deterministic. Evidence is generated, never hand-written:
+  `scripts/run_examples.sh` produces `output_examples/` and `logs/samples/`.
+- **Next step:** open Tasks 15 (live OCI adapters) and 16 (held-out scenario generator) — both
+  stretch, both decided at the 17 Oct checkpoint. A whole-branch review is due before either.
 - **Pre-window:** create the lab tenancy (spec §5.2) so metric history exists by 15 Oct;
-  confirm track name and partner stack on HackOS; watch the 7 Oct Zetaris recording.
+  confirm track name and partner stack on HackOS; choose the model provider; watch the 7 Oct
+  Zetaris recording. **Docker path still unverified** — no Docker daemon on the build machine.
 - **Build window:** 15 Oct 2026 00:00 UTC → 20 Oct 2026 23:45 UTC (144 hours).
 
 ## Hard dates (all UTC)
