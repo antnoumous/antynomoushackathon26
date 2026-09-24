@@ -62,6 +62,7 @@ class Writer(Agent):
                 evidence_refs=candidate.evidence_refs, impact=candidate.impact,
                 confidence=round(candidate.confidence if ruling.verdict != "reject" else 0.0, 2),
                 status=finding_status, falsifier=candidate.falsifier,
+                superseded_by=candidate.superseded_by,
                 history=[VerdictRecord(round=ruling.round, verdict=ruling.verdict,
                                        reason=ruling.reason)]))
 

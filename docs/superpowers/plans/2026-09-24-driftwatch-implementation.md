@@ -80,10 +80,13 @@ fastapi==0.115.0
 uvicorn==0.31.0
 oci==2.135.0
 requests==2.32.3
+httpx==0.27.2
 pytest==8.3.3
 ```
 
-`oci` is installed in the image but only imported lazily by the live adapters, so sample mode never touches it.
+`httpx` is required by `fastapi.testclient`, so the API tests run from a clean clone. `oci` is
+installed in the image but only imported lazily by the live adapters, so sample mode never
+touches it.
 
 - [ ] **Step 2: Create `.env.example`**
 

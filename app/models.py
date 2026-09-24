@@ -91,6 +91,9 @@ class Finding(BaseModel):
     status: FindingStatus
     falsifier: str
     history: list[VerdictRecord] = Field(default_factory=list)
+    superseded_by: str | None = None
+    """Set when a later round reached a different conclusion: the reason this finding is
+    `rejected` and which finding replaced it."""
 
 
 class Candidate(BaseModel):

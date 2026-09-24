@@ -33,6 +33,8 @@ def render_markdown(report: RunReport) -> str:
         ]
         for record in finding.history:
             lines.append(f"- Round {record.round}: {record.verdict} — {record.reason}")
+        if finding.superseded_by:
+            lines.append(f"- Superseded by: `{finding.superseded_by}`")
         lines.append("")
     if report.undetermined:
         lines += ["## Not determined", ""]
