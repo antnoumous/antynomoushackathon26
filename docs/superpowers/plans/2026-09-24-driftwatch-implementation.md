@@ -380,8 +380,10 @@ class IaCDeclaration(BaseModel):
 
 
 class PolicyRule(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     rule_id: str
-    finding_class: FindingClass
+    finding_class: FindingClass = Field(alias="class")
     when: dict[str, Any]
     note: str
 
@@ -1162,7 +1164,8 @@ def test_stats_expose_mean_peak_and_coverage():
 
 def test_monthly_cost_uses_shape_rates():
     assert monthly_cost(resource(shape="VM.Standard.E4.Flex", ocpus=4, memory_gb=16), PRICING) == 90.52
-    assert monthly_cost(resource(resource_class="block_volume", size_gb=50), PRICING) == pytest.approx(1.28, abs=0.01)
+    assert monthly_cost(resource(resource_class="block_volume", size_gb=50), PRICING) == pytest.approx(
+        50 * PRICING["block_volume_gb_month"], abs=0.01)
     assert monthly_cost(resource(resource_class="reserved_public_ip"), PRICING) == pytest.approx(7.30)
     with pytest.raises(KeyError):
         monthly_cost(resource(shape="VM.Does.Not.Exist", ocpus=1, memory_gb=1), PRICING)
@@ -1184,7 +1187,11 @@ def test_short_coverage_disqualifies_every_cost_rule():
     stats = stats_from_series(sandbox)
     rules = [PolicyRule(**r) for r in json.loads((SCEN / "policy.json").read_text())["rules"]]
     assert stats["coverage_ratio"] < 0.8
-    assert qualifying_rules(resource(display_name="sandbox-tmp"), stats, None, True, rules) == []
+    fired = qualifying_rules(resource(display_name="sandbox-tmp"), stats, None, True, rules)
+    # R-5 is an unattributed rule and deliberately needs no metric window; every rule that
+    # depends on statistics is disqualified.
+    assert [r.rule_id for r in fired if r.finding_class == "cost_waste"] == []
+    assert [r.rule_id for r in fired] == ["R-5"]
 
 
 def test_window_width_changes_which_rule_fires():
