@@ -1421,14 +1421,14 @@ import requests
 from app.config import RunConfig
 
 TEMPLATES: dict[str, str] = {
-    "R-1": "{resource_name} is a detached 50 GB-class block volume. It is billed continuously "
+    "R-1": "{resource_name} is a detached {size_gb} GB block volume. It is billed continuously "
            "and is attached to nothing.",
     "R-2": "{resource_name} is a reserved public IP with no assigned entity. It is billed "
            "whether or not it is attached.",
-    "R-3": "{resource_name} averages {mean:.2f}% CPU with a peak of {peak:.2f}% across the "
+    "R-3": "{resource_name} averages {mean}% CPU with a peak of {peak}% across the "
            "requested window, and is declared in Terraform. Nothing in the evidence attributes "
            "a purpose to it.",
-    "R-4": "{resource_name} averages {mean:.2f}% CPU but peaks at {peak:.2f}%. The cost is the "
+    "R-4": "{resource_name} averages {mean}% CPU but peaks at {peak}%. The cost is the "
            "idle shape it holds around the clock, not the work it does.",
     "R-5": "{resource_name} is running and appears in no Terraform declaration. No owner tag "
            "attributes it to a team.",
@@ -2391,7 +2391,7 @@ class Writer(Agent):
             "findings_accepted": len(accepted),
             "findings_rejected": len(rejected),
             "spend_audited_usd_per_month": round(spend, 2),
-            "attributed_waste_usd_per_month": round(reported, 2),
+            "waste_found_usd_per_month": round(reported, 2),
             "unattributed_ratio": round(
                 len([f for f in accepted if f.finding_class == "unattributed"])
                 / max(1, len(self.ctx.state.facts["resources"])), 3),
@@ -2531,7 +2531,9 @@ def test_canonical_run_rejects_the_idle_claim_and_revises_it(tmp_path):
 
     batch = [f for f in report.findings if f.resource_id.endswith("bbb2")]
     assert [f.status for f in batch] == ["rejected", "revised"]
-    assert any("idle" not in f.claim for f in batch if f.status == "revised")
+    rejected, revised = batch
+    assert revised.claim != rejected.claim      # the conclusion actually changed
+    assert "peaks at" in revised.claim          # and cites the burst that forced the change
     assert report.status == "success"
     assert report.mode == "sample"
     assert report.caps_hit == []
@@ -2545,7 +2547,7 @@ def test_report_finds_both_orphans_and_the_unattributed_instance(tmp_path):
     assert ("eee5", "cost_waste") in classes        # detached block volume
     assert ("fff6", "cost_waste") in classes        # unattached reserved IP
     assert ("ddd4", "unattributed") in classes      # absent from every Terraform file
-    assert report.summary["attributed_waste_usd_per_month"] > 0
+    assert report.summary["waste_found_usd_per_month"] > 0
     assert report.summary["findings_rejected"] == 1
     assert report.summary["unattributed_ratio"] > 0
 

@@ -75,7 +75,7 @@ class Writer(Agent):
             "findings_accepted": len(accepted),
             "findings_rejected": len(rejected),
             "spend_audited_usd_per_month": round(spend, 2),
-            "attributed_waste_usd_per_month": round(reported, 2),
+            "waste_found_usd_per_month": round(reported, 2),
             "unattributed_ratio": round(
                 len([f for f in accepted if f.finding_class == "unattributed"])
                 / max(1, len(self.ctx.state.facts["resources"])), 3),

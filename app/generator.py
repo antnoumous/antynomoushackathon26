@@ -9,14 +9,14 @@ import requests
 from app.config import RunConfig
 
 TEMPLATES: dict[str, str] = {
-    "R-1": "{resource_name} is a detached 50 GB-class block volume. It is billed continuously "
+    "R-1": "{resource_name} is a detached {size_gb} GB block volume. It is billed continuously "
            "and is attached to nothing.",
     "R-2": "{resource_name} is a reserved public IP with no assigned entity. It is billed "
            "whether or not it is attached.",
-    "R-3": "{resource_name} averages {mean:.2f}% CPU with a peak of {peak:.2f}% across the "
+    "R-3": "{resource_name} averages {mean}% CPU with a peak of {peak}% across the "
            "requested window, and is declared in Terraform. Nothing in the evidence attributes "
            "a purpose to it.",
-    "R-4": "{resource_name} averages {mean:.2f}% CPU but peaks at {peak:.2f}%. The cost is the "
+    "R-4": "{resource_name} averages {mean}% CPU but peaks at {peak}%. The cost is the "
            "idle shape it holds around the clock, not the work it does.",
     "R-5": "{resource_name} is running and appears in no Terraform declaration. No owner tag "
            "attributes it to a team.",
@@ -49,7 +49,8 @@ class RulesGenerator:
             template = TEMPLATES[rule_id]                 # KeyError on an unmapped rule: fail loudly
             text = template.format(resource_name=context["resource_name"],
                                    mean=context["stats"].get("mean", 0.0),
-                                   peak=context["stats"].get("peak", 0.0))
+                                   peak=context["stats"].get("peak", 0.0),
+                                   size_gb=context.get("size_gb"))
             confidence = 0.75 if context.get("iac_match_rule") == "tag" else 0.55
             return {"claim": text, "confidence": confidence}
         if name == "verdict_reason":

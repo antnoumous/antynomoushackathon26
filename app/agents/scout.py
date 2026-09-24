@@ -122,7 +122,9 @@ class Scout(Agent):
                                               f"{resource.ocpus} OCPU/{resource.memory_gb} GB "
                                               f"{resource.lifecycle_state}",
                                       payload={"shape": resource.shape, "ocpus": resource.ocpus,
-                                               "memory_gb": resource.memory_gb, "tags": resource.tags,
+                                               "memory_gb": resource.memory_gb,
+                                               "size_gb": resource.size_gb,
+                                               "tags": resource.tags,
                                                "lifecycle_state": resource.lifecycle_state}),
                 ]
                 if series is not None:
@@ -152,7 +154,8 @@ class Scout(Agent):
                     prompt=f"State the finding for {resource.display_name} under {rule.rule_id}.",
                     schema={"name": "finding_claim"},
                     context={"rule_id": rule.rule_id, "resource_name": resource.display_name,
-                             "stats": stats, "iac_match_rule": match_rule})
+                             "stats": stats, "iac_match_rule": match_rule,
+                             "size_gb": resource.size_gb})
 
                 pricing = json.loads((Path("data/pricing.json")).read_text())
                 impact_kind = "usd_per_month" if rule.rule_id in {"R-1", "R-2", "R-3", "R-5"} \
