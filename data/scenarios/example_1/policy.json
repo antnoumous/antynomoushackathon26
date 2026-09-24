@@ -1,0 +1,19 @@
+{
+  "scenario_id": "example_1",
+  "rules": [
+    {"rule_id": "R-1", "class": "cost_waste", "when": {"resource_class": "block_volume", "attached": false},
+     "note": "detached block volume billed continuously"},
+    {"rule_id": "R-2", "class": "cost_waste", "when": {"resource_class": "reserved_public_ip", "attached": false},
+     "note": "reserved public IP billed whether attached or not"},
+    {"rule_id": "R-3", "class": "cost_waste",
+     "when": {"resource_class": "compute_instance", "mean_cpu_lt": 5.0, "min_coverage_ratio": 0.8,
+              "peak_cpu_lt": 20.0, "absent_from_iac": false},
+     "note": "low mean and low peak with adequate coverage and a declared purpose"},
+    {"rule_id": "R-4", "class": "cost_waste",
+     "when": {"resource_class": "compute_instance", "mean_cpu_lt": 5.0, "min_coverage_ratio": 0.8,
+              "peak_cpu_gte": 20.0},
+     "note": "low mean with a real peak: mis-sized, not idle"},
+    {"rule_id": "R-5", "class": "unattributed", "when": {"compute_instance": true, "absent_from_iac": true},
+     "note": "running but declared in no Terraform file"}
+  ]
+}

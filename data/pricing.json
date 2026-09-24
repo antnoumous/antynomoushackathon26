@@ -1,0 +1,12 @@
+{
+  "currency": "USD",
+  "note": "OCI list rates, rounded, used for cost estimation only. Verified 2026-09.",
+  "shapes": {
+    "VM.Standard.A1.Flex": {"ocpu_hour": 0.01, "gb_hour": 0.0015},
+    "VM.Standard.E4.Flex": {"ocpu_hour": 0.025, "gb_hour": 0.0015},
+    "VM.Standard.E2.1.Micro": {"ocpu_hour": 0.0075, "gb_hour": 0.0015}
+  },
+  "block_volume_gb_month": 0.0255,
+  "reserved_public_ip_hour": 0.01,
+  "hours_per_month": 730
+}

@@ -1,0 +1,14 @@
+{
+  "scenario_id": "example_1",
+  "declarations": [
+    {"address": "oci_core_instance.web_01", "resource_type": "oci_core_instance",
+     "declared_name": "web-01", "file_path": "terraform/compute.tf",
+     "last_commit": "a1b2c3d", "commit_message": "scale web tier to 1 OCPU", "author": "me@example.com"},
+    {"address": "oci_core_instance.batch_01", "resource_type": "oci_core_instance",
+     "declared_name": "batch-01", "file_path": "terraform/batch.tf",
+     "last_commit": "d4e5f6a", "commit_message": "month-end batch worker, runs 1st 02:00", "author": "me@example.com"},
+    {"address": "oci_core_instance.reports_01", "resource_type": "oci_core_instance",
+     "declared_name": "reports-01", "file_path": "terraform/reports.tf",
+     "last_commit": "9f8e7d6", "commit_message": "report generator, left running intentionally", "author": "me@example.com"}
+  ]
+}
