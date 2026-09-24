@@ -1,0 +1,46 @@
+# Secrets — never commit real values. Use .env.example as the template.
+.env
+.env.*
+!.env.example
+
+# Keys and certs
+*.pem
+*.key
+*.p12
+credentials.json
+client_secret*.json
+
+# Logs (sample logs intended for the submission should be copied into logs/samples/)
+*.log
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+
+# Model weights and large artifacts
+*.gguf
+*.safetensors
+*.bin
+*.pt
+models/
+
+# Demo media — keep out of git, upload separately
+*.mp4
+*.mov
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
