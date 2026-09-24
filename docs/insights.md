@@ -67,8 +67,8 @@ Short and specific beats long and vague. Each entry:
 
 | What | Measurement |
 |---|---|
-| Full test suite | 63 tests, 0.85 s on a fresh clone |
-| `POST /run`, sample mode | HTTP 200, 20 ms for 5 resources / 4 findings |
+| Full test suite | 82 tests, 0.9 s on a fresh clone |
+| `POST /run`, sample mode | HTTP 200, 20 ms for 6 resources / 5 findings |
 | End-to-end CLI audit | ~1 s per scenario including all four agents |
 | Evaluation (3 scenarios) | precision 1.0, recall 1.0, verdict accuracy 1.0, deterministic |
 | Model calls in sample mode | 0 — enforced by a test that replaces `socket.socket` |
@@ -76,3 +76,27 @@ Short and specific beats long and vague. Each entry:
 The 20 ms figure matters for the design, not for speed: it means a judge can run all three
 scenarios and the evaluator in under five seconds, so the demo is about the agent's reasoning
 rather than a progress bar.
+
+### A guard you wrote can still agree with itself
+
+> **What we observed** → the Writer refuses to print a figure that no evidence supports, and it was
+> passing its own tests. The review broke it anyway: with telemetry unavailable the Scout fell back
+> to `mean 0.0 / coverage 1.0 / sufficient True`, and because a candidate's own `stats` were part of
+> the Writer's allow-list, the invented number **vouched for itself** and appeared in an accepted
+> finding as "web-01 averages 0.0% CPU". → **why it happens** → a guard proves consistency, not
+> truth: it checks that a claim agrees with something, and if the something is the claimant, the
+> check is a tautology. → **what we did about it** → missing telemetry is now a single named
+> `NO_TELEMETRY_STATS` shape with `sufficient: False`, no CPU rule may fire without a series, and a
+> candidate's own numbers are no longer evidence for its own claim. **A fallback that produces
+> numbers is a lie with good manners; a fallback that produces `None` is a degradation.**
+
+### The cap that could never fire
+
+> **What we observed** → `MAX_RECHECKS_PER_FINDING = 2` was implemented, tested and unreachable:
+> the counter was keyed by candidate id, and every round mints a new id, so the count reset forever.
+> → **why it happens** → the test that proved the cap worked constructed the state a cap needs —
+> three re-checks of the *same* candidate id — which the loop cannot produce, because an id belongs
+> to one round. The test encoded the implementation's assumption instead of the run's reality. →
+> **what we did about it** → counts are keyed by resource and finding class, which is stable across
+> rounds, and the test drives three real rounds. **When a cap is keyed by something the loop
+> recreates every cycle, the cap is decoration; test it by running the loop, not by building state.**
