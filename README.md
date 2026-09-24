@@ -24,12 +24,12 @@ report shows both the finding and the reason the agent changed its mind.
 ## Run it
 
 Nothing installs after the app starts, no model or dataset is downloaded, and no GPU is used.
-Python 3.11.
+**Python 3.11 or newer.**
 
 ```bash
 git clone https://github.com/antnoumous/antynomoushackathon26.git
 cd antynomoushackathon26
-python -m venv .venv && . .venv/bin/activate
+python3.11 -m venv .venv && . .venv/bin/activate    # 3.11+; the app says so plainly if not
 pip install -r requirements.txt
 
 # Audits the bundled sample scenario on cached data. No credentials, no network.
