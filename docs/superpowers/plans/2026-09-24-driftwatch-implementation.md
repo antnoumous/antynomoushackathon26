@@ -2518,6 +2518,26 @@ git commit -m "feat: Writer that refuses untraceable figures, plus the Markdown 
 
 ### Task 11: The bounded loop, degradation, and the canonical run end to end
 
+**Amended during the build (2026-09-24).** Two changes, both forced by a real failure rather than a
+preference:
+
+1. **The wall clock was implemented but untested.** `pytest -k cap` covered the round, resource and
+   re-check caps and never touched `_budget_exceeded`, so the DoD line "no silent caps" rested on
+   inspection. Two tests now drive a fake monotonic clock (`Clock` in `tests/test_loop.py`): the
+   soft cap must be logged as `capped` without killing the run, and the hard cap must stop the loop
+   and still produce a report.
+2. **The hard cap exposed an honesty defect.** A candidate the Skeptic answered with `recheck`, and
+   that the loop then never returned to, fell through the Writer's status branches to `accepted` —
+   so a truncated run published the very claim the Skeptic had refused to conclude, using its
+   original unrevised text. The loop now collects unresolved candidates (verdict `recheck` with no
+   `superseded_by`), emits a `not_concluded` trace line, and reports them under `undetermined` with
+   the reason. The superseded case is unaffected: in the canonical run `C-001` carries
+   `superseded_by = C-005` and is still reported as `rejected`, which is what the money shot needs.
+
+Pinned by `test_the_hard_wall_clock_stops_the_run_rather_than_letting_it_hang`. Re-running
+`scripts/run_examples.sh` after this change regenerated all three scenarios with identical findings,
+statuses and claims — the fix touches only the path where the loop gives up.
+
 **Files:**
 - Create: `app/loop.py`, `tests/test_loop.py`
 
@@ -3762,7 +3782,7 @@ Mapped to the spec's acceptance criteria (§13). Every line must be observed, no
 |---|---|
 | 1. `rm .env` + Docker + `curl` returns a report | Task 14 Step 5 |
 | 2. Fresh clone runs with no manual steps | Task 14 Step 4 |
-| 3. A run finishes well inside 10 minutes, no silent caps | Task 11 `test_max_rounds_is_enforced_and_logged_as_capped`; wall clock in `_budget_exceeded` |
+| 3. A run finishes well inside 10 minutes, no silent caps | Task 11 `test_max_rounds_is_enforced_and_logged_as_capped`, `test_the_soft_wall_clock_is_logged_as_a_cap_but_does_not_stop_the_run`, `test_the_hard_wall_clock_stops_the_run_rather_than_letting_it_hang`; a capped run cannot present an un-concluded candidate as a finding |
 | 4. Trace shows four agents, handoff, a rejection with a reason, a re-check, a revision | Task 11 `test_the_trace_shows_at_least_two_agents_handing_off_and_a_recheck` |
 | 5. Three input examples and three matching outputs, differing meaningfully | Task 13, Task 14 Step 3 |
 | 6. `evals/` reports precision/recall; held-out scoring if Task 16 shipped | Task 13, Task 16 |

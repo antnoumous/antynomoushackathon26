@@ -129,3 +129,46 @@ def test_no_policy_rules_yields_partial_and_an_explanation(tmp_path):
     assert report.status == "partial"
     assert report.findings == []
     assert any(u.resource_id == "scope" for u in report.undetermined)
+
+
+class Clock:
+    """A monotonic clock that reads 0 at construction and a fixed elapsed time after that."""
+
+    def __init__(self, elapsed: float):
+        self.elapsed = elapsed
+        self.calls = 0
+
+    def monotonic(self) -> float:
+        self.calls += 1
+        return 0.0 if self.calls == 1 else self.elapsed
+
+
+def test_the_soft_wall_clock_is_logged_as_a_cap_but_does_not_stop_the_run(tmp_path, monkeypatch):
+    monkeypatch.setattr("app.loop.time", Clock(elapsed=310))
+    cfg, ctx = build(tmp_path)
+    report = Orchestrator(ctx).run()
+
+    assert "wall_clock_soft_s" in report.caps_hit
+    assert report.status == "capped"          # a slow run never reads as a clean one
+    assert report.findings                    # but the investigation finished anyway
+    capped = [json.loads(l) for l in ctx.trace.path.read_text().splitlines()
+              if json.loads(l)["status"] == "capped"]
+    assert capped and capped[0]["action"] == "cap_hit"
+    assert "wall clock" in capped[0]["input_summary"]
+
+
+def test_the_hard_wall_clock_stops_the_run_rather_than_letting_it_hang(tmp_path, monkeypatch):
+    monkeypatch.setattr("app.loop.time", Clock(elapsed=600))
+    cfg, ctx = build(tmp_path)
+    report = Orchestrator(ctx).run()
+
+    assert report.caps_hit == ["wall_clock_hard_s"]     # hard wins; the soft check never runs
+    assert report.status == "capped"
+    assert report.findings                              # what round 1 found is still reported
+    assert "request_recheck" in actions(ctx)            # the recheck was requested...
+
+    # ...and never honoured, so the un-concluded claim must not be presented as a finding.
+    assert [f for f in report.findings if f.resource_id.endswith("bbb2")] == []
+    unresolved = [u for u in report.undetermined if u.resource_id.endswith("bbb2")]
+    assert unresolved and "the re-check the Skeptic asked for did not run" in unresolved[0].reason
+    assert "not_concluded" in actions(ctx)

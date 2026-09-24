@@ -174,3 +174,15 @@ pinned a rounding artefact, and one rule field made its own promised output impo
 that is silently out of step with the code is worse than no plan, because the next session
 trusts it; correcting it keeps it usable as the record of what was intended and why it changed.
 
+## 2026-09-24 — A capped run may not publish a claim its critic refused
+
+**Decision:** A candidate the Skeptic answered with `recheck` that the loop never returned to is
+removed from the findings and reported under `undetermined` with the reason, and a
+`not_concluded` line is written to the trace.
+
+**Why:** Found by testing the hard wall clock, which had never been exercised. The Writer's status
+branches fell through to `accepted` for a `recheck` verdict, so a run that hit its hard budget
+would have published the contested claim verbatim — the one outcome the caps exist to prevent.
+The three committed scenarios regenerate identically after the fix, which is the evidence that it
+changed nothing except the path where the loop gives up.
+

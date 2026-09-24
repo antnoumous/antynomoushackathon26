@@ -116,7 +116,9 @@ that no evidence in the ledger supports (`app/agents/writer.py:assert_figures_tr
 **Caps are enforced and always visible.** `MAX_ROUNDS=3`, ≤25 resources per run, ≤2 Skeptic
 re-checks per finding, a 300 s soft / 540 s hard wall clock, and timeouts on every external call.
 Any cap that fires sets the run's `status` to `capped` and names itself in `caps_hit` — a truncated
-investigation never reads as a finished one.
+investigation never reads as a finished one. A finding the Skeptic asked to re-check, which the run
+then never got back to, is not reported as accepted: it moves to `undetermined` with the reason
+(`app/loop.py`), because the whole point of the caps is that a run which gives up must say so.
 
 **Degradation is not fabrication.** A source that fails is retried once, then falls back to fixture
 data with the degradation logged and the source named in the report; if there is no fallback the

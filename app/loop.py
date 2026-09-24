@@ -190,10 +190,26 @@ class Orchestrator:
                                 status="capped")
 
         status = "capped" if self.caps_hit else ("partial" if self._any_source_unavailable() else "success")
-        report = self.writer.synthesise(candidates=all_candidates, rulings=self.rulings,
-                                        undetermined=self.scout.undetermined(),
-                                        sources=self.sources_status, status=status,
-                                        caps_hit=self.caps_hit)
+        # A candidate the Skeptic asked to re-check that the loop never got back to is not a
+        # conclusion. It is reported as undetermined with the reason, never as accepted: the caps
+        # exist precisely so a truncated run cannot present an unverified claim as a finding.
+        unresolved = [c for c in all_candidates
+                      if self.rulings[c.candidate_id].verdict == "recheck" and not c.superseded_by]
+        for candidate in unresolved:
+            self.ctx.trace.emit(agent_name="Writer", action="not_concluded",
+                                input_summary=candidate.candidate_id,
+                                output_summary="re-check requested but never honoured",
+                                evidence_refs=candidate.evidence_refs, status="capped")
+        unresolved_ids = {c.candidate_id for c in unresolved}
+        undetermined = self.scout.undetermined() + [
+            Undetermined(resource_id=c.resource_id,
+                         reason=f"{c.candidate_id} was not concluded: the re-check the Skeptic "
+                                f"asked for did not run")
+            for c in unresolved]
+        report = self.writer.synthesise(
+            candidates=[c for c in all_candidates if c.candidate_id not in unresolved_ids],
+            rulings=self.rulings, undetermined=undetermined, sources=self.sources_status,
+            status=status, caps_hit=self.caps_hit)
         report.trace_path = str(self.ctx.trace.path)
         self.ctx.state.append("report", {"status": status, "findings": len(report.findings)})
         return report
