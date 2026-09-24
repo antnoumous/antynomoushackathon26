@@ -98,6 +98,14 @@ class Undetermined(BaseModel):
     reason: str
 
 
+class Assignment(BaseModel):
+    assignment_id: str
+    round: int
+    resource_ids: list[str]
+    lookback_hours: int
+    focus: str = "initial"
+
+
 class SourceStatus(BaseModel):
     name: str
     backend: Literal["live", "fixture"]
