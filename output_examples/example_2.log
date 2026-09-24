@@ -1,0 +1,72 @@
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e1441b6220", "agent_name": "Planner", "action": "source_ok", "input_summary": "inventory attempt 1", "output_summary": "5 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e1441b6220", "agent_name": "Planner", "action": "source_ok", "input_summary": "iac attempt 1", "output_summary": "5 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e1441b6220", "agent_name": "Planner", "action": "source_ok", "input_summary": "policy attempt 1", "output_summary": "5 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e1441b6220", "agent_name": "Scout", "action": "hydrate", "input_summary": "inventory, iac, policy", "output_summary": "5 resources", "target_agent": null, "confidence": 1.0, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e1441b6220", "agent_name": "Planner", "action": "delegate_task", "input_summary": "round 1, 5 target(s), lookback 168h", "output_summary": "assignment A-1 (initial)", "target_agent": "Scout", "confidence": 0.8, "retry_count": 0, "status": "success", "round": 1}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e1441b6220", "agent_name": "Writer", "action": "synthesise", "input_summary": "0 accepted, 0 rejected", "output_summary": "Audited 5 resources across 4 sources; 0 findings accepted, 0 rejected, 0 left undetermined.", "target_agent": null, "confidence": 1.0, "retry_count": 0, "status": "success"}
+{
+  "run_id": "run-e1441b6220",
+  "status": "success",
+  "mode": "sample",
+  "sources": [
+    {
+      "name": "inventory",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "iac",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "policy",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "telemetry",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    }
+  ],
+  "summary": {
+    "resources_examined": 5,
+    "findings_accepted": 0,
+    "findings_rejected": 0,
+    "spend_audited_usd_per_month": 0,
+    "waste_found_usd_per_month": 0,
+    "unattributed_ratio": 0.0,
+    "narrative": "Audited 5 resources across 4 sources; 0 findings accepted, 0 rejected, 0 left undetermined."
+  },
+  "findings": [],
+  "undetermined": [],
+  "report_markdown_path": "logs/report-run-e1441b6220.md",
+  "trace_path": "logs/trace-run-e1441b6220.jsonl",
+  "caps_hit": []
+}
+
+--- report ---
+# Tenancy audit — run `run-e1441b6220`
+
+- **Status:** success
+- **Mode:** sample
+- **Sources:** inventory (fixture), iac (fixture), policy (fixture), telemetry (fixture)
+- **Caps hit:** none
+
+## Summary
+
+- **resources examined:** 5
+- **findings accepted:** 0
+- **findings rejected:** 0
+- **spend audited usd per month:** 0
+- **waste found usd per month:** 0
+- **unattributed ratio:** 0.0
+- **narrative:** Audited 5 resources across 4 sources; 0 findings accepted, 0 rejected, 0 left undetermined.
+
+## Findings
+

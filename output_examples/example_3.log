@@ -1,0 +1,242 @@
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Planner", "action": "source_ok", "input_summary": "inventory attempt 1", "output_summary": "5 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Planner", "action": "source_ok", "input_summary": "iac attempt 1", "output_summary": "2 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Planner", "action": "source_ok", "input_summary": "policy attempt 1", "output_summary": "5 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Scout", "action": "hydrate", "input_summary": "inventory, iac, policy", "output_summary": "5 resources", "target_agent": null, "confidence": 1.0, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Planner", "action": "delegate_task", "input_summary": "round 1, 5 target(s), lookback 168h", "output_summary": "assignment A-1 (initial)", "target_agent": "Scout", "confidence": 0.8, "retry_count": 0, "status": "success", "round": 1}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Scout", "action": "propose_finding", "input_summary": "dr-standby-01 under R-3", "output_summary": "C-001: cost_waste", "target_agent": "Skeptic", "confidence": 0.75, "retry_count": 0, "status": "success", "round": 1, "evidence_refs": ["E-001", "E-002", "E-003", "E-004"]}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Scout", "action": "flag_unattributed", "input_summary": "leftover-01", "output_summary": "no IaC declaration matched", "target_agent": "Skeptic", "confidence": 0.75, "retry_count": 0, "status": "success", "round": 1}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Scout", "action": "propose_finding", "input_summary": "leftover-01 under R-3", "output_summary": "C-002: cost_waste", "target_agent": "Skeptic", "confidence": 0.55, "retry_count": 0, "status": "success", "round": 1, "evidence_refs": ["E-005", "E-006", "E-007", "E-008"]}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Scout", "action": "propose_finding", "input_summary": "leftover-01 under R-5", "output_summary": "C-003: unattributed", "target_agent": "Skeptic", "confidence": 0.55, "retry_count": 0, "status": "success", "round": 1, "evidence_refs": ["E-009", "E-010", "E-011", "E-012"]}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Scout", "action": "abstain", "input_summary": "newapp-01 telemetry", "output_summary": "insufficient coverage (0.12); no cost finding raised", "target_agent": null, "confidence": 1.0, "retry_count": 0, "status": "abstained", "round": 1}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Scout", "action": "propose_finding", "input_summary": "vol-orphan-100g under R-1", "output_summary": "C-004: cost_waste", "target_agent": "Skeptic", "confidence": 0.55, "retry_count": 0, "status": "success", "round": 1, "evidence_refs": ["E-013", "E-014"]}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Skeptic", "action": "validate_finding", "input_summary": "C-001", "output_summary": "rejected: the declaration states a deliberate purpose (by design), which is exactly the falsifier this finding published", "target_agent": "Planner", "confidence": 0.8, "retry_count": 0, "status": "rejected", "round": 1, "evidence_refs": ["E-001", "E-002", "E-003", "E-004"]}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Skeptic", "action": "validate_finding", "input_summary": "C-002", "output_summary": "accepted under R-3", "target_agent": "Writer", "confidence": 0.55, "retry_count": 0, "status": "success", "round": 1, "evidence_refs": ["E-005", "E-006", "E-007", "E-008"]}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Skeptic", "action": "validate_finding", "input_summary": "C-003", "output_summary": "accepted under R-5", "target_agent": "Writer", "confidence": 0.55, "retry_count": 0, "status": "success", "round": 1, "evidence_refs": ["E-009", "E-010", "E-011", "E-012"]}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Skeptic", "action": "validate_finding", "input_summary": "C-004", "output_summary": "accepted under R-1", "target_agent": "Writer", "confidence": 0.55, "retry_count": 0, "status": "success", "round": 1, "evidence_refs": ["E-013", "E-014"]}
+{"timestamp": "2026-09-24T11:12:19Z", "run_id": "run-e5d4474673", "agent_name": "Writer", "action": "synthesise", "input_summary": "3 accepted, 1 rejected", "output_summary": "Audited 5 resources across 4 sources; 3 findings accepted, 1 rejected, 1 left undetermined.", "target_agent": null, "confidence": 1.0, "retry_count": 0, "status": "success", "evidence_refs": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006", "E-007", "E-008", "E-009", "E-010", "E-011", "E-012", "E-013", "E-014"]}
+{
+  "run_id": "run-e5d4474673",
+  "status": "success",
+  "mode": "sample",
+  "sources": [
+    {
+      "name": "inventory",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "iac",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "policy",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "telemetry",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    }
+  ],
+  "summary": {
+    "resources_examined": 5,
+    "findings_accepted": 3,
+    "findings_rejected": 1,
+    "spend_audited_usd_per_month": 106.94,
+    "waste_found_usd_per_month": 93.07,
+    "unattributed_ratio": 0.2,
+    "narrative": "Audited 5 resources across 4 sources; 3 findings accepted, 1 rejected, 1 left undetermined."
+  },
+  "findings": [
+    {
+      "finding_id": "C-001",
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022dd01",
+      "resource_class": "compute_instance",
+      "class": "cost_waste",
+      "claim": "dr-standby-01 averages 0.133% CPU with a peak of 0.15% across the requested window, and is declared in Terraform. Nothing in the evidence attributes a purpose to it.",
+      "evidence_refs": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004"
+      ],
+      "impact": {
+        "kind": "usd_per_month",
+        "value": 13.87
+      },
+      "confidence": 0.0,
+      "status": "rejected",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 1,
+          "verdict": "reject",
+          "reason": "the declaration states a deliberate purpose (by design), which is exactly the falsifier this finding published"
+        }
+      ],
+      "superseded_by": null
+    },
+    {
+      "finding_id": "C-002",
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022cc01",
+      "resource_class": "compute_instance",
+      "class": "cost_waste",
+      "claim": "leftover-01 averages 3.188% CPU with a peak of 3.44% across the requested window, and is declared in Terraform. Nothing in the evidence attributes a purpose to it.",
+      "evidence_refs": [
+        "E-005",
+        "E-006",
+        "E-007",
+        "E-008"
+      ],
+      "impact": {
+        "kind": "usd_per_month",
+        "value": 45.26
+      },
+      "confidence": 0.55,
+      "status": "accepted",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 1,
+          "verdict": "accept",
+          "reason": "no contradicting evidence found in the consulted sources"
+        }
+      ],
+      "superseded_by": null
+    },
+    {
+      "finding_id": "C-003",
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022cc01",
+      "resource_class": "compute_instance",
+      "class": "unattributed",
+      "claim": "leftover-01 is running and appears in no Terraform declaration. No owner tag attributes it to a team.",
+      "evidence_refs": [
+        "E-009",
+        "E-010",
+        "E-011",
+        "E-012"
+      ],
+      "impact": {
+        "kind": "usd_per_month",
+        "value": 45.26
+      },
+      "confidence": 0.55,
+      "status": "accepted",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 1,
+          "verdict": "accept",
+          "reason": "no contradicting evidence found in the consulted sources"
+        }
+      ],
+      "superseded_by": null
+    },
+    {
+      "finding_id": "C-004",
+      "resource_id": "ocid1.volume.oc1..\u2022\u2022\u2022\u2022ee01",
+      "resource_class": "block_volume",
+      "class": "cost_waste",
+      "claim": "vol-orphan-100g is a detached 100.0 GB block volume. It is billed continuously and is attached to nothing.",
+      "evidence_refs": [
+        "E-013",
+        "E-014"
+      ],
+      "impact": {
+        "kind": "usd_per_month",
+        "value": 2.55
+      },
+      "confidence": 0.55,
+      "status": "accepted",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 1,
+          "verdict": "accept",
+          "reason": "no contradicting evidence found in the consulted sources"
+        }
+      ],
+      "superseded_by": null
+    }
+  ],
+  "undetermined": [
+    {
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022bb01",
+      "reason": "coverage 20h of 168h requested"
+    }
+  ],
+  "report_markdown_path": "logs/report-run-e5d4474673.md",
+  "trace_path": "logs/trace-run-e5d4474673.jsonl",
+  "caps_hit": []
+}
+
+--- report ---
+# Tenancy audit — run `run-e5d4474673`
+
+- **Status:** success
+- **Mode:** sample
+- **Sources:** inventory (fixture), iac (fixture), policy (fixture), telemetry (fixture)
+- **Caps hit:** none
+
+## Summary
+
+- **resources examined:** 5
+- **findings accepted:** 3
+- **findings rejected:** 1
+- **spend audited usd per month:** 106.94
+- **waste found usd per month:** 93.07
+- **unattributed ratio:** 0.2
+- **narrative:** Audited 5 resources across 4 sources; 3 findings accepted, 1 rejected, 1 left undetermined.
+
+## Findings
+
+### C-002 — leftover-01 averages 3.188% CPU with a peak of 3.44% across the requested window, and is declared in Terraform. Nothing in the evidence attributes a purpose to it.
+
+- Resource: `ocid1.instance.oc1..••••cc01` (compute_instance)
+- Class: cost_waste
+- Verdict: **accepted** (confidence 0.55)
+- Impact: 45.26 usd_per_month
+- Evidence: E-005, E-006, E-007, E-008
+- Would be withdrawn by: a current, declared, owned purpose for this resource would withdraw this finding
+- Round 1: accept — no contradicting evidence found in the consulted sources
+
+### C-003 — leftover-01 is running and appears in no Terraform declaration. No owner tag attributes it to a team.
+
+- Resource: `ocid1.instance.oc1..••••cc01` (compute_instance)
+- Class: unattributed
+- Verdict: **accepted** (confidence 0.55)
+- Impact: 45.26 usd_per_month
+- Evidence: E-009, E-010, E-011, E-012
+- Would be withdrawn by: a current, declared, owned purpose for this resource would withdraw this finding
+- Round 1: accept — no contradicting evidence found in the consulted sources
+
+### C-004 — vol-orphan-100g is a detached 100.0 GB block volume. It is billed continuously and is attached to nothing.
+
+- Resource: `ocid1.volume.oc1..••••ee01` (block_volume)
+- Class: cost_waste
+- Verdict: **accepted** (confidence 0.55)
+- Impact: 2.55 usd_per_month
+- Evidence: E-013, E-014
+- Would be withdrawn by: a current, declared, owned purpose for this resource would withdraw this finding
+- Round 1: accept — no contradicting evidence found in the consulted sources
+
+### C-001 — dr-standby-01 averages 0.133% CPU with a peak of 0.15% across the requested window, and is declared in Terraform. Nothing in the evidence attributes a purpose to it.
+
+- Resource: `ocid1.instance.oc1..••••dd01` (compute_instance)
+- Class: cost_waste
+- Verdict: **rejected** (confidence 0.0)
+- Impact: 13.87 usd_per_month
+- Evidence: E-001, E-002, E-003, E-004
+- Would be withdrawn by: a current, declared, owned purpose for this resource would withdraw this finding
+- Round 1: reject — the declaration states a deliberate purpose (by design), which is exactly the falsifier this finding published
+
+## Not determined
+
+- `ocid1.instance.oc1..••••bb01` — coverage 20h of 168h requested
+

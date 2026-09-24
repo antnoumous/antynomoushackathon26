@@ -1,0 +1,8 @@
+{
+  "objective": "audit this tenancy for cost waste and unattributed resources",
+  "scope": {"compartment_ids": [], "resource_types": ["compute_instance", "block_volume", "reserved_public_ip"]},
+  "telemetry": {"lookback_hours": 168, "resolution_minutes": 5},
+  "caps": {"max_rounds": 3, "max_resources": 25, "wall_clock_soft_s": 300, "wall_clock_hard_s": 540},
+  "sample_mode": true,
+  "scenario": "data/scenarios/example_1"
+}

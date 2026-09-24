@@ -1,0 +1,161 @@
+{
+  "run_id": "run-e5d4474673",
+  "status": "success",
+  "mode": "sample",
+  "sources": [
+    {
+      "name": "inventory",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "iac",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "policy",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "telemetry",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    }
+  ],
+  "summary": {
+    "resources_examined": 5,
+    "findings_accepted": 3,
+    "findings_rejected": 1,
+    "spend_audited_usd_per_month": 106.94,
+    "waste_found_usd_per_month": 93.07,
+    "unattributed_ratio": 0.2,
+    "narrative": "Audited 5 resources across 4 sources; 3 findings accepted, 1 rejected, 1 left undetermined."
+  },
+  "findings": [
+    {
+      "finding_id": "C-001",
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022dd01",
+      "resource_class": "compute_instance",
+      "class": "cost_waste",
+      "claim": "dr-standby-01 averages 0.133% CPU with a peak of 0.15% across the requested window, and is declared in Terraform. Nothing in the evidence attributes a purpose to it.",
+      "evidence_refs": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004"
+      ],
+      "impact": {
+        "kind": "usd_per_month",
+        "value": 13.87
+      },
+      "confidence": 0.0,
+      "status": "rejected",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 1,
+          "verdict": "reject",
+          "reason": "the declaration states a deliberate purpose (by design), which is exactly the falsifier this finding published"
+        }
+      ],
+      "superseded_by": null
+    },
+    {
+      "finding_id": "C-002",
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022cc01",
+      "resource_class": "compute_instance",
+      "class": "cost_waste",
+      "claim": "leftover-01 averages 3.188% CPU with a peak of 3.44% across the requested window, and is declared in Terraform. Nothing in the evidence attributes a purpose to it.",
+      "evidence_refs": [
+        "E-005",
+        "E-006",
+        "E-007",
+        "E-008"
+      ],
+      "impact": {
+        "kind": "usd_per_month",
+        "value": 45.26
+      },
+      "confidence": 0.55,
+      "status": "accepted",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 1,
+          "verdict": "accept",
+          "reason": "no contradicting evidence found in the consulted sources"
+        }
+      ],
+      "superseded_by": null
+    },
+    {
+      "finding_id": "C-003",
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022cc01",
+      "resource_class": "compute_instance",
+      "class": "unattributed",
+      "claim": "leftover-01 is running and appears in no Terraform declaration. No owner tag attributes it to a team.",
+      "evidence_refs": [
+        "E-009",
+        "E-010",
+        "E-011",
+        "E-012"
+      ],
+      "impact": {
+        "kind": "usd_per_month",
+        "value": 45.26
+      },
+      "confidence": 0.55,
+      "status": "accepted",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 1,
+          "verdict": "accept",
+          "reason": "no contradicting evidence found in the consulted sources"
+        }
+      ],
+      "superseded_by": null
+    },
+    {
+      "finding_id": "C-004",
+      "resource_id": "ocid1.volume.oc1..\u2022\u2022\u2022\u2022ee01",
+      "resource_class": "block_volume",
+      "class": "cost_waste",
+      "claim": "vol-orphan-100g is a detached 100.0 GB block volume. It is billed continuously and is attached to nothing.",
+      "evidence_refs": [
+        "E-013",
+        "E-014"
+      ],
+      "impact": {
+        "kind": "usd_per_month",
+        "value": 2.55
+      },
+      "confidence": 0.55,
+      "status": "accepted",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 1,
+          "verdict": "accept",
+          "reason": "no contradicting evidence found in the consulted sources"
+        }
+      ],
+      "superseded_by": null
+    }
+  ],
+  "undetermined": [
+    {
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022bb01",
+      "reason": "coverage 20h of 168h requested"
+    }
+  ],
+  "report_markdown_path": "logs/report-run-e5d4474673.md",
+  "trace_path": "logs/trace-run-e5d4474673.jsonl",
+  "caps_hit": []
+}

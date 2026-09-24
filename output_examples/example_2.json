@@ -1,0 +1,45 @@
+{
+  "run_id": "run-e1441b6220",
+  "status": "success",
+  "mode": "sample",
+  "sources": [
+    {
+      "name": "inventory",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "iac",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "policy",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    },
+    {
+      "name": "telemetry",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null
+    }
+  ],
+  "summary": {
+    "resources_examined": 5,
+    "findings_accepted": 0,
+    "findings_rejected": 0,
+    "spend_audited_usd_per_month": 0,
+    "waste_found_usd_per_month": 0,
+    "unattributed_ratio": 0.0,
+    "narrative": "Audited 5 resources across 4 sources; 0 findings accepted, 0 rejected, 0 left undetermined."
+  },
+  "findings": [],
+  "undetermined": [],
+  "report_markdown_path": "logs/report-run-e1441b6220.md",
+  "trace_path": "logs/trace-run-e1441b6220.jsonl",
+  "caps_hit": []
+}
