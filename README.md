@@ -59,22 +59,28 @@ docker build -t driftwatch .
 docker run --rm -p 8000:8000 -e SAMPLE_MODE=true driftwatch
 ```
 
-Run against a real tenancy by setting `SAMPLE_MODE=false` and the `OCI_*` variables from
-`.env.example`. A live run needs an OCI API key; sample mode never does.
+**Only sample mode is implemented.** `SAMPLE_MODE=true` runs the full agent on the bundled
+scenarios with no credentials and no network, and that is how this submission is meant to be
+judged. Setting `SAMPLE_MODE=false` does **not** currently audit a real tenancy: every live
+adapter is a placeholder that raises, so all four sources degrade to the bundled fixtures, the run
+reports `status: partial` with `summary.backends` naming what actually answered, and a warning is
+printed to stderr. The live OCI adapters are planned stretch work (Task 15 of the implementation
+plan) and are not built. `oci` is pinned in `requirements.txt` for them, and nothing imports it
+today.
 
 ## The money shot
 
 In `example_1`, one instance is genuinely interesting.
 
-**Round 1.** The Scout reads seven days of CPU telemetry for `batch-01`, finds a mean of 0.77% and
-a peak of 0.89%, and proposes a cost-waste finding: idle instance, $90.52/month.
+**Round 1.** The Scout reads seven days of CPU telemetry for `batch-01`, finds a mean of 0.766% and
+a peak of 0.888%, and proposes a cost-waste finding: idle instance, $90.52/month.
 
-**The Skeptic rejects it.** Its declaration says the instance runs a month-end batch job. A
-month-end cadence is invisible in a seven-day window, so the mean is not evidence of anything.
-The Skeptic does not accept or reject — it returns `recheck`, with a request for a wider window.
+**The Skeptic refuses to accept it.** Its declaration says the instance runs a month-end batch job.
+A month-end cadence is invisible in a seven-day window, so the mean is not evidence of anything.
+The Skeptic neither accepts nor rejects — it returns `recheck`, with a request for a wider window.
 
 **Round 2.** The Planner narrows the assignment to that one resource and widens the lookback to
-31 days. The burst appears: mean 1.00%, peak 58%. The Scout's conclusion changes — this is not an
+31 days. The burst appears: mean 1.002%, peak 58.0%. The Scout's conclusion changes — this is not an
 idle instance, it is a **mis-sized** one, provisioned around the clock for two hours of work a
 month.
 
@@ -89,40 +95,68 @@ You can watch this happen in `logs/samples/trace-example_1.jsonl`, and read it i
 
 ```
                      ┌──────────────────────────────────────────┐
-   four sources      │  inventory  telemetry  iac  policy       │   live backends (OCI SDK)
-   one interface     │  ── each with a fixture twin ──          │   or bundled JSON fixtures
+   four sources      │  inventory  telemetry  iac  policy       │   live adapters: placeholders,
+   one interface     │  ── each with a fixture twin ──          │   not built (Task 15 stretch)
                      └──────────────────────────────────────────┘
                                         │
         ┌───────────────┬───────────────┴────────────┬───────────────┐
         │   Planner     │        Scout               │   Skeptic     │   Writer
         │  owns the run │  evidence → candidates     │  accept /     │  accepted +
-        │  caps, rounds │  cannot see rulings        │  reject /     │  rejected-with-
+        │  caps, rounds │  returns Candidates        │  reject /     │  rejected-with-
         │  assignment   │                            │  recheck      │  reasons
         └───────────────┴────────────────────────────┴───────────────┘
                                         │
                         one append-only RunState + one JSONL trace
 ```
 
-Each agent has a permission set that is structurally enforced, not described: the Scout cannot set
-a finding's status (it has no such field), the Skeptic cannot propose a finding, and the Writer
-cannot investigate — it only renders what the other three produced.
+Each agent's permission set is enforced by the shape of what it returns, not by a prompt: the Scout
+cannot set a finding's status (a `Candidate` has no such field), the Skeptic cannot propose a
+finding (it returns only `Ruling` objects), and the Writer cannot investigate (it reads the ledger
+and makes no source calls). Two limits are worth stating plainly. First, the four agents share one
+`AgentContext`, so the boundary is the *type each one returns* rather than a sandbox. Second, the
+Scout's inability to see verdicts is convention, not structure — it holds the same state the
+rulings are written into. The types enforce the handoffs; they do not enforce secrecy.
 
 **The determinism boundary is the design's spine.** Code decides enumeration, cost arithmetic,
 coverage checks, tag parsing, IaC matching, threshold comparisons, cap enforcement, evidence IDs
 and verdict eligibility. A model decides interpretation, ambiguous judgement, explanation and
-prose. **No number in a report is produced by a model**, and the Writer refuses to emit a figure
-that no evidence in the ledger supports (`app/agents/writer.py:assert_figures_traceable`).
+prose. **No figure in a report is produced by a model**: every number in a claim, a revised claim,
+a verdict's reason and the run narrative is checked against the evidence ledger by
+`app/agents/writer.py:assert_figures_traceable`, which raises rather than publish. Money figures
+are stricter still — a `300` in the text is not allowed merely because 300 is the soft wall clock.
 
-**Caps are enforced and always visible.** `MAX_ROUNDS=3`, ≤25 resources per run, ≤2 Skeptic
-re-checks per finding, a 300 s soft / 540 s hard wall clock, and timeouts on every external call.
-Any cap that fires sets the run's `status` to `capped` and names itself in `caps_hit` — a truncated
-investigation never reads as a finished one. A finding the Skeptic asked to re-check, which the run
-then never got back to, is not reported as accepted: it moves to `undetermined` with the reason
-(`app/loop.py`), because the whole point of the caps is that a run which gives up must say so.
+What that guarantee is *not* is a truthfulness oracle. It stops a number without evidence; it
+cannot stop a false sentence that contains no number. The defence there is structural: the prose a
+model writes is scoped to one candidate at a time, and the facts in it come from the rule engine's
+computed context rather than from the model's own recall.
+
+**Caps are enforced and always visible.** Every cap is real and every one that fires names itself in
+`caps_hit` and writes a `cap_hit` trace line — a truncated investigation never reads as a finished
+one.
+
+| Cap | Value | What firing looks like |
+|---|---|---|
+| Rounds | 3 | `max_rounds`; outstanding re-checks are recorded, not silently dropped |
+| Resources per run | 25 | `max_resources`; `summary.resources_examined` counts what was examined, not what exists, and `summary.resources_in_scope` shows the difference |
+| Re-checks per finding | 2 | `max_rechecks_per_finding`; keyed by resource and finding class, because each round mints a new candidate id |
+| Wall clock | 300 s soft / 540 s hard | `wall_clock_soft_s` / `wall_clock_hard_s`; checked between rounds *and* before each resource, and each model call's timeout is trimmed to the remaining budget |
+| Model call | 60 s, or the remaining budget | `GeneratorUnavailableError` / a degraded judgement, never a hung run |
+
+Two consequences are worth calling out. A finding the Skeptic asked to re-check, which the run then
+never got back to, is **not** reported as accepted: it moves to `undetermined` with the reason
+(`app/loop.py`). And `status` states the harshest truth available — a cap outranks degradation in
+that one field (`capped` beats `partial`), while both facts stay separate and visible in `caps_hit`
+and `sources[].degraded`.
 
 **Degradation is not fabrication.** A source that fails is retried once, then falls back to fixture
-data with the degradation logged and the source named in the report; if there is no fallback the
-run finishes `partial` and says which source was unavailable. There is no path that invents data.
+data with the degradation logged and the source named in the report; if there is no fallback the run
+finishes `partial` and says which source was unavailable. Telemetry is the sharp edge of this: it
+has no fixture fallback, because a CPU verdict computed from substitute data would be a lie rather
+than a degradation. When telemetry is unavailable the Scout therefore raises **no CPU finding at
+all** — the resources move to `undetermined` with the reason "no telemetry was retrieved" — while
+shape-based findings (detached volumes, unattached IPs, undeclared instances) still stand, because
+those never needed a series. `summary.backends` and `summary.sources_degraded` say what actually
+answered.
 
 ### Reproduce the canonical run
 
@@ -152,8 +186,10 @@ without touching any agent. Without it, the adapter reads `data/scenarios/*/poli
 ## Evidence: traces, inputs, outputs
 
 Everything under `output_examples/` and `logs/samples/` is **generated** by `scripts/run_examples.sh`
-and the runs it starts. Nothing in them is hand-written or edited. If the code changes, re-run the
-script and the diff shows exactly what changed.
+and the runs it starts. Nothing in them is hand-written or edited, and a test asserts that no
+unmasked OCID exists anywhere in the repository (`tests/test_mask_ocids.py`). Re-running the script
+reproduces the same findings, statuses, claims and caps; the run id and timestamps differ, because
+each run mints a fresh `run_id` by design.
 
 | Evidence | Where |
 |---|---|
@@ -172,8 +208,8 @@ The three scenarios differ meaningfully rather than cosmetically:
 2. **example_2 — the clean tenancy.** Five resources, all declared, all appropriately loaded. The
    correct output is **no findings at all**. A scanner that invents work fails here.
 3. **example_3 — the tag that changes the answer.** An idle instance declared *idle by design* must
-   not be reported; an untagged idle instance yields two findings; an instance with only 20% of the
-   requested history lands in `undetermined`; an attached IP is correctly ignored.
+   not be reported; an untagged idle instance yields two findings; an instance with 20 hours of the
+   168 requested (about 12%) lands in `undetermined`; an attached IP is correctly ignored.
 
 Every trace line carries `timestamp`, `run_id`, `agent_name`, `action`, `input_summary`,
 `output_summary`, `target_agent`, `confidence`, `retry_count` and `status`, plus `round` and
@@ -182,9 +218,12 @@ Every trace line carries `timestamp`, `run_id`, `agent_name`, `action`, `input_s
 ## Evaluation
 
 ```
-example_1    precision 1.0    recall 1.0    verdicts 1.0    findings 5   status success  deterministic True
-example_2    precision 1.0    recall 1.0    verdicts 1.0    findings 0   status success  deterministic True
-example_3    precision 1.0    recall 1.0    verdicts 1.0    findings 4   status success  deterministic True
+example_1    precision 1.0   recall 1.0    verdicts 1.0   findings 5   status success  deterministic True
+  must-not-flag: 2 resource(s) must stay unreported — 0 violation(s)
+example_2    precision n/a   recall n/a    verdicts n/a   findings 0   status success  deterministic True
+  must-not-flag: 5 resource(s) must stay unreported — 0 violation(s)
+example_3    precision 1.0   recall 1.0    verdicts 1.0   findings 4   status success  deterministic True
+  must-not-flag: 3 resource(s) must stay unreported — 0 violation(s)
 
 3 scenarios, 0 failing
 ```
@@ -192,7 +231,9 @@ example_3    precision 1.0    recall 1.0    verdicts 1.0    findings 4   status 
 `evals/run_eval.py` scores every scenario against a hand-written `ground_truth.json`:
 
 - **precision / recall** over the accepted findings, so a missed finding and an invented one both
-  cost something;
+  cost something. Where a scenario has no expected findings there is nothing to divide by, so the
+  scorer prints **`n/a`** rather than a 1.0 that would read as a measured perfect score — exactly
+  why `must_not_flag` exists as the non-vacuous check for the clean tenancy;
 - **verdict accuracy**, which is what makes `rejected` and `revised` scoreable rather than just
   `accepted`;
 - **`must_not_flag`**, an explicit list of resources that must stay unreported — the clean tenancy
@@ -203,49 +244,60 @@ example_3    precision 1.0    recall 1.0    verdicts 1.0    findings 4   status 
 
 - **Models and providers:** live mode calls one OpenAI-compatible `chat/completions` endpoint,
   configured by `LLM_BASE_URL` and `LLM_MODEL`. **No live provider is configured in this
-  repository**, and both committed sample runs used the deterministic rule engine in
+  repository**, and every committed run used the deterministic rule engine in
   `app/generator.py:RulesGenerator`. Setting `LLM_API_KEY` switches the judgement path to a model
-  without any other change.
+  without any other change — and the figure guard then applies to that model's prose in all four
+  places it can appear (claim, revised claim, verdict reason, run narrative).
 - **Agent frameworks:** none. The loop is hand-rolled in `app/loop.py` — no LangGraph, CrewAI or
   AutoGen.
 - **Partner technologies:** none mounted, as stated above.
+- **Live path:** not implemented. `app/sources/live.py` raises for every source, so
+  `SAMPLE_MODE=false` degrades to the bundled fixtures, reports `status: partial` with
+  `summary.backends` naming what answered, and warns on stderr. The OCI adapters are Task 15 of the
+  plan. `.env.example` documents the variables they will need.
 - **External tools and libraries:** `pydantic` (models), `fastapi` + `uvicorn` (`POST /run`),
-  `httpx` (API tests), `requests` (model calls), `pytest`, and `oci` on the live path only.
+  `httpx` (API tests), `requests` (model calls), `pytest`, and `oci` — pinned for the live adapters,
+  which are not built, so **nothing imports it today**.
 - **Data sources:** all synthetic. The scenarios under `data/scenarios/` are fixtures; their
   telemetry series are **materialised deterministically** from the compact specs in
   `data/scenarios/*/telemetry.json` (CRC32-seeded, so identical across processes) rather than
   captured from any real system. `data/pricing.json` holds rounded OCI list rates for cost
   estimation only. **No employer, customer or third-party data is present anywhere in this
-  repository**, and OCIDs in every fixture are masked placeholders. `scripts/mask_ocids.py` masks
-  real OCIDs before any artifact is committed or filmed.
+  repository**, and a test fails the build if an unmasked OCID appears in any tracked file
+  (`tests/test_mask_ocids.py`). `scripts/mask_ocids.py` masks real OCIDs before any artifact is
+  committed or filmed.
 - **Adapted open-source code:** none. Every file was written for this submission.
 - **Known limitations:** the audit covers compute instances, block volumes and reserved public
-  IPs only — not databases, load balancers, object storage or networking. Cost figures are list
-  prices from a bundled catalog, not your invoice. A finding with
-  `usd_per_month_upper_bound` impact is an upper bound, never a promised saving. Telemetry is CPU
-  only. The IaC check reads Terraform declarations; a resource managed by hand in the console is
-  reported as unattributed by design, which is the intended behaviour and also a way to be
-  annoying. Nothing is remediated: findings are recommendations, and the agent is read-only.
+  IPs only — not databases, load balancers, object storage or networking. It reads no live system:
+  every committed result comes from fixtures. Cost figures are list prices from a bundled catalog,
+  not your invoice. A finding with `usd_per_month_upper_bound` impact is an upper bound, never a
+  promised saving. Telemetry is CPU only, and a resource whose window is short has no CPU verdict
+  at all rather than a hedged one. The IaC check reads Terraform declarations; a resource managed by
+  hand in the console is reported as unattributed by design, which is the intended behaviour and
+  also a way to be annoying. A run examines at most 25 resources and says so when it truncates.
+  The figure guard stops unsupported *numbers*, not unsupported *sentences* that contain none.
+  Nothing is remediated: findings are recommendations, and the agent is read-only.
 - **Sample mode:** `SAMPLE_MODE=true` runs the complete agent on fixture backends with no network
   and no credentials, and does not call a model. All four agents, the critique loop, the caps, the
   cost arithmetic and the report still execute for real; only the judgement source changes. A test
   monkeypatches `socket.socket` to prove no network call happens
   (`tests/test_loop.py::test_sample_mode_makes_no_network_calls`).
 - **Packaging verification:** the fresh-clone path was verified end to end — a new clone, a
-  Python 3.11.16 venv, `pip install -r requirements.txt`, `pytest` (63 passed), a credential-free
-  `run.py`, and `POST /run` returning HTTP 200 in 20 ms. The `Dockerfile` was **not executed**:
-  there is no Docker daemon on the build machine. It runs the same verified command
-  (`python run.py --serve`) on `python:3.11-slim` with the same `0.0.0.0:8000` binding, but it is
-  offered unverified and should be treated as such.
-- **Determinism:** every figure in a report comes from `app/analysis.py`, and the Writer refuses to
-  emit a number that no evidence supports.
+  Python 3.11.16 venv, `pip install -r requirements.txt`, the full suite via `pytest -q`, a
+  credential-free `run.py`, and `POST /run` returning HTTP 200 in 20 ms. The `Dockerfile` was
+  **not executed**: there is no Docker daemon on the build machine. It runs the same verified
+  command (`python run.py --serve`) on `python:3.11-slim` with the same `0.0.0.0:8000` binding, but
+  it is offered unverified and should be treated as such.
+- **Review:** this branch was audited by an independent reviewer whose findings are recorded in
+  `docs/decisions.md` (2026-09-24, "An independent review found five blockers"). Five of them were
+  real and are fixed; the fixes each carry a regression test.
 
 ## Repository layout
 
 | Path | Purpose |
 |---|---|
 | `run.py` | CLI entry point (`--serve` for HTTP) |
-| `app/sources/` | Four source adapters, each with a fixture backend and a live twin |
+| `app/sources/` | Four source adapters: fixture backends are real, live twins are placeholders (Task 15) |
 | `app/agents/` | Planner, Scout, Skeptic, Writer — one file, one permission set each |
 | `app/loop.py` | Bounded orchestrator: caps, degradation, termination |
 | `app/analysis.py` | Every number the report contains |

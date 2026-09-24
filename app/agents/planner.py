@@ -15,7 +15,17 @@ class Planner(Agent):
                            for r in recheck_requests)
             focus = "recheck"
         else:
-            target_ids = [r.resource_id for r in resources][: self.ctx.config.max_resources]
+            in_scope = [r.resource_id for r in resources]
+            target_ids = in_scope[: self.ctx.config.max_resources]
+            if len(in_scope) > len(target_ids):
+                # The cap is a decision, so it is reported like one: named in caps_hit, counted in
+                # the trace, and never left to look like full coverage.
+                self.ctx.state.facts.setdefault("caps_hit", []).append("max_resources")
+                self._emit("cap_hit", round=round, input_summary="resource cap",
+                           output_summary=f"{len(in_scope)} resource(s) in scope, "
+                                          f"{len(target_ids)} examined, "
+                                          f"{len(in_scope) - len(target_ids)} left unexamined",
+                           status="capped")
             lookback = self.ctx.config.lookback_hours
             focus = "initial"
 

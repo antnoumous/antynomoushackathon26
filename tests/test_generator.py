@@ -52,3 +52,20 @@ def test_model_generator_refuses_to_construct_without_a_key(monkeypatch):
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     with pytest.raises(GeneratorUnavailableError):
         ModelGenerator.from_env()
+
+
+class FakeTime:
+    monotonic = staticmethod(lambda: 100.0)
+
+
+def test_a_model_call_timeout_shrinks_to_fit_the_run_budget(monkeypatch):
+    """A 60 s call under a 115 s deadline is 15 s, and never under a second."""
+    monkeypatch.setattr("app.generator.time", FakeTime)
+    generator = ModelGenerator("https://example.invalid/v1", FAKE_KEY, "some-model", timeout_s=60)
+    assert generator.current_timeout() == 60.0          # no deadline yet: the configured timeout
+
+    generator.set_deadline(115.0)
+    assert generator.current_timeout() == 15.0
+
+    generator.set_deadline(99.0)                        # the budget is already gone
+    assert generator.current_timeout() == 1.0

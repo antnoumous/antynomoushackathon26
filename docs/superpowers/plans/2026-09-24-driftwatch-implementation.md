@@ -3471,7 +3471,7 @@ def test_live_sources_construct_without_credentials_and_fail_loudly_when_used():
 
 def test_mask_ocids_rewrites_every_ocid_but_keeps_the_shape():
     from scripts.mask_ocids import mask
-    text = '{"id": "ocid1.instance.oc1.ap-singapore-1.an9hxljr3f2a"}'
+    text = '{"id": "ocid1.instance.oc1.ap-singapore-1..••••3f2a"}'
     masked = mask(text)
     assert "ocid1.instance.oc1." in masked
     assert "an9hxljr3f2a" not in masked
@@ -3774,6 +3774,33 @@ git commit -m "feat: held-out scenario generator with ground truth, scored by th
 
 ---
 
+## Post-build review (added 2026-09-24, after Task 14)
+
+The plan's execution mode called for one fresh reviewer over the whole branch once the must-ship
+path was complete. That review ran read-only with a single instruction: verify every claim by
+running code, not by reading prose. It found **five blockers and eleven lesser issues**, all
+reproduced before being fixed, and all five blockers are now closed with regression tests.
+
+| # | Blocker the review found | Where it was | Closed by |
+|---|---|---|---|
+| 1 | The README advertised a live OCI path that does not exist; `SAMPLE_MODE=false` degraded to fixtures and still reported `mode: live` with invented CPU figures | `app/sources/live.py:15`, README | Honest README (§Run it, diagram, disclosure), `summary.backends` / `sources_degraded`, stderr warning in `app/pipeline.py` |
+| 2 | The 25-resource cap truncated silently and `resources_examined` reported the whole tenancy | `app/agents/planner.py:18`, `app/agents/writer.py` | `max_resources` recorded in `caps_hit` + `cap_hit` trace line; `resources_examined` vs `resources_in_scope` |
+| 3 | With telemetry unavailable the Scout invented `mean 0.0 / coverage 1.0 / sufficient True` and published it as a finding | `app/agents/scout.py:91` | Single `NO_TELEMETRY_STATS` (`sufficient: False`) → `undetermined`, no CPU rule fires; `candidate.stats` removed as a self-vouching figure source |
+| 4 | The figure guard covered only `candidate.claim`; the narrative and every verdict reason reached the report unchecked | `app/agents/writer.py:90` | Guard applied to claim, revised claim, reason and narrative, with a separate currency check |
+| 5 | The re-check cap was unreachable (keyed by candidate id, and each round mints a new one) and wouldn't have been reported as a cap | `app/agents/skeptic.py:53` | Keyed by resource + finding class; firing records `max_rechecks_per_finding` |
+
+Lesser issues closed in the same pass: the wall clock sampled only between rounds (now before each
+resource, with model timeouts trimmed to the remaining budget); a missing fixture raising out of
+`run()` (now degrades); leaked trace/state handles (now closed in `run_pipeline`); a vacuous 1.0
+precision for a scenario with no expected findings (now `n/a`); `mask_ocids.py` missing short-suffix
+OCIDs; and four README claims that overstated the code.
+
+The three committed scenarios regenerate with identical findings, statuses, claims and caps — the
+evidence that these fixes changed only the paths where something goes wrong. Full record:
+`docs/decisions.md`, 2026-09-24.
+
+---
+
 ## Definition of done
 
 Mapped to the spec's acceptance criteria (§13). Every line must be observed, not assumed.
@@ -3786,8 +3813,9 @@ Mapped to the spec's acceptance criteria (§13). Every line must be observed, no
 | 4. Trace shows four agents, handoff, a rejection with a reason, a re-check, a revision | Task 11 `test_the_trace_shows_at_least_two_agents_handing_off_and_a_recheck` |
 | 5. Three input examples and three matching outputs, differing meaningfully | Task 13, Task 14 Step 3 |
 | 6. `evals/` reports precision/recall; held-out scoring if Task 16 shipped | Task 13, Task 16 |
-| 7. No secret, real OCID or employer artifact in the repo, examples, logs or video | Task 15 Step 4 (`mask_ocids.py`), Task 14 Step 4 |
+| 7. No secret, real OCID or employer artifact in the repo, examples, logs or video | `tests/test_mask_ocids.py` (tests the tool *and* scans every tracked file) |
 | 8. README discloses every required item | Task 14 Step 6 |
+| 9. Every README claim is one a script or a reviewer can check | Post-build review, above; `docs/decisions.md` |
 | Regression sweep across every task | `python -m pytest -q` |
 
 ---

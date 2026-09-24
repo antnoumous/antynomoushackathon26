@@ -141,7 +141,9 @@ class Assignment(BaseModel):
 
 class SourceStatus(BaseModel):
     name: str
-    backend: Literal["live", "fixture"]
+    # `none` means the source answered nothing at all: it is not a backend, it is the absence of
+    # one, and saying so is what keeps a fixture-only run from reading as a live audit.
+    backend: Literal["live", "fixture", "none"]
     degraded: bool = False
     reason: str | None = None
 

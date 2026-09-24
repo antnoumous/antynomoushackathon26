@@ -1,11 +1,3 @@
-{"kind": "hydrate", "run_id": "run-185826040d", "resources": 5, "declarations": 2, "rules": 5}
-{"kind": "assignment", "run_id": "run-185826040d", "round": 1, "focus": "initial", "resource_ids": ["ocid1.instance.oc1..••••dd01", "ocid1.instance.oc1..••••cc01", "ocid1.instance.oc1..••••bb01", "ocid1.volume.oc1..••••ee01", "ocid1.publicip.oc1..••••ff01"], "lookback_hours": 168}
-{"kind": "candidate", "run_id": "run-185826040d", "candidate_id": "C-001", "resource_id": "ocid1.instance.oc1..••••dd01", "rules": ["R-3"], "round": 1}
-{"kind": "candidate", "run_id": "run-185826040d", "candidate_id": "C-002", "resource_id": "ocid1.instance.oc1..••••cc01", "rules": ["R-3"], "round": 1}
-{"kind": "candidate", "run_id": "run-185826040d", "candidate_id": "C-003", "resource_id": "ocid1.instance.oc1..••••cc01", "rules": ["R-5"], "round": 1}
-{"kind": "candidate", "run_id": "run-185826040d", "candidate_id": "C-004", "resource_id": "ocid1.volume.oc1..••••ee01", "rules": ["R-1"], "round": 1}
-{"kind": "ruling", "run_id": "run-185826040d", "candidate_id": "C-001", "verdict": "reject", "round": 1}
-{"kind": "ruling", "run_id": "run-185826040d", "candidate_id": "C-002", "verdict": "accept", "round": 1}
-{"kind": "ruling", "run_id": "run-185826040d", "candidate_id": "C-003", "verdict": "accept", "round": 1}
-{"kind": "ruling", "run_id": "run-185826040d", "candidate_id": "C-004", "verdict": "accept", "round": 1}
-{"kind": "report", "run_id": "run-185826040d", "status": "success", "findings": 4}
+{"kind": "hydrate", "run_id": "run-87d64cdc7b", "resources": 5, "declarations": 5, "rules": 5}
+{"kind": "assignment", "run_id": "run-87d64cdc7b", "round": 1, "focus": "initial", "resource_ids": ["ocid1.instance.oc1..••••aa01", "ocid1.instance.oc1..••••bb01", "ocid1.instance.oc1..••••cc01", "ocid1.volume.oc1..••••dd01", "ocid1.publicip.oc1..••••ee01"], "lookback_hours": 168}
+{"kind": "report", "run_id": "run-87d64cdc7b", "status": "success", "findings": 0}

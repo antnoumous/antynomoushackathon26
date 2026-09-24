@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from typing import Any, Protocol
 
 import requests
@@ -39,10 +40,15 @@ class GeneratorUnavailableError(Exception):
 
 class Generator(Protocol):
     def complete(self, *, prompt: str, schema: dict, context: dict) -> dict: ...
+    def set_deadline(self, deadline: float | None) -> None: ...
 
 
 class RulesGenerator:
     """Deterministic, offline. The same structured outputs a model would produce, from rules."""
+
+    def set_deadline(self, deadline: float | None) -> None:
+        """Nothing to bound: this generator does no I/O. Present so every backend honours the
+        same interface, and so the loop never has to ask which kind it is holding."""
 
     def complete(self, *, prompt: str, schema: dict, context: dict) -> dict:
         name = schema.get("name")
@@ -72,6 +78,16 @@ class ModelGenerator:
 
     def __init__(self, base_url: str, api_key: str, model: str, timeout_s: int = 60) -> None:
         self.base_url, self.api_key, self.model, self.timeout_s = base_url, api_key, model, timeout_s
+        self._deadline: float | None = None
+
+    def set_deadline(self, deadline: float | None) -> None:
+        """The run's wall-clock deadline, so no single call can outlive the run's budget."""
+        self._deadline = deadline
+
+    def current_timeout(self) -> float:
+        if self._deadline is None:
+            return float(self.timeout_s)
+        return max(1.0, min(float(self.timeout_s), self._deadline - time.monotonic()))
 
     @classmethod
     def from_env(cls) -> "ModelGenerator":
@@ -88,7 +104,7 @@ class ModelGenerator:
             json={"model": self.model, "response_format": {"type": "json_object"},
                   "messages": [{"role": "system", "content": json.dumps(schema)},
                                {"role": "user", "content": prompt}]},
-            timeout=self.timeout_s,
+            timeout=self.current_timeout(),
         )
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]

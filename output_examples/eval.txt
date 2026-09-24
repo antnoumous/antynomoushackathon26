@@ -1,4 +1,7 @@
-example_1    precision 1.0    recall 1.0    verdicts 1.0    findings 5   status success  deterministic True
-example_2    precision 1.0    recall 1.0    verdicts 1.0    findings 0   status success  deterministic True
-example_3    precision 1.0    recall 1.0    verdicts 1.0    findings 4   status success  deterministic True
+example_1    precision 1.0   recall 1.0    verdicts 1.0   findings 5   status success  deterministic True
+  must-not-flag: 2 resource(s) must stay unreported — 0 violation(s)
+example_2    precision n/a   recall n/a    verdicts n/a   findings 0   status success  deterministic True
+  must-not-flag: 5 resource(s) must stay unreported — 0 violation(s)
+example_3    precision 1.0   recall 1.0    verdicts 1.0   findings 4   status success  deterministic True
+  must-not-flag: 3 resource(s) must stay unreported — 0 violation(s)
 3 scenarios, 0 failing

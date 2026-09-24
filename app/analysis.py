@@ -4,12 +4,18 @@ from typing import Any
 
 from app.models import IaCDeclaration, MetricSeries, PolicyRule, Resource
 
+# The shape used whenever no telemetry exists for a resource. `sufficient: False` is load-bearing:
+# it is what stops a cost verdict, because the Scout must never publish a CPU figure it did not
+# actually retrieve. Mean and peak are zero because zero is the only value that is true of no data.
+NO_TELEMETRY_STATS: dict[str, Any] = {
+    "n": 0, "mean": 0.0, "peak": 0.0, "p50": 0.0, "p95": 0.0, "p99": 0.0,
+    "peak_timestamps": [], "coverage_ratio": 0.0, "sufficient": False}
+
 
 def stats_from_series(series: MetricSeries) -> dict[str, Any]:
     values = [p.value for p in series.points]
     if not values:
-        return {"n": 0, "mean": 0.0, "peak": 0.0, "p50": 0.0, "p95": 0.0, "p99": 0.0,
-                "peak_timestamps": [], "coverage_ratio": 0.0, "sufficient": False}
+        return dict(NO_TELEMETRY_STATS)
     ordered = sorted(values)
 
     def percentile(q: float) -> float:
@@ -61,6 +67,16 @@ def match_iac(resource: Resource, declarations: list[IaCDeclaration]) -> tuple[s
         if item.declared_name.lower().replace("-", "_").replace(" ", "_") == normalised:
             return "normalised", item
     return None, None
+
+
+# Rule keys that compare CPU statistics. A rule referencing any of these cannot fire without a
+# series; a rule that only inspects a resource's shape (attached, absent from IaC) needs no
+# telemetry at all. Derived from the rule set rather than hardcoded rule ids.
+TELEMETRY_KEYS = ("min_coverage_ratio", "mean_cpu_lt", "peak_cpu_lt", "peak_cpu_gte")
+
+
+def requires_telemetry(rule: PolicyRule) -> bool:
+    return any(key in rule.when for key in TELEMETRY_KEYS)
 
 
 def _matches(resource: Resource, stats: dict[str, Any], attached: bool | None,

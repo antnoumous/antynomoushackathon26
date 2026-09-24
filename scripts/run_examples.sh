@@ -36,5 +36,5 @@ done
 
 echo
 echo "=== evaluation ==="
-"$PY" -m evals.run_eval 2>/dev/null | grep -E "^(example_|.*scenarios,)" > output_examples/eval.txt || true
+"$PY" -m evals.run_eval 2>/dev/null | grep -E "^(example_|  must-not-flag|.*scenarios,)" > output_examples/eval.txt || true
 cat output_examples/eval.txt

@@ -186,3 +186,55 @@ would have published the contested claim verbatim — the one outcome the caps e
 The three committed scenarios regenerate identically after the fix, which is the evidence that it
 changed nothing except the path where the loop gives up.
 
+## 2026-09-24 — An independent review found five blockers; all five are fixed
+
+**Decision:** A fresh reviewer audited the whole must-ship branch, read-only, with instructions to
+verify claims by running code rather than reading prose, and to hunt for anything that would
+embarrass the author in front of a judge. Every finding was reproduced independently before being
+fixed, and every fix carries a regression test.
+
+**What it found, and what changed:**
+
+1. **The README advertised a live path that does not exist.** `app/sources/live.py` raises for all
+   four sources, so `SAMPLE_MODE=false` degraded to fixtures and still produced a report labelled
+   `mode: live`. Reproduced: eight findings including "averages 0.0% CPU", no warning anywhere.
+   *Fixed by telling the truth* — the README's quickstart, diagram, library list and disclosure now
+   say only sample mode is implemented; the report carries `summary.backends` and
+   `summary.sources_degraded`; and `run_pipeline` prints a stderr warning when a live run got no
+   live backend. After the fix the same command yields three shapes-based findings, zero CPU claims,
+   `backends: ['fixture','none']`, and `status: partial`.
+2. **The 25-resource cap truncated silently** while `resources_examined` reported the full tenancy
+   count — a report that overstates its own coverage. *Fixed:* the Planner records `max_resources`,
+   emits a `cap_hit` trace line naming how many were dropped, and the summary now distinguishes
+   `resources_examined` from `resources_in_scope`.
+3. **The Scout invented telemetry when telemetry was unavailable** — a hardcoded
+   `mean 0.0 / coverage_ratio 1.0 / sufficient True` fallback that published "averages 0.0% CPU"
+   with no telemetry evidence, defeating the very guard meant to catch it (the numbers in
+   `candidate.stats` were vouchable by the candidate itself). *Fixed:* there is now a single
+   `NO_TELEMETRY_STATS` shape with `sufficient: False`, so a resource with no series lands in
+   `undetermined` and no CPU rule can fire; `candidate.stats` is no longer a source for the Writer's
+   allow-list; and whether a rule needs telemetry is derived from its own `when` keys, so the
+   volume and IP findings that never needed a series still stand.
+4. **The figure guard covered only one of four prose fields.** `summary['narrative']` and every
+   `ruling.reason` reached the report and the rendered Markdown unchecked, so a bad model could put
+   "41,998.37 USD" in the audit with no evidence behind it. *Fixed:* all four fields are checked, and
+   currency figures are checked against evidence specifically — `300` in the text is no longer
+   acceptable merely because 300 is the soft wall clock.
+5. **The re-check cap was unreachable.** `recheck_counts` was keyed by candidate id, and every round
+   mints a new id, so the counter could never reach 2; and the branch returned a rejection instead of
+   recording a cap. *Fixed:* keyed by resource and finding class, and firing now names
+   `max_rechecks_per_finding` in `caps_hit` with a `cap_hit` trace line.
+
+**Also fixed from the same review:** the wall clock is now checked before each resource and each
+model call's timeout is trimmed to the remaining budget (a budget sampled once per round cannot
+bound the round in progress); a missing or malformed fixture degrades the source instead of raising
+out of `run()`; `run_pipeline` closes its trace and state handles; the evaluator prints `n/a` instead
+of a vacuous 1.0 for a scenario with no expected findings; `mask_ocids.py` catches short-suffix
+OCIDs (and the plan's own example token is now masked, which is how that was proven); and three
+README claims that overstated the code are corrected.
+
+**Why this entry exists:** the review found the exact failure mode this project cannot afford —
+confident, precise-looking output that no evidence supports. The lesson is recorded rather than
+summarised away: **every claim in the README is now something a script can check**, and
+`tests/test_mask_ocids.py` keeps the OCID claim honest by testing the tool and scanning the repo.
+

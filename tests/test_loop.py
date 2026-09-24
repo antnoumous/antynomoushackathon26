@@ -15,11 +15,11 @@ from app.trace import Tracer
 SCEN = Path("data/scenarios/example_1")
 
 
-def build(tmp_path, **request):
+def build(tmp_path, scenario=SCEN, **request):
     cfg = RunConfig.from_env_and_request({"sample_mode": True, **request})
     scope = Scope(compartment_ids=[], resource_types=cfg.resource_types,
                   lookback_hours=cfg.lookback_hours, resolution_minutes=60)
-    sources = {name: get_source(name, cfg, scenario_dir=SCEN)
+    sources = {name: get_source(name, cfg, scenario_dir=scenario)
                for name in ("inventory", "telemetry", "iac", "policy")}
     ctx = AgentContext(config=cfg, sources=sources, generator=RulesGenerator(),
                        state=RunState(cfg.run_id, tmp_path),
@@ -132,33 +132,39 @@ def test_no_policy_rules_yields_partial_and_an_explanation(tmp_path):
 
 
 class Clock:
-    """A monotonic clock that reads 0 at construction and a fixed elapsed time after that."""
+    """A monotonic clock driven by a script, so wall-clock behaviour is testable.
 
-    def __init__(self, elapsed: float):
-        self.elapsed = elapsed
+    Call 1 is the orchestrator's start; each resource the Scout is about to examine costs one call,
+    and each round boundary costs one. The last value repeats.
+    """
+
+    def __init__(self, schedule: list[float]):
+        self.schedule = schedule
         self.calls = 0
 
     def monotonic(self) -> float:
+        value = self.schedule[min(self.calls, len(self.schedule) - 1)]
         self.calls += 1
-        return 0.0 if self.calls == 1 else self.elapsed
+        return value
 
 
 def test_the_soft_wall_clock_is_logged_as_a_cap_but_does_not_stop_the_run(tmp_path, monkeypatch):
-    monkeypatch.setattr("app.loop.time", Clock(elapsed=310))
+    monkeypatch.setattr("app.loop.time", Clock([0.0, 310]))
     cfg, ctx = build(tmp_path)
     report = Orchestrator(ctx).run()
 
     assert "wall_clock_soft_s" in report.caps_hit
     assert report.status == "capped"          # a slow run never reads as a clean one
     assert report.findings                    # but the investigation finished anyway
-    capped = [json.loads(l) for l in ctx.trace.path.read_text().splitlines()
-              if json.loads(l)["status"] == "capped"]
+    capped = [json.loads(line) for line in ctx.trace.path.read_text().splitlines()
+              if json.loads(line)["status"] == "capped"]
     assert capped and capped[0]["action"] == "cap_hit"
     assert "wall clock" in capped[0]["input_summary"]
 
 
 def test_the_hard_wall_clock_stops_the_run_rather_than_letting_it_hang(tmp_path, monkeypatch):
-    monkeypatch.setattr("app.loop.time", Clock(elapsed=600))
+    # A full round runs, then the budget is gone: the loop must stop instead of starting another.
+    monkeypatch.setattr("app.loop.time", Clock([0.0] * 8 + [600]))
     cfg, ctx = build(tmp_path)
     report = Orchestrator(ctx).run()
 
@@ -170,5 +176,84 @@ def test_the_hard_wall_clock_stops_the_run_rather_than_letting_it_hang(tmp_path,
     # ...and never honoured, so the un-concluded claim must not be presented as a finding.
     assert [f for f in report.findings if f.resource_id.endswith("bbb2")] == []
     unresolved = [u for u in report.undetermined if u.resource_id.endswith("bbb2")]
-    assert unresolved and "the re-check the Skeptic asked for did not run" in unresolved[0].reason
+    assert unresolved
+    assert any("the re-check the Skeptic asked for did not run" in u.reason for u in unresolved)
     assert "not_concluded" in actions(ctx)
+
+
+def test_the_budget_is_checked_before_each_resource_not_only_between_rounds(tmp_path, monkeypatch):
+    # The budget expires mid-round, after two resources: the rest are named, never silently dropped.
+    monkeypatch.setattr("app.loop.time", Clock([0.0, 0.0, 0.0, 700]))
+    cfg, ctx = build(tmp_path)
+    report = Orchestrator(ctx).run()
+
+    unexamined = [u for u in report.undetermined if "wall-clock budget was exhausted" in u.reason]
+    assert unexamined, "resources skipped for time must be named in the report"
+    assert report.summary["resources_examined"] < report.summary["resources_in_scope"]
+    assert "wall_clock_hard_s" in report.caps_hit
+    assert report.status == "capped"
+
+
+def test_no_telemetry_means_no_cpu_finding_rather_than_a_zero(tmp_path):
+    """The worst failure this project can have: publishing a CPU number nobody measured."""
+    cfg, ctx = build(tmp_path)
+
+    class Broken:
+        name = "telemetry"
+
+        def fetch(self, scope):
+            raise RuntimeError("monitoring API unavailable")
+
+    ctx.sources["telemetry"] = Broken()
+    report = Orchestrator(ctx).run()
+
+    assert not [f for f in report.findings if "averages" in f.claim]
+    reasons = [u.reason for u in report.undetermined]
+    assert any("no telemetry was retrieved" in reason for reason in reasons)
+    # A verdict that rests on the resource's shape needs no telemetry: it still stands.
+    assert [f for f in report.findings if f.finding_class == "unattributed"]
+    assert [f for f in report.findings if f.resource_class == "block_volume"]
+    assert report.status == "partial"
+
+
+def test_more_resources_than_the_cap_are_reported_not_hidden(tmp_path):
+    wide = tmp_path / "wide"
+    wide.mkdir()
+    resources, series = [], []
+    for index in range(30):
+        resource_id = f"ocid1.instance.oc1..v{index:04d}"
+        resources.append({
+            "resource_id": resource_id, "resource_class": "compute_instance",
+            "display_name": f"wide-{index:02d}",
+            "compartment_id": "ocid1.compartment.oc1..lab", "lifecycle_state": "RUNNING",
+            "time_created": "2026-08-01T00:00:00Z", "shape": "VM.Standard.E4.Flex",
+            "ocpus": 2, "memory_gb": 8, "tags": {}})
+        series.append({"resource_id": resource_id, "metric": "CpuUtilization",
+                       "start": "2026-08-24T00:00:00Z", "baseline": 0.4, "jitter": 0.1,
+                       "bursts": []})
+    (wide / "inventory.json").write_text(json.dumps({"scenario_id": "wide",
+                                                     "resources": resources}))
+    (wide / "telemetry.json").write_text(json.dumps({"scenario_id": "wide",
+                                                     "now": "2026-09-23T04:00:00Z",
+                                                     "series": series}))
+    (wide / "iac.json").write_text(json.dumps({"scenario_id": "wide", "declarations": []}))
+    (wide / "policy.json").write_text((SCEN / "policy.json").read_text())
+
+    cfg, ctx = build(tmp_path, scenario=wide)
+    report = Orchestrator(ctx, scenario_dir=wide).run()
+
+    assert "max_resources" in report.caps_hit
+    assert report.status == "capped"
+    assert report.summary["resources_in_scope"] == 30
+    assert report.summary["resources_examined"] == 25     # not 30: the report cannot overstate
+    assert "cap_hit" in actions(ctx)
+
+
+def test_a_broken_fixture_degrades_the_source_instead_of_crashing_the_run(tmp_path):
+    cfg, ctx = build(tmp_path, scenario=tmp_path / "does-not-exist")
+    report = Orchestrator(ctx, scenario_dir=tmp_path / "does-not-exist").run()
+
+    assert report.status == "partial"
+    assert report.findings == []
+    assert all(source.degraded for source in report.sources)
+    assert any(u.resource_id == "scope" for u in report.undetermined)

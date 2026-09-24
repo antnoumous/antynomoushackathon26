@@ -1,5 +1,5 @@
 {
-  "run_id": "run-185826040d",
+  "run_id": "run-d6317e3fe9",
   "status": "success",
   "mode": "sample",
   "sources": [
@@ -30,11 +30,16 @@
   ],
   "summary": {
     "resources_examined": 5,
+    "resources_in_scope": 5,
     "findings_accepted": 3,
     "findings_rejected": 1,
     "spend_audited_usd_per_month": 106.94,
     "waste_found_usd_per_month": 93.07,
     "unattributed_ratio": 0.2,
+    "backends": [
+      "fixture"
+    ],
+    "sources_degraded": 0,
     "narrative": "Audited 5 resources across 4 sources; 3 findings accepted, 1 rejected, 1 left undetermined."
   },
   "findings": [
@@ -155,7 +160,7 @@
       "reason": "coverage 20h of 168h requested"
     }
   ],
-  "report_markdown_path": "logs/report-run-185826040d.md",
-  "trace_path": "logs/trace-run-185826040d.jsonl",
+  "report_markdown_path": "logs/report-run-d6317e3fe9.md",
+  "trace_path": "logs/trace-run-d6317e3fe9.jsonl",
   "caps_hit": []
 }

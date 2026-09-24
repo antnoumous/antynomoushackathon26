@@ -19,8 +19,14 @@ class Skeptic(Agent):
         """A declared purpose is the falsifier the Scout itself published. Honour it."""
         return self._signal(candidate, PURPOSE_SIGNALS)
 
-    def _recheck_count(self, candidate_id: str) -> int:
-        return self.ctx.state.facts.setdefault("recheck_counts", {}).get(candidate_id, 0)
+    def _recheck_key(self, candidate: Candidate) -> str:
+        """Keyed by resource and finding class, never by candidate id: every round mints a new id,
+        so a per-id counter could never reach the cap."""
+        return f"{candidate.resource_id}|{candidate.finding_class}"
+
+    def _recheck_count(self, candidate: Candidate) -> int:
+        counts = self.ctx.state.facts.setdefault("recheck_counts", {})
+        return counts.get(self._recheck_key(candidate), 0)
 
     def _signal(self, candidate: Candidate, needles: tuple[str, ...]) -> str | None:
         for item in self.ctx.ledger.resolve(candidate.evidence_refs):
@@ -50,11 +56,18 @@ class Skeptic(Agent):
         if "R-3" in candidate.matched_rule_ids:
             signal = self._schedule_signal(candidate)
             if signal:
-                if self._recheck_count(candidate.candidate_id) >= self.ctx.config.max_rechecks_per_finding:
+                count = self._recheck_count(candidate)
+                if count >= self.ctx.config.max_rechecks_per_finding:
+                    # A cap that fired is named, exactly like the round and wall-clock caps.
+                    self.ctx.state.facts.setdefault("caps_hit", []).append(
+                        "max_rechecks_per_finding")
+                    self._emit("cap_hit", round=round, input_summary="re-check cap",
+                               output_summary=f"{candidate.candidate_id} already re-investigated "
+                                              f"{count} time(s); no further re-check granted",
+                               status="capped")
                     reason = self.ctx.generator.complete(
                         prompt="", schema={"name": "verdict_reason"},
-                        context={"reason_key": "recheck_cap",
-                                 "n": self._recheck_count(candidate.candidate_id)})["reason"]
+                        context={"reason_key": "recheck_cap", "n": count})["reason"]
                     return self._reject(candidate, round, reason)
                 request = {"resource_id": candidate.resource_id,
                            "lookback_hours": RECHECK_LOOKBACK_HOURS,

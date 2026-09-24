@@ -25,6 +25,12 @@ class Orchestrator:
         self.caps_hit: list[str] = []
         self.sources_status: list[SourceStatus] = []
         self._started = time.monotonic()
+        # One deadline for the whole run, shared with every agent and every outbound call, so no
+        # agent starts work the run cannot finish paying for.
+        self.deadline = self._started + ctx.config.wall_clock_hard_s
+        ctx.extras["deadline"] = self.deadline
+        ctx.extras["clock"] = time.monotonic
+        ctx.generator.set_deadline(self.deadline)
 
     # --- source access with retry, then fixture fallback, then honest failure ---------------
     def _fetch(self, name: str, scope: Scope):
@@ -46,9 +52,17 @@ class Orchestrator:
                                     retry_count=attempt - 1, status="retrying")
 
         if self.scenario_dir is not None:
-            fallback = get_source(name, self.ctx.config.model_copy(update={"sample_mode": True}),
-                                  scenario_dir=self.scenario_dir)
-            result = fallback.fetch(scope)
+            try:
+                fallback = get_source(name, self.ctx.config.model_copy(update={"sample_mode": True}),
+                                      scenario_dir=self.scenario_dir)
+                result = fallback.fetch(scope)
+            except Exception as exc:                  # noqa: BLE001 - a missing fixture degrades
+                self.ctx.trace.emit(agent_name="Planner", action="source_unavailable",
+                                    input_summary=name,
+                                    output_summary=f"fallback failed: {type(exc).__name__}: {exc}",
+                                    status="failed", retry_count=1)
+                return None, SourceStatus(name=name, backend="fixture", degraded=True,
+                                          reason=f"fallback failed: {exc}")
             self.ctx.trace.emit(agent_name="Planner", action="source_degraded",
                                 input_summary=name, output_summary="fell back to fixture data",
                                 status="degraded", retry_count=1)
@@ -58,26 +72,36 @@ class Orchestrator:
         self.ctx.trace.emit(agent_name="Planner", action="source_unavailable",
                             input_summary=name, output_summary="no fallback available",
                             status="failed", retry_count=1)
-        return None, SourceStatus(name=name, backend="live", degraded=True, reason=str(last_error))
+        return None, SourceStatus(name=name, backend="none", degraded=True, reason=str(last_error))
+
+    def _load(self, name: str, result) -> None:
+        if name == "inventory":
+            from app.models import Resource
+            for record in result.records:
+                resource = Resource(**record)
+                self.ctx.state.facts["resources"][resource.resource_id] = resource
+        elif name == "iac":
+            from app.models import IaCDeclaration
+            self.ctx.state.facts["declarations"] = [IaCDeclaration(**d) for d in result.records]
+        else:
+            from app.models import PolicyRule
+            self.ctx.state.facts["rules"] = [PolicyRule(**r) for r in result.records]
 
     def _hydrate(self) -> None:
         scope = self.ctx.scope
         for name in ("inventory", "iac", "policy"):
             result, status = self._fetch(name, scope)
+            if result is not None:
+                try:
+                    self._load(name, result)
+                except Exception as exc:      # noqa: BLE001 - malformed records degrade, never crash
+                    status.degraded = True
+                    status.reason = f"records could not be loaded: {type(exc).__name__}: {exc}"
+                    self.ctx.trace.emit(agent_name="Planner", action="source_degraded",
+                                        input_summary=name,
+                                        output_summary=status.reason,
+                                        status="degraded", retry_count=1)
             self.sources_status.append(status)
-            if result is None:
-                continue
-            if name == "inventory":
-                from app.models import Resource
-                for record in result.records:
-                    resource = Resource(**record)
-                    self.ctx.state.facts["resources"][resource.resource_id] = resource
-            elif name == "iac":
-                from app.models import IaCDeclaration
-                self.ctx.state.facts["declarations"] = [IaCDeclaration(**d) for d in result.records]
-            else:
-                from app.models import PolicyRule
-                self.ctx.state.facts["rules"] = [PolicyRule(**r) for r in result.records]
         self.ctx.state.append("hydrate", {
             "resources": len(self.ctx.state.facts["resources"]),
             "declarations": len(self.ctx.state.facts["declarations"]),
@@ -124,7 +148,7 @@ class Orchestrator:
         if not self._rules_available():
             report = self.writer.synthesise(
                 candidates=[], rulings={}, sources=self.sources_status, status="partial",
-                caps_hit=[],
+                caps_hit=self._state_caps(),
                 undetermined=[Undetermined(
                     resource_id="scope",
                     reason="no policy rules were loaded, so no finding could be justified")])
@@ -171,7 +195,10 @@ class Orchestrator:
                 self.ctx.state.facts["rulings"][candidate.candidate_id] = ruling.model_dump()
                 if ruling.verdict == "recheck":
                     counts = self.ctx.state.facts["recheck_counts"]
-                    counts[candidate.candidate_id] = counts.get(candidate.candidate_id, 0) + 1
+                    # Keyed by resource and class, not candidate id: a new round mints a new id, and
+                    # a per-id counter could therefore never reach the re-check cap.
+                    key = f"{candidate.resource_id}|{candidate.finding_class}"
+                    counts[key] = counts.get(key, 0) + 1
                     recheck_requests.append(ruling.request)
                 self.ctx.state.append("ruling", {"candidate_id": candidate.candidate_id,
                                                  "verdict": ruling.verdict,
@@ -189,7 +216,12 @@ class Orchestrator:
                                                f"{len(recheck_requests)} request(s) outstanding",
                                 status="capped")
 
-        status = "capped" if self.caps_hit else ("partial" if self._any_source_unavailable() else "success")
+        # Precedence, stated so it cannot be mistaken for a clean run: a cap outranks degradation in
+        # the single `status` field, but both facts are always in the report — `caps_hit` names
+        # every cap that fired, and every degraded source names itself in `sources`. The agents'
+        # own caps are folded in first, so a status can never disagree with the caps list.
+        caps_hit = self._state_caps()
+        status = "capped" if caps_hit else ("partial" if self._any_source_unavailable() else "success")
         # A candidate the Skeptic asked to re-check that the loop never got back to is not a
         # conclusion. It is reported as undetermined with the reason, never as accepted: the caps
         # exist precisely so a truncated run cannot present an unverified claim as a finding.
@@ -209,10 +241,18 @@ class Orchestrator:
         report = self.writer.synthesise(
             candidates=[c for c in all_candidates if c.candidate_id not in unresolved_ids],
             rulings=self.rulings, undetermined=undetermined, sources=self.sources_status,
-            status=status, caps_hit=self.caps_hit)
+            status=status, caps_hit=caps_hit)
         report.trace_path = str(self.ctx.trace.path)
         self.ctx.state.append("report", {"status": status, "findings": len(report.findings)})
         return report
+
+    def _state_caps(self) -> list[str]:
+        """Caps recorded by the agents themselves (the resource cap, the re-check cap), folded into
+        the loop's own list so every fired cap reaches the report through one field."""
+        for cap in self.ctx.state.facts.get("caps_hit", []):
+            if cap not in self.caps_hit:
+                self.caps_hit.append(cap)
+        return list(self.caps_hit)
 
     def _any_source_unavailable(self) -> bool:
         return any(s.degraded for s in self.sources_status)

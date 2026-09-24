@@ -1,4 +1,4 @@
-# Tenancy audit — run `run-9a938965e4`
+# Tenancy audit — run `run-c55e297b35`
 
 - **Status:** success
 - **Mode:** sample
@@ -8,11 +8,14 @@
 ## Summary
 
 - **resources examined:** 6
+- **resources in scope:** 6
 - **findings accepted:** 4
 - **findings rejected:** 1
 - **spend audited usd per month:** 196.18
 - **waste found usd per month:** 105.66
 - **unattributed ratio:** 0.167
+- **backends:** ['fixture']
+- **sources degraded:** 0
 - **narrative:** Audited 6 resources across 4 sources; 4 findings accepted, 1 rejected, 1 left undetermined.
 
 ## Findings

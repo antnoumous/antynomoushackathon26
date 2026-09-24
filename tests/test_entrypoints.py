@@ -3,6 +3,9 @@ import json, subprocess, sys
 from pathlib import Path
 from fastapi.testclient import TestClient
 from app.api import app
+from app.pipeline import run_pipeline
+from app.state import RunState
+from app.trace import Tracer
 
 SCEN = Path("data/scenarios/example_1")
 REQUEST = {"objective": "audit", "sample_mode": True}
@@ -33,3 +36,29 @@ def test_cli_and_http_return_the_same_findings(tmp_path):
 def test_unknown_scenario_is_a_400_not_a_crash():
     body = TestClient(app).post("/run", json={**REQUEST, "scenario": "data/scenarios/nope"}).json()
     assert "error" in body
+
+
+def test_run_pipeline_closes_the_log_handles_it_opens(monkeypatch, tmp_path):
+    """One open trace and one open state file per run, for the life of the process, is a leak."""
+    monkeypatch.setenv("LOGS_DIR", str(tmp_path))
+    closed: set[str] = set()
+    for cls in (RunState, Tracer):
+        original = cls.close
+        monkeypatch.setattr(cls, "close",
+                            lambda self, _o=original, _n=cls.__name__: (
+                                closed.add(_n), _o(self))[1])
+    run_pipeline({**REQUEST}, scenario_dir=SCEN)
+    assert closed == {"RunState", "Tracer"}
+
+
+def test_a_live_run_that_only_got_fixtures_says_so(monkeypatch, tmp_path, capsys):
+    """The README-promised live path does not exist yet; a run must not quietly pretend it did."""
+    monkeypatch.setenv("LOGS_DIR", str(tmp_path))
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    report, _ = run_pipeline({"sample_mode": False}, scenario_dir=SCEN)
+
+    assert report.mode == "live"
+    assert "fixture" in report.summary["backends"]     # what actually answered the run
+    assert report.summary["sources_degraded"] >= 1
+    assert report.status in {"partial", "capped"}
+    assert "no live backend answered" in capsys.readouterr().err

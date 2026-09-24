@@ -18,7 +18,11 @@ from pathlib import Path
 MASK = "\u2022\u2022\u2022\u2022"
 USAGE = ("usage: python scripts/mask_ocids.py FILE [FILE ...]\n"
          "Masks OCIDs in place. Idempotent.")
-OCID = re.compile(r"\bocid1\.([a-z0-9_]+)\.([a-z0-9]+)\.([a-z0-9-]*)\.[A-Za-z0-9]{20,}\b")
+# A real OCID ends in a long opaque suffix, but the threshold is deliberately low (8) so a short
+# or hand-written identifier is still caught — an unmasked example token in a document is exactly
+# the kind of leak this tool exists to prevent. Already-masked ids contain bullets, so they cannot
+# match, which is what makes the tool idempotent.
+OCID = re.compile(r"\bocid1\.([a-z0-9_]+)\.([a-z0-9]+)\.([a-z0-9-]*)\.[A-Za-z0-9]{8,}\b")
 
 
 def mask_text(text: str) -> tuple[str, int]:

@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 
 from app.agents.base import Agent
-from app.analysis import match_iac, monthly_cost, qualifying_rules, stats_from_series
+from app.analysis import (NO_TELEMETRY_STATS, match_iac, monthly_cost, qualifying_rules,
+                          requires_telemetry, stats_from_series)
 from app.models import (Assignment, Candidate, IaCDeclaration, MetricSeries, PolicyRule, Resource,
                         SourceStatus, Undetermined)
 from app.sources.base import Scope
@@ -72,7 +73,7 @@ class Scout(Agent):
         self._emit("source_call_failed", input_summary=name,
                    output_summary="both attempts failed; source treated as unavailable",
                    status="failed", retry_count=1)
-        self._source_status[name] = SourceStatus(name=name, backend="live", degraded=True,
+        self._source_status[name] = SourceStatus(name=name, backend="none", degraded=True,
                                                  reason="both attempts failed")
         return None
 
@@ -82,15 +83,31 @@ class Scout(Agent):
         declarations: list[IaCDeclaration] = self.ctx.state.facts["declarations"]
         rules: list[PolicyRule] = self.ctx.state.facts["rules"]
 
-        for resource_id in assignment.resource_ids:
+        examined: set[str] = self.ctx.state.facts.setdefault("examined", set())
+        for index, resource_id in enumerate(assignment.resource_ids):
+            if self.ctx.out_of_time():
+                # The budget is checked before each resource, not only between rounds, so a slow
+                # round cannot outrun the cap it is running under.
+                skipped = assignment.resource_ids[index:]
+                for remaining in skipped:
+                    self._undetermined.append(Undetermined(
+                        resource_id=remaining,
+                        reason="the run's wall-clock budget was exhausted before this resource "
+                               "was examined"))
+                self._emit("abstain", round=assignment.round, input_summary="wall clock",
+                           output_summary=f"{len(skipped)} resource(s) not examined",
+                           status="capped", confidence=1.0)
+                break
+            examined.add(resource_id)
             resource = resources[resource_id]
             attached = getattr(resource, "attached", None)
 
-            series = (None if resource.resource_class != "compute_instance"
-                      else self._series_for(resource_id, assignment.lookback_hours))
-            stats = stats_from_series(series) if series else {
-                "n": 0, "mean": 0.0, "peak": 0.0, "p50": 0.0, "p95": 0.0, "p99": 0.0,
-                "peak_timestamps": [], "coverage_ratio": 1.0, "sufficient": True}
+            is_compute = resource.resource_class == "compute_instance"
+            series = (self._series_for(resource_id, assignment.lookback_hours)
+                      if is_compute else None)
+            # No telemetry means no CPU figure may be published at all. `sufficient: False`
+            # suppresses every cost rule below and routes this resource to `undetermined`.
+            stats = stats_from_series(series) if series is not None else dict(NO_TELEMETRY_STATS)
 
             match_rule, declaration = match_iac(resource, declarations)
             absent = declaration is None
@@ -101,19 +118,26 @@ class Scout(Agent):
                            confidence=0.75)
             fired = qualifying_rules(resource, stats, attached, absent, rules)
 
-            if resource.resource_class == "compute_instance" and not stats["sufficient"]:
-                self._undetermined.append(Undetermined(
-                    resource_id=resource_id,
-                    reason=series.insufficient_reason or "insufficient telemetry coverage"))
+            if is_compute and not stats["sufficient"]:
+                reason = (series.insufficient_reason or "insufficient telemetry coverage"
+                          if series is not None
+                          else "no telemetry was retrieved for this resource, so no CPU-based "
+                               "conclusion could be drawn")
+                self._undetermined.append(Undetermined(resource_id=resource_id, reason=reason))
+                summary_text = (f"insufficient coverage ({stats['coverage_ratio']:.2f}); "
+                                f"no cost finding raised") if series is not None else \
+                               "no telemetry retrieved; no cost finding raised"
                 self._emit("abstain", round=assignment.round,
                            input_summary=f"{resource.display_name} telemetry",
-                           output_summary=f"insufficient coverage "
-                                          f"({stats['coverage_ratio']:.2f}); no cost finding raised",
+                           output_summary=summary_text,
                            status="abstained", confidence=1.0)
 
             for rule in fired:
-                if rule.finding_class == "cost_waste" and not stats["sufficient"]:
-                    continue          # a cost verdict on an incomplete window is not allowed
+                # A verdict that rests on CPU statistics needs the window behind it. A verdict that
+                # rests on the resource's shape — detached, unattached, undeclared — needs no
+                # telemetry, so it still stands when telemetry is missing.
+                if requires_telemetry(rule) and not stats["sufficient"]:
+                    continue
 
                 evidence = [
                     self.ctx.evidence(source="inventory", kind="resource",

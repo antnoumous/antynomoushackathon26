@@ -68,10 +68,13 @@ def test_skeptic_accepts_a_clean_orphan_without_fuss(ctx):
 def test_skeptic_refuses_a_third_recheck_on_the_same_finding(ctx):
     batch = next(c for c in candidates(ctx) if c.resource_id.endswith("bbb2"))
     skeptic = Skeptic(ctx)
-    ctx.state.facts["recheck_counts"][batch.candidate_id] = 2   # already re-checked twice
+    key = f"{batch.resource_id}|{batch.finding_class}"
+    ctx.state.facts["recheck_counts"][key] = 2      # already re-checked twice
     ruling = skeptic.judge(batch, round=3)
     assert ruling.verdict == "reject"
     assert "re-investigated" in ruling.reason
+    # A cap that fired is named, not left to look like an ordinary rejection.
+    assert "max_rechecks_per_finding" in ctx.state.facts["caps_hit"]
 
 
 def test_a_declared_purpose_withdraws_a_cost_finding(ctx):

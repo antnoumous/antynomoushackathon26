@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+import time
 
 from app.config import RunConfig
 from app.evidence import EvidenceLedger
@@ -25,6 +26,19 @@ class AgentContext:
     def evidence(self, *, source: str, kind: str, resource_id: str, summary: str, payload: dict):
         return self.ledger.add(source=source, kind=kind, resource_id=resource_id,
                                summary=summary, payload=payload)
+
+    def out_of_time(self) -> bool:
+        """True once the run's wall-clock deadline has passed, so no agent starts new work.
+
+        Checked before each resource as well as between rounds: a budget sampled only between
+        rounds cannot bound the round that is already running. The clock is the orchestrator's own,
+        so every agent measures the budget with the same clock the cap is enforced with.
+        """
+        deadline = self.extras.get("deadline")
+        clock = self.extras.get("clock")
+        if deadline is None or clock is None:
+            return False
+        return clock() >= deadline
 
 
 class Agent:
