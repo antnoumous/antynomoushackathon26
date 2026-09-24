@@ -25,7 +25,7 @@
     {"resource_id": "ocid1.volume.oc1..••••eee5", "resource_class": "block_volume",
      "display_name": "vol-orphan-50g", "compartment_id": "ocid1.compartment.oc1..••••labtest",
      "lifecycle_state": "AVAILABLE", "time_created": "2026-06-01T00:00:00Z",
-     "tags": {}, "attached": false},
+     "tags": {}, "size_gb": 50, "attached": false},
     {"resource_id": "ocid1.publicip.oc1..••••fff6", "resource_class": "reserved_public_ip",
      "display_name": "ip-orphan", "compartment_id": "ocid1.compartment.oc1..••••labtest",
      "lifecycle_state": "AVAILABLE", "time_created": "2026-05-20T00:00:00Z",

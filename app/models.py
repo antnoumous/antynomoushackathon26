@@ -23,6 +23,7 @@ class Resource(BaseModel):
     shape: str | None = None
     ocpus: float | None = None
     memory_gb: float | None = None
+    size_gb: float | None = None
     attached: bool | None = None
 
 
@@ -53,8 +54,10 @@ class IaCDeclaration(BaseModel):
 
 
 class PolicyRule(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     rule_id: str
-    finding_class: FindingClass
+    finding_class: FindingClass = Field(alias="class")
     when: dict[str, Any]
     note: str
 
