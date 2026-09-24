@@ -93,6 +93,27 @@ class Finding(BaseModel):
     history: list[VerdictRecord] = Field(default_factory=list)
 
 
+class Candidate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    candidate_id: str
+    resource_id: str
+    resource_class: ResourceClass
+    finding_class: FindingClass = Field(alias="class")
+    claim: str
+    evidence_refs: list[str]
+    impact: dict[str, Any]
+    confidence: float
+    falsifier: str
+    matched_rule_ids: list[str] = Field(default_factory=list)
+    iac_match_rule: str | None = None
+    absent_from_iac: bool = False
+    stats: dict[str, Any] = Field(default_factory=dict)
+    superseded_by: str | None = None
+    """Set by the loop when a later round reaches a different conclusion about this resource.
+    A superseded candidate is reported as `rejected`, with its reason — never dropped."""
+
+
 class Undetermined(BaseModel):
     resource_id: str
     reason: str

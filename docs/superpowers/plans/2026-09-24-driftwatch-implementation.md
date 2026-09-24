@@ -1785,9 +1785,28 @@ def ctx(tmp_path):
                         ledger=EvidenceLedger(), scope=scope)
 
 
+def hydrate_and_assign(ctx, round=1, lookback_hours=None):
+    """The Scout must hydrate the shared state before it can investigate anything, and the
+    Planner must be given the real resources — an empty assignment investigates nothing."""
+    scout = Scout(ctx)
+    scout.hydrate()
+    assignment = Planner(ctx).assign(
+        round=round, resources=list(ctx.state.facts["resources"].values()), recheck_requests=[])
+    if lookback_hours is not None:
+        assignment = assignment.model_copy(update={"lookback_hours": lookback_hours})
+    return scout, assignment
+
+
+def test_hydrate_loads_six_resources_three_declarations_and_five_rules(ctx):
+    hydrate_and_assign(ctx)
+    assert len(ctx.state.facts["resources"]) == 6
+    assert len(ctx.state.facts["declarations"]) == 3
+    assert len(ctx.state.facts["rules"]) == 5
+
+
 def test_scout_proposes_the_idle_claim_for_batch01_on_the_narrow_window(ctx):
-    assignment = Planner(ctx).assign(round=1, resources=[], recheck_requests=[])
-    candidates = Scout(ctx).investigate(assignment)
+    scout, assignment = hydrate_and_assign(ctx)
+    candidates = scout.investigate(assignment)
     batch = next(c for c in candidates if c.resource_id.endswith("bbb2"))
     assert batch.finding_class == "cost_waste"
     assert batch.matched_rule_ids == ["R-3"]
@@ -1797,13 +1816,15 @@ def test_scout_proposes_the_idle_claim_for_batch01_on_the_narrow_window(ctx):
 
 
 def test_scout_never_sets_a_status(ctx):
-    assignment = Planner(ctx).assign(round=1, resources=[], recheck_requests=[])
-    for candidate in Scout(ctx).investigate(assignment):
+    scout, assignment = hydrate_and_assign(ctx)
+    for candidate in scout.investigate(assignment):
         assert not hasattr(candidate, "status")
 
 
 def test_every_candidate_ref_resolves_or_the_ledger_raises(ctx):
-    candidates = Scout(ctx).investigate(Planner(ctx).assign(round=1, resources=[], recheck_requests=[]))
+    scout, assignment = hydrate_and_assign(ctx)
+    candidates = scout.investigate(assignment)
+    assert candidates
     for candidate in candidates:
         assert candidate.evidence_refs
         assert ctx.ledger.resolve(candidate.evidence_refs)
@@ -1812,21 +1833,23 @@ def test_every_candidate_ref_resolves_or_the_ledger_raises(ctx):
 
 
 def test_insufficient_coverage_becomes_undetermined_not_a_candidate(ctx):
-    scout = Scout(ctx)
-    scout.investigate(Planner(ctx).assign(round=1, resources=[], recheck_requests=[]))
+    scout, assignment = hydrate_and_assign(ctx)
+    scout.investigate(assignment)
     undetermined = {u.resource_id: u.reason for u in scout.undetermined()}
     sandbox = next(k for k in undetermined if k.endswith("ddd4"))
     assert "41h of 168h" in undetermined[sandbox]
 
 
 def test_unattributed_finding_needs_no_telemetry_but_cost_finding_does(ctx):
-    candidates = Scout(ctx).investigate(Planner(ctx).assign(round=1, resources=[], recheck_requests=[]))
+    scout, assignment = hydrate_and_assign(ctx)
+    candidates = scout.investigate(assignment)
     sandbox = [c for c in candidates if c.resource_id.endswith("ddd4")]
     assert [c.finding_class for c in sandbox] == ["unattributed"]
 
 
 def test_scout_does_not_flag_a_genuinely_busy_instance(ctx):
-    candidates = Scout(ctx).investigate(Planner(ctx).assign(round=1, resources=[], recheck_requests=[]))
+    scout, assignment = hydrate_and_assign(ctx)
+    candidates = scout.investigate(assignment)
     assert not [c for c in candidates if c.resource_id.endswith("aaa1")]  # web-01, steady 50%
     assert not [c for c in candidates if c.resource_id.endswith("ccc3")]  # reports-01, steady 10%
 ```
@@ -2030,7 +2053,7 @@ class Scout(Agent):
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run: `python -m pytest tests/test_scout.py -v`
-Expected: 6 passed
+Expected: 7 passed
 
 - [ ] **Step 6: Commit**
 
