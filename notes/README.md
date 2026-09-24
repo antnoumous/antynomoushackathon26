@@ -3,6 +3,12 @@
 Findings on Zetaris, NVIDIA and Meterless, gathered from the recorded workshops and the
 HackOS sponsor resource areas. One file per sponsor once there is enough to say.
 
+> **Start here:** [`host-docs-digest.md`](host-docs-digest.md) — digest of the twelve
+> documents shared by the organisers (rules, policies, self-check, onboarding deck, and the
+> three Meterless agent engines). It includes a conflict table for facts where the host
+> documents disagree with `docs/event-brief.md` and `AGENTS.md` — **including the partner
+> stack: the host docs say Zetaris / Neo4j / Meterless, with no NVIDIA.**
+
 | Sponsor | Layer | Workshop | Notes file |
 |---|---|---|---|
 | Zetaris | Data — real, fragmented data via MCP | 7 Oct, 16:00–17:30 UTC | `zetaris.md` |

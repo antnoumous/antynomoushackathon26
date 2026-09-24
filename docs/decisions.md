@@ -30,9 +30,83 @@ open-sourcing, evaluations and insights are all cheap on day one and expensive a
 **Why:** No pre-existing dev-directory convention on this machine. A public repo supports
 the open-sourcing bonus criterion from the first commit.
 
+## 2026-09-24 — Organiser documents digested into `notes/host-docs-digest.md`
+
+**Decision:** Digest the twelve host-shared documents into one reference file in `notes/`
+rather than copying the originals into the repo.
+
+**Why:** The raw files stay with the organisers' own material; the repo gets the distilled
+version plus a conflict table. `submission-requirements.md` and
+`technical-execution-requirements.md` are byte-identical duplicates, and `official-rules.md`
+is explicitly a *working draft* whose binding version lives on the event page — both worth
+recording so no session treats a draft as final.
+
+**Open:** the digest flags seven factual conflicts with `docs/event-brief.md` and
+`AGENTS.md`, including the partner stack (host docs say Zetaris / Neo4j / Meterless — no
+NVIDIA), the four track names, and the claimed 30 bonus points. The builder confirmed the
+repo's version came from the **HackOS event pages and an organiser channel**, so
+`event-brief.md` and `AGENTS.md` were left unchanged and the conflict table is framed as a
+re-verification list, not an error list. Confirm on HackOS before the build window; the
+track name in particular must match HackOS at submission time.
+
 ## 2026-09-24 — Track and stack deliberately deferred
 
 **Decision:** No track, problem statement, language or framework chosen yet.
 
 **Why:** Deciding these before understanding the builder's strengths and interests risks
 six days spent building the wrong thing. Next conversation.
+
+## 2026-09-24 — Track 02, and the problem statement: an OCI tenancy auditor
+
+**Decision:** Enter **Track 02 — Autonomous Agent** with *Driftwatch*: an agent that audits an
+Oracle Cloud tenancy for cost waste and unattributed ("shadow") infrastructure, where a
+dedicated critic agent can reject a finding and force a re-investigation.
+
+**Why:** The builder is an Oracle Cloud specialist (OIC, networking, firewall), so the domain
+credibility is real rather than researched — which is what Impact (30 points) actually tests.
+The problem is genuinely fragmented across four disconnected systems (control-plane inventory,
+monitoring time-series, the Terraform repository, a policy/pricing reference). And the naive
+version of the task is *wrong in a way a critic exists to catch*: a mean-CPU threshold flags
+the month-end batch job that finance depends on. That gives the required multi-agent critique a
+real job instead of a decorative one.
+
+**Rejected:** Tinkerer Track (requires a pre-existing project to extend; there is none), an OIC
+integration-flow auditor (no free-tier OIC instance, worse API surface, less legible to a judge
+in three minutes), a firewall/rule-drift auditor over public corpora (no live integration).
+
+## 2026-09-24 — Runs against the builder's own tenancy, never the employer's
+
+**Decision:** The demo and all sample data come from a purpose-built personal OCI tenancy.
+
+**Why:** "Unauthorised private, personal or restricted data" is a disqualification trigger, and
+employer infrastructure telemetry, tags and cost data in a public repo and demo video is exactly
+that. Owning the tenancy also means the judge's credential-free path and the builder's path run
+the same code, and that drift is real rather than staged (some resources are created by CLI,
+outside Terraform). Lab resources are created *before* the window so seven-day metric history
+exists by 15 Oct; infrastructure created early is not code written early.
+
+## 2026-09-24 — Four agents, a hand-rolled bounded loop, and no security findings
+
+**Decision:** Ship exactly two finding classes (cost waste, unattributed infrastructure), four
+named agents with distinct permission sets, a ~20-hour scope with a frozen ~15-hour must-ship
+list, and no orchestration framework, no UI, and no compliance/security scoring.
+
+**Why:** Rules §7.3 disqualifies prompt wrappers, "one agent with several labels" and fixed
+chains with no critique, so the agent split is a scored requirement rather than a flourish —
+hence the permission table in the spec, which makes the split structural. LangGraph is dropped
+because the framework is not scored and a bounded loop emits the exact JSONL trace shape the
+organisers specified. A UI is dropped because it can never be the only entry point. Security
+findings are dropped because they are a second rule set and a second report format for no extra
+demo value. The budget is ~20 hours with no slack, so the must-ship list is a complete
+submission on its own and everything else is earnable stretch, decided at the 17 Oct checkpoint.
+
+## 2026-09-24 — Fixtures first, live OCI second
+
+**Decision:** Build sample mode end-to-end behind a `Source` interface before writing any live
+OCI adapter, and treat the live path as stretch.
+
+**Why:** `SAMPLE_MODE=true` is how a judge without credentials experiences the project, so it is
+the primary path, not a fallback. Building it first also makes it the fastest development loop
+(no network, no rate limits, deterministic) and reduces the Monitoring API to an optional
+adapter rather than a critical-path dependency. A `Generator` seam keeps the model provider
+equally swappable, which is what lets sample mode run with no credentials at all.
