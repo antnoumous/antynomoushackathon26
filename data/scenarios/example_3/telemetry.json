@@ -1,0 +1,12 @@
+{
+  "scenario_id": "example_3",
+  "now": "2026-10-02T00:00:00Z",
+  "series": [
+    {"resource_id": "ocid1.instance.oc1..••••dd01", "metric": "CpuUtilization",
+     "start": "2026-08-01T00:00:00Z", "baseline": 0.1, "jitter": 0.05, "bursts": []},
+    {"resource_id": "ocid1.instance.oc1..••••cc01", "metric": "CpuUtilization",
+     "start": "2026-08-01T00:00:00Z", "baseline": 3.0, "jitter": 0.5, "bursts": []},
+    {"resource_id": "ocid1.instance.oc1..••••bb01", "metric": "CpuUtilization",
+     "start": "2026-10-01T04:00:00Z", "baseline": 30.0, "jitter": 4.0, "bursts": []}
+  ]
+}

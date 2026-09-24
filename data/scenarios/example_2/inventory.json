@@ -1,0 +1,29 @@
+{
+  "scenario_id": "example_2",
+  "resources": [
+    {"resource_id": "ocid1.instance.oc1..••••aa01", "resource_class": "compute_instance",
+     "display_name": "web-01", "compartment_id": "ocid1.compartment.oc1..••••lab",
+     "lifecycle_state": "RUNNING", "time_created": "2026-08-01T00:00:00Z",
+     "shape": "VM.Standard.A1.Flex", "ocpus": 1, "memory_gb": 6,
+     "tags": {"owner": "platform", "env": "prod", "iac_address": "oci_core_instance.web_01"}},
+    {"resource_id": "ocid1.instance.oc1..••••bb01", "resource_class": "compute_instance",
+     "display_name": "worker-01", "compartment_id": "ocid1.compartment.oc1..••••lab",
+     "lifecycle_state": "RUNNING", "time_created": "2026-08-01T00:00:00Z",
+     "shape": "VM.Standard.E4.Flex", "ocpus": 2, "memory_gb": 8,
+     "tags": {"owner": "platform", "env": "prod", "iac_address": "oci_core_instance.worker_01"}},
+    {"resource_id": "ocid1.instance.oc1..••••cc01", "resource_class": "compute_instance",
+     "display_name": "nightly-01", "compartment_id": "ocid1.compartment.oc1..••••lab",
+     "lifecycle_state": "RUNNING", "time_created": "2026-08-01T00:00:00Z",
+     "shape": "VM.Standard.E4.Flex", "ocpus": 2, "memory_gb": 8,
+     "tags": {"role": "etl", "schedule": "nightly", "env": "prod",
+              "iac_address": "oci_core_instance.nightly_01"}},
+    {"resource_id": "ocid1.volume.oc1..••••dd01", "resource_class": "block_volume",
+     "display_name": "vol-web-data", "compartment_id": "ocid1.compartment.oc1..••••lab",
+     "lifecycle_state": "AVAILABLE", "time_created": "2026-08-01T00:00:00Z",
+     "tags": {"owner": "platform"}, "size_gb": 100, "attached": true},
+    {"resource_id": "ocid1.publicip.oc1..••••ee01", "resource_class": "reserved_public_ip",
+     "display_name": "ip-web", "compartment_id": "ocid1.compartment.oc1..••••lab",
+     "lifecycle_state": "AVAILABLE", "time_created": "2026-08-01T00:00:00Z",
+     "tags": {"owner": "platform"}, "attached": true}
+  ]
+}

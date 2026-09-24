@@ -1,0 +1,16 @@
+{
+  "scenario_id": "example_3",
+  "findings": [
+    {"resource_id": "ocid1.instance.oc1..••••cc01", "class": "cost_waste",
+     "expected_verdict": "accepted"},
+    {"resource_id": "ocid1.instance.oc1..••••cc01", "class": "unattributed",
+     "expected_verdict": "accepted"},
+    {"resource_id": "ocid1.volume.oc1..••••ee01", "class": "cost_waste",
+     "expected_verdict": "accepted"}
+  ],
+  "must_not_flag": [
+    "ocid1.instance.oc1..••••dd01",
+    "ocid1.instance.oc1..••••bb01",
+    "ocid1.publicip.oc1..••••ff01"
+  ]
+}

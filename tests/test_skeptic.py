@@ -72,3 +72,14 @@ def test_skeptic_refuses_a_third_recheck_on_the_same_finding(ctx):
     ruling = skeptic.judge(batch, round=3)
     assert ruling.verdict == "reject"
     assert "re-investigated" in ruling.reason
+
+
+def test_a_declared_purpose_withdraws_a_cost_finding(ctx):
+    """The falsifier every candidate publishes has to be executable, or it is decoration."""
+    batch = next(c for c in candidates(ctx) if c.resource_id.endswith("bbb2"))
+    extra = ctx.ledger.add(source="iac", kind="declaration", resource_id=batch.resource_id,
+                           summary="DR standby replica, idle by design", payload={})
+    batch.evidence_refs = batch.evidence_refs + [extra.evidence_id]
+    ruling = Skeptic(ctx).judge(batch, round=1)
+    assert ruling.verdict == "reject"
+    assert "falsifier" in ruling.reason

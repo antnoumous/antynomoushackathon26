@@ -1,0 +1,20 @@
+{
+  "scenario_id": "example_2",
+  "declarations": [
+    {"address": "oci_core_instance.web_01", "resource_type": "oci_core_instance",
+     "declared_name": "web-01", "file_path": "terraform/compute.tf",
+     "last_commit": "1111111", "commit_message": "web tier, 1 OCPU is deliberate", "author": "me@example.com"},
+    {"address": "oci_core_instance.worker_01", "resource_type": "oci_core_instance",
+     "declared_name": "worker-01", "file_path": "terraform/compute.tf",
+     "last_commit": "2222222", "commit_message": "queue worker, sustained load", "author": "me@example.com"},
+    {"address": "oci_core_instance.nightly_01", "resource_type": "oci_core_instance",
+     "declared_name": "nightly-01", "file_path": "terraform/etl.tf",
+     "last_commit": "3333333", "commit_message": "nightly ETL, runs 01:00 to 03:00", "author": "me@example.com"},
+    {"address": "oci_core_volume.web_data", "resource_type": "oci_core_volume",
+     "declared_name": "vol-web-data", "file_path": "terraform/storage.tf",
+     "last_commit": "4444444", "commit_message": "attached to web-01", "author": "me@example.com"},
+    {"address": "oci_core_public_ip.web", "resource_type": "oci_core_public_ip",
+     "declared_name": "ip-web", "file_path": "terraform/network.tf",
+     "last_commit": "5555555", "commit_message": "attached to the web NAT", "author": "me@example.com"}
+  ]
+}

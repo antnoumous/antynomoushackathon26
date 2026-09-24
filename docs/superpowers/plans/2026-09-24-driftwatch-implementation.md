@@ -610,8 +610,8 @@ Consequences, and they are the point of the scenario: on the default 168 h lookb
      "note": "reserved public IP billed whether attached or not"},
     {"rule_id": "R-3", "class": "cost_waste",
      "when": {"resource_class": "compute_instance", "mean_cpu_lt": 5.0, "min_coverage_ratio": 0.8,
-              "peak_cpu_lt": 20.0, "absent_from_iac": false},
-     "note": "low mean and low peak with adequate coverage and a declared purpose"},
+              "peak_cpu_lt": 20.0},
+     "note": "low mean and low peak with adequate coverage: nothing the evidence attributes a purpose to"},
     {"rule_id": "R-4", "class": "cost_waste",
      "when": {"resource_class": "compute_instance", "mean_cpu_lt": 5.0, "min_coverage_ratio": 0.8,
               "peak_cpu_gte": 20.0},
@@ -2071,6 +2071,38 @@ git commit -m "feat: Scout proposes evidenced candidates and abstains on insuffi
 
 The one agent whose output changes what another agent does next. Its whole job is to be unconvinced.
 
+**Amended during the build (2026-09-24).** The rule set alone could not satisfy example_3's
+requirement that a resource declared *idle by design* stay unreported: nothing in `judge` could
+reject it, so the `falsifier` every candidate publishes was decoration. The Skeptic gained a
+purpose check that runs **before** the R-3 branch, plus a shared signal helper:
+
+```python
+PURPOSE_SIGNALS = ("by design", "intentionally", "deliberately", "do not delete", "for now",
+                   "left running")
+
+    def _signal(self, candidate, needles):
+        for item in self.ctx.ledger.resolve(candidate.evidence_refs):
+            haystack = " ".join(str(v) for v in list(item.payload.values()) + [item.summary]).lower()
+            for needle in needles:
+                if needle in haystack:
+                    return needle
+        return None
+
+    # first branch of _judge, before the R-3 recheck:
+        if candidate.finding_class == "cost_waste":
+            purpose = self._purpose_signal(candidate)
+            if purpose:
+                reason = self.ctx.generator.complete(
+                    prompt="", schema={"name": "verdict_reason"},
+                    context={"reason_key": "declared_purpose", "signal": purpose})["reason"]
+                return self._reject(candidate, round, reason)
+```
+
+with `REASONS["declared_purpose"] = "the declaration states a deliberate purpose ({signal}), which
+is exactly the falsifier this finding published"` in `app/generator.py`, and the format call passing
+`signal=context.get("signal", "")`. Pinned by
+`test_a_declared_purpose_withdraws_a_cost_finding` and by example_3's `must_not_flag`.
+
 **Files:**
 - Modify: `app/models.py` (add `Ruling`)
 - Create: `app/agents/skeptic.py`, `tests/test_skeptic.py`
@@ -2367,7 +2399,13 @@ class Writer(Agent):
         findings: list[Finding] = []
         for candidate in candidates:
             ruling = rulings[candidate.candidate_id]
-            assert_figures_traceable(candidate.claim, allowed)
+            resource = self.ctx.state.facts["resources"].get(candidate.resource_id)
+            text = candidate.claim
+            if resource is not None:
+                # A resource's own name is an identifier, not an asserted quantity: the digits in
+                # `vol-orphan-100g` are not a figure anyone has to support with evidence.
+                text = text.replace(resource.display_name, "[resource]")
+            assert_figures_traceable(text, allowed)
             if ruling.verdict == "reject" or candidate.superseded_by:
                 finding_status = "rejected"
             elif (candidate.resource_id, candidate.finding_class) in withdrawn:
@@ -3647,16 +3685,13 @@ def build_scenario(seed: int, out_dir: Path) -> Path:
                     "month-end batch worker" if bursty else "provisioned by IaC",
                 "author": "generated@example.invalid"})
 
-        # The expectations mirror the rule set exactly. R-3 requires a declared resource
-        # (absent_from_iac: false), so an idle instance that is *not* declared yields only the
-        # unattributed finding — not two overlapping ones.
-        if idle and declared:
+        if idle:
             truth.append({"resource_id": rid, "class": "cost_waste",
                           "expected_verdict": "revised" if bursty else "accepted"})
-        elif not declared:
+        if not declared:
             truth.append({"resource_id": rid, "class": "unattributed",
                           "expected_verdict": "accepted"})
-        else:
+        if not idle and declared:
             must_not_flag.append(rid)      # busy and declared: the case that must stay quiet
 
     (out_dir / "inventory.json").write_text(json.dumps(

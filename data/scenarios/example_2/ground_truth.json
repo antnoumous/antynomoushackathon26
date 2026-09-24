@@ -1,0 +1,11 @@
+{
+  "scenario_id": "example_2",
+  "findings": [],
+  "must_not_flag": [
+    "ocid1.instance.oc1..••••aa01",
+    "ocid1.instance.oc1..••••bb01",
+    "ocid1.instance.oc1..••••cc01",
+    "ocid1.volume.oc1..••••dd01",
+    "ocid1.publicip.oc1..••••ee01"
+  ]
+}

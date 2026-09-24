@@ -1,0 +1,13 @@
+{
+  "scenario_id": "example_1",
+  "findings": [
+    {"resource_id": "ocid1.instance.oc1..••••bbb2", "class": "cost_waste", "expected_verdict": "revised"},
+    {"resource_id": "ocid1.volume.oc1..••••eee5",   "class": "cost_waste", "expected_verdict": "accepted"},
+    {"resource_id": "ocid1.publicip.oc1..••••fff6", "class": "cost_waste", "expected_verdict": "accepted"},
+    {"resource_id": "ocid1.instance.oc1..••••ddd4", "class": "unattributed", "expected_verdict": "accepted"}
+  ],
+  "must_not_flag": [
+    "ocid1.instance.oc1..••••aaa1",
+    "ocid1.instance.oc1..••••ccc3"
+  ]
+}

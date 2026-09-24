@@ -48,7 +48,13 @@ class Writer(Agent):
         findings: list[Finding] = []
         for candidate in candidates:
             ruling = rulings[candidate.candidate_id]
-            assert_figures_traceable(candidate.claim, allowed)
+            resource = self.ctx.state.facts["resources"].get(candidate.resource_id)
+            text = candidate.claim
+            if resource is not None:
+                # A resource's own name is an identifier, not an asserted quantity: the digits in
+                # `vol-orphan-100g` are not a figure anyone has to support with evidence.
+                text = text.replace(resource.display_name, "[resource]")
+            assert_figures_traceable(text, allowed)
             if ruling.verdict == "reject" or candidate.superseded_by:
                 finding_status = "rejected"
             elif (candidate.resource_id, candidate.finding_class) in withdrawn:

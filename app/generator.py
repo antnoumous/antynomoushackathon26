@@ -28,6 +28,8 @@ REASONS: dict[str, str] = {
     "recheck_cap": "this finding has already been re-investigated {n} times",
     "frequency_mismatch": "a low mean with a peak this high is a duty-cycle problem, not an "
                           "idle resource",
+    "declared_purpose": "the declaration states a deliberate purpose ({signal}), which is exactly "
+                        "the falsifier this finding published",
 }
 
 
@@ -54,7 +56,8 @@ class RulesGenerator:
             confidence = 0.75 if context.get("iac_match_rule") == "tag" else 0.55
             return {"claim": text, "confidence": confidence}
         if name == "verdict_reason":
-            return {"reason": REASONS[context["reason_key"]].format(n=context.get("n", 0)),
+            return {"reason": REASONS[context["reason_key"]].format(n=context.get("n", 0),
+                                                                    signal=context.get("signal", "")),
                     "confidence": 0.8}
         if name == "run_summary":
             return {"summary": ("Audited {resources} resources across {sources} sources; "

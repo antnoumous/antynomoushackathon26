@@ -1,0 +1,11 @@
+{
+  "scenario_id": "example_3",
+  "declarations": [
+    {"address": "oci_core_instance.dr_standby_01", "resource_type": "oci_core_instance",
+     "declared_name": "dr-standby-01", "file_path": "terraform/dr.tf",
+     "last_commit": "aaaaaaa", "commit_message": "DR standby replica, idle by design", "author": "me@example.com"},
+    {"address": "oci_core_instance.newapp_01", "resource_type": "oci_core_instance",
+     "declared_name": "newapp-01", "file_path": "terraform/newapp.tf",
+     "last_commit": "bbbbbbb", "commit_message": "new app host, provisioned this week", "author": "me@example.com"}
+  ]
+}

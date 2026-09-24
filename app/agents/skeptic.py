@@ -4,6 +4,8 @@ from app.agents.base import Agent
 from app.models import Candidate, Ruling
 
 SCHEDULE_SIGNALS = ("month-end", "monthly", "weekly", "nightly", "batch", "cron", "schedule")
+PURPOSE_SIGNALS = ("by design", "intentionally", "deliberately", "do not delete", "for now",
+                   "left running")
 RECHECK_LOOKBACK_HOURS = 744
 
 
@@ -11,15 +13,22 @@ class Skeptic(Agent):
     name = "Skeptic"
 
     def _schedule_signal(self, candidate: Candidate) -> str | None:
-        for item in self.ctx.ledger.resolve(candidate.evidence_refs):
-            haystack = " ".join(str(v) for v in list(item.payload.values()) + [item.summary]).lower()
-            for signal in SCHEDULE_SIGNALS:
-                if signal in haystack:
-                    return signal
-        return None
+        return self._signal(candidate, SCHEDULE_SIGNALS)
+
+    def _purpose_signal(self, candidate: Candidate) -> str | None:
+        """A declared purpose is the falsifier the Scout itself published. Honour it."""
+        return self._signal(candidate, PURPOSE_SIGNALS)
 
     def _recheck_count(self, candidate_id: str) -> int:
         return self.ctx.state.facts.setdefault("recheck_counts", {}).get(candidate_id, 0)
+
+    def _signal(self, candidate: Candidate, needles: tuple[str, ...]) -> str | None:
+        for item in self.ctx.ledger.resolve(candidate.evidence_refs):
+            haystack = " ".join(str(v) for v in list(item.payload.values()) + [item.summary]).lower()
+            for needle in needles:
+                if needle in haystack:
+                    return needle
+        return None
 
     def judge(self, candidate: Candidate, round: int) -> Ruling:
         """The only entry point. Every ruling leaves here carrying the round that produced it."""
@@ -27,7 +36,17 @@ class Skeptic(Agent):
         return ruling.model_copy(update={"round": round})
 
     def _judge(self, candidate: Candidate, round: int) -> Ruling:
-        # 1. An idle verdict (R-3) is only safe if nothing suggests the window is unrepresentative.
+        # 1. A declaration that states a deliberate purpose withdraws the finding outright —
+        #    this is the finding's own published falsifier being triggered by real evidence.
+        if candidate.finding_class == "cost_waste":
+            purpose = self._purpose_signal(candidate)
+            if purpose:
+                reason = self.ctx.generator.complete(
+                    prompt="", schema={"name": "verdict_reason"},
+                    context={"reason_key": "declared_purpose", "signal": purpose})["reason"]
+                return self._reject(candidate, round, reason)
+
+        # 2. An idle verdict (R-3) is only safe if nothing suggests the window is unrepresentative.
         if "R-3" in candidate.matched_rule_ids:
             signal = self._schedule_signal(candidate)
             if signal:
