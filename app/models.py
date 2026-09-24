@@ -114,6 +114,15 @@ class Candidate(BaseModel):
     A superseded candidate is reported as `rejected`, with its reason — never dropped."""
 
 
+class Ruling(BaseModel):
+    candidate_id: str
+    verdict: Verdict
+    reason: str
+    request: dict[str, Any] | None = None
+    revised_claim: str | None = None
+    round: int = 0
+
+
 class Undetermined(BaseModel):
     resource_id: str
     reason: str

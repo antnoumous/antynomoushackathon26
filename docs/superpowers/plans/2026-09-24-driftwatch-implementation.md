@@ -2129,8 +2129,9 @@ def ctx(tmp_path):
 
 def candidates(ctx, lookback=168):
     scout: Scout = ctx.extras["scout"]
-    assignment = Planner(ctx).assign(round=1, resources=[], recheck_requests=[])
-    assignment.lookback_hours = lookback
+    assignment = Planner(ctx).assign(
+        round=1, resources=list(ctx.state.facts["resources"].values()), recheck_requests=[])
+    assignment = assignment.model_copy(update={"lookback_hours": lookback})
     return scout.investigate(assignment)
 
 
@@ -2147,7 +2148,8 @@ def test_skeptic_accepts_the_revised_claim_once_the_burst_is_in_the_window(ctx):
     assert batch.matched_rule_ids == ["R-4"]
     ruling = Skeptic(ctx).judge(batch, round=2)
     assert ruling.verdict == "accept"
-    assert "idle" not in ruling.reason.lower()
+    # The reason must state the revised conclusion — a duty cycle — rather than repeat "idle".
+    assert "duty-cycle" in ruling.reason
 
 
 def test_skeptic_accepts_a_clean_orphan_without_fuss(ctx):
