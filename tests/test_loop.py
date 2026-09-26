@@ -276,3 +276,45 @@ def test_a_broken_fixture_degrades_the_source_instead_of_crashing_the_run(tmp_pa
     assert report.findings == []
     assert all(source.degraded for source in report.sources)
     assert any(u.resource_id == "scope" for u in report.undetermined)
+
+
+def test_a_re_check_that_changes_nothing_is_a_duplicate_not_a_revision(tmp_path):
+    """Found by held-out seed 6, which no committed scenario covers.
+
+    An idle, bursty, *undeclared* instance gets re-investigated for its cost verdict, and the Scout
+    — working per resource, not per class — re-derives its `unattributed` finding too, identically.
+    Superseding that untouched finding marked it `rejected` and the repeat `revised`: a change of
+    mind the agent never had, which is exactly the kind of claim this report is supposed to make
+    visible rather than invent.
+    """
+    scenario = tmp_path / "duplicate"
+    scenario.mkdir()
+    resource = {"resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022dup1",
+                "resource_class": "compute_instance", "display_name": "worker-01",
+                "compartment_id": "ocid1.compartment.oc1..\u2022\u2022\u2022\u2022labtest",
+                "lifecycle_state": "RUNNING",
+                "time_created": "2026-08-01T00:00:00Z", "shape": "VM.Standard.E4.Flex",
+                "ocpus": 2, "memory_gb": 8, "tags": {"schedule": "month-end"}}
+    # now = 2026-10-05. The burst sits 20 days back, so it is outside the 7-day window the run asks
+    # for and inside the 31-day window the Skeptic widens to: R-3 fires first, R-4 after the
+    # re-check. That is the only arrangement in which `revised` is the true answer.
+    series = {"resource_id": resource["resource_id"], "metric": "CpuUtilization",
+              "start": "2026-08-21T00:00:00Z", "baseline": 0.6, "jitter": 0.4,
+              "bursts": [{"start": "2026-09-15T02:00:00Z", "hours": 3, "value": 58.0}]}
+    (scenario / "inventory.json").write_text(json.dumps(
+        {"scenario_id": "duplicate", "resources": [resource]}))
+    (scenario / "telemetry.json").write_text(json.dumps(
+        {"scenario_id": "duplicate", "now": "2026-10-05T00:00:00Z", "series": [series]}))
+    (scenario / "iac.json").write_text(json.dumps({"scenario_id": "duplicate", "declarations": []}))
+    (scenario / "policy.json").write_text((SCEN / "policy.json").read_text())
+
+    cfg, ctx = build(tmp_path, scenario=scenario)
+    report = Orchestrator(ctx, scenario_dir=scenario).run()
+
+    by_class = {finding.finding_class: finding for finding in report.findings}
+    assert by_class["cost_waste"].status == "revised"          # R-3, then R-4: a real revision
+    assert by_class["unattributed"].status == "accepted"       # untouched: not a revision
+    assert len([f for f in report.findings if f.finding_class == "unattributed"]) == 1
+    assert "drop_duplicate_finding" in actions(ctx)
+    assert all(f.status != "revised" for f in report.findings
+               if f.finding_class == "unattributed")

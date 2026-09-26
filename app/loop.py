@@ -13,6 +13,18 @@ from app.sources.base import Scope
 from app.sources import get_source
 
 
+def _same_conclusion(previous: Candidate, current: Candidate) -> bool:
+    """Whether a re-check re-derived the very finding it was handed.
+
+    Compared on the rules that justified it and the conclusion itself, not on the candidate id: the
+    id is new every round by design (that is what made the re-check cap unreachable once), so it can
+    never be the thing that tells two rounds apart.
+    """
+    return (sorted(previous.matched_rule_ids) == sorted(current.matched_rule_ids)
+            and previous.claim == current.claim
+            and previous.impact == current.impact)
+
+
 class Orchestrator:
     def __init__(self, ctx: AgentContext, scenario_dir: Path | None = None) -> None:
         self.ctx = ctx
@@ -172,20 +184,45 @@ class Orchestrator:
             self._merge_source_statuses(self.scout.source_statuses())
 
             if assignment.focus == "recheck":
-                # A re-check that reaches a different conclusion supersedes the earlier finding.
-                # The superseded candidate is still reported: rejected, with its reason.
+                # A re-check that reaches a *different* conclusion supersedes the earlier finding;
+                # the superseded candidate is still reported, rejected, with its reason.
+                #
+                # A re-check that re-derives the identical finding is not a change of mind. It is a
+                # duplicate: the re-investigation looked at a resource for one class and produced
+                # every class it could justify again. Publishing the repeat would report one class
+                # twice for a resource and hang the word "revised" on a finding nobody touched —
+                # a false claim about the agent's reasoning, which is the one thing this report is
+                # supposed to make visible. The earlier ruling stands and the repeat is dropped.
                 current_ids = {c.candidate_id for c in candidates}
+                repeated: set[str] = set()
                 for candidate in candidates:
                     for previous in all_candidates:
-                        if (previous.candidate_id not in current_ids
-                                and previous.resource_id == candidate.resource_id
-                                and previous.finding_class == candidate.finding_class
-                                and previous.superseded_by is None):
-                            previous.superseded_by = candidate.candidate_id
-                            self.ctx.state.append("supersede", {
-                                "superseded": previous.candidate_id,
-                                "superseded_by": candidate.candidate_id,
+                        if (previous.candidate_id in current_ids
+                                or previous.resource_id != candidate.resource_id
+                                or previous.finding_class != candidate.finding_class
+                                or previous.superseded_by is not None):
+                            continue
+                        if _same_conclusion(previous, candidate):
+                            repeated.add(candidate.candidate_id)
+                            self.ctx.state.append("duplicate_finding", {
+                                "candidate_id": candidate.candidate_id,
+                                "already_found_as": previous.candidate_id,
                                 "round": round_number})
+                            self.ctx.trace.emit(
+                                agent_name="Planner", action="drop_duplicate_finding",
+                                input_summary=f"{candidate.candidate_id} under "
+                                              f"{','.join(candidate.matched_rule_ids)}",
+                                output_summary=f"already found as {previous.candidate_id}: the "
+                                               f"re-check reached the same conclusion",
+                                target_agent="Writer", status="duplicate", confidence=1.0,
+                                round=round_number)
+                            break
+                        previous.superseded_by = candidate.candidate_id
+                        self.ctx.state.append("supersede", {
+                            "superseded": previous.candidate_id,
+                            "superseded_by": candidate.candidate_id,
+                            "round": round_number})
+                candidates = [c for c in candidates if c.candidate_id not in repeated]
             all_candidates.extend(candidates)
 
             recheck_requests = []
