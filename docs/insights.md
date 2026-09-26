@@ -71,6 +71,7 @@ Short and specific beats long and vague. Each entry:
 | `POST /run`, sample mode | HTTP 200, 20 ms for 6 resources / 5 findings |
 | End-to-end CLI audit | ~1 s per scenario including all four agents |
 | Evaluation (3 scenarios) | precision 1.0, recall 1.0, verdict accuracy 1.0, deterministic |
+| Held-out scoring (10 generated tenancies) | precision 1.0, recall 1.0, verdict accuracy 1.0, deterministic, 0 failing |
 | Model calls in sample mode | 0 — enforced by a test that replaces `socket.socket` |
 
 The 20 ms figure matters for the design, not for speed: it means a judge can run all three
@@ -89,6 +90,36 @@ rather than a progress bar.
 > `NO_TELEMETRY_STATS` shape with `sufficient: False`, no CPU rule may fire without a series, and a
 > candidate's own numbers are no longer evidence for its own claim. **A fallback that produces
 > numbers is a lie with good manners; a fallback that produces `None` is a degradation.**
+
+### Three scenarios you wrote test your assumptions; a generator tests the space
+
+> **What we observed** → the agent passed 88 tests, three hand-written scenarios at precision 1.0 /
+> recall 1.0 / verdict accuracy 1.0, and a full-length adversarial review of the whole branch. Then
+> ten tenancies generated from integer seeds found **two** defects in the first run: a re-check that
+> changed nothing was reported as a revision (seed 6), and the committed traces had been filed under
+> the wrong scenario since the day they were generated. → **why it happens** → every hand-written
+> scenario was written by the person who wrote the agent, so it encodes the shapes that person
+> thought of. A generator samples the space instead, including the combinations that are obvious in
+> hindsight and invisible while writing: an idle, bursty, *undeclared* instance is the intersection
+> of three independent choices, and none of the curated scenarios happened to be in it. →
+> **what we did about it** → ground truth is generated from the same random choices that shape each
+> resource, so it cannot drift from the fixture; ten seeds score 1.0 across the board; seed 6 is
+> pinned in a test with a comment saying exactly which shape it carries. **Hold-out a slice of the
+> input space, or the tests only measure how well you anticipated yourself.**
+
+### The evidence was filed by the wrong key
+
+> **What we observed** → `scripts/run_examples.sh` chose each run's trace, state and report as "the
+> newest file in `logs/`". Two runs finish in the same second, `-nt` is false for equal timestamps,
+> so the loop kept the earlier candidate: the committed `trace-example_2.jsonl` carried example_1's
+> run — 19 lines describing a tenancy with six resources and four findings, filed under a scenario
+> that has five and none. → **why it happens** → mtime is a *proxy* for identity, and proxies fail
+> exactly when the thing they approximate moves fast. The run had already recorded which files it
+> wrote (`trace_path`, `report_markdown_path`); the script guessed anyway. → **what we did about it**
+> → read the paths out of the report the run just wrote, and add a test that every committed trace
+> carries its own report's run id and narrative. **Never infer identity from a timestamp when the
+> artifact names itself — and make the evidence you ship subject to a test, because a mismatched log
+> is worse than no log.**
 
 ### The cap that could never fire
 

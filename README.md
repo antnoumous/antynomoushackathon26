@@ -190,10 +190,11 @@ without touching any agent. Without it, the adapter reads `data/scenarios/*/poli
 ## Evidence: traces, inputs, outputs
 
 Everything under `output_examples/` and `logs/samples/` is **generated** by `scripts/run_examples.sh`
-and the runs it starts. Nothing in them is hand-written or edited, and a test asserts that no
-unmasked OCID exists anywhere in the repository (`tests/test_mask_ocids.py`). Re-running the script
-reproduces the same findings, statuses, claims and caps; the run id and timestamps differ, because
-each run mints a fresh `run_id` by design.
+and the runs it starts. Nothing in them is hand-written or edited, and two tests keep that honest:
+no unmasked OCID exists anywhere in the repository (`tests/test_mask_ocids.py`), and every committed
+trace, state file and rendered report carries its **own** run's id and narrative
+(`tests/test_committed_evidence.py`). Re-running the script reproduces the same findings, statuses,
+claims and caps; the run id and timestamps differ, because each run mints a fresh `run_id` by design.
 
 | Evidence | Where |
 |---|---|
@@ -204,6 +205,7 @@ each run mints a fresh `run_id` by design.
 | Agent trace (one JSONL line per action) | `logs/samples/trace-example_{1,2,3}.jsonl` |
 | Shared run state (append-only) | `logs/samples/state-example_{1,2,3}.jsonl` |
 | Evaluation results | `output_examples/eval.txt` |
+| Held-out scoring on generated tenancies | `output_examples/held_out.txt` |
 
 The three scenarios differ meaningfully rather than cosmetically:
 
@@ -244,6 +246,37 @@ example_3    precision 1.0   recall 1.0    verdicts 1.0   findings 4   status su
   and the deliberately idle standby are both here;
 - **determinism**, by running the pipeline twice and comparing every finding and status.
 
+### Held-out scoring: tenancies that did not exist when the agent was written
+
+The three scenarios above were written by the same person who wrote the agent, which is the weakest
+form of evidence for "these outputs are computed, not hardcoded". So they are not the only inputs it
+is scored on. `scripts/make_scenario.py` derives a complete tenancy — instances, volumes, reserved
+IPs, their telemetry series, their Terraform declarations — **and its own ground truth** from a
+single integer seed, and the same evaluator scores it:
+
+```
+held_out_1    precision 1.0  recall 1.0  verdicts 1.0  findings 8   status success  deterministic True
+...
+held_out_6    precision 1.0  recall 1.0  verdicts 1.0  findings 6   status success  deterministic True
+
+6 held-out tenancies, 0 failing
+```
+
+Everything in that block is generated: nobody chose which instances are idle, which are declared,
+which carry a month-end schedule, or what the right answer is. Ground truth is derived from the same
+random choices that shaped each resource, never written beside it.
+
+**This is not a decorative harness.** Seed 6 carries a shape none of the committed scenarios have —
+an idle, bursty, *undeclared* instance — and it found a real defect: the re-check re-derived that
+instance's `unattributed` finding identically, and the loop superseded the untouched original, so
+the report claimed a change of mind that never happened. Held-out scoring caught what three
+hand-written scenarios missed, and `tests/test_make_scenario.py` now pins that seed.
+
+```bash
+python scripts/make_scenario.py --seed 7 --out /tmp/held_out_7   # one tenancy, with its truth
+python scripts/make_scenario.py --score 8                        # generate and score eight
+```
+
 ## Disclosure
 
 - **Models and providers:** live mode calls one OpenAI-compatible `chat/completions` endpoint,
@@ -280,7 +313,9 @@ example_3    precision 1.0   recall 1.0    verdicts 1.0   findings 4   status su
   hand in the console is reported as unattributed by design, which is the intended behaviour and
   also a way to be annoying. A run examines at most 25 resources and says so when it truncates.
   The figure guard stops unsupported *numbers*, not unsupported *sentences* that contain none.
-  Nothing is remediated: findings are recommendations, and the agent is read-only.
+  The held-out generator multiplies the shapes that get tested; it does not widen the resource
+  classes the audit covers, which remain the three above. Nothing is remediated: findings are
+  recommendations, and the agent is read-only.
 - **Sample mode:** `SAMPLE_MODE=true` runs the complete agent on fixture backends with no network
   and no credentials, and does not call a model. All four agents, the critique loop, the caps, the
   cost arithmetic and the report still execute for real; only the judgement source changes. A test
@@ -308,5 +343,5 @@ example_3    precision 1.0   recall 1.0    verdicts 1.0   findings 4   status su
 | `app/generator.py` | The Generator seam: rule engine or model |
 | `data/scenarios/` | Three scenarios plus their `ground_truth.json` |
 | `evals/run_eval.py` | Precision, recall, verdict accuracy, determinism |
-| `scripts/` | `run_examples.sh` (regenerates evidence), `mask_ocids.py` |
+| `scripts/` | `run_examples.sh` (regenerates evidence), `make_scenario.py` (held-out generator), `mask_ocids.py` |
 | `docs/` | Event brief, decision log, insights, spec and implementation plan |

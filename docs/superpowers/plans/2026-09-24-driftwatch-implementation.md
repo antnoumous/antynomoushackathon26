@@ -3639,7 +3639,10 @@ The strongest available answer to "are these outputs hardcoded": score the agent
 - Consumes: nothing.
 - Produces: `build_scenario(seed: int, out_dir: Path) -> Path` writing a complete scenario directory plus its `ground_truth.json`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test** — done 2026-09-24; the draft's name promised a check it did
+  not make ("…and are not the committed ones" asserted nothing about the committed ones), so the
+  built test asserts verdict accuracy, determinism and that no generated tenancy shares a resource id
+  with a committed one.
 
 ```python
 # tests/test_make_scenario.py
@@ -3666,12 +3669,13 @@ def test_two_seeds_produce_different_tenancies(tmp_path):
     assert a != c                      # different seed, different tenancy
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails** — done 2026-09-24; `ModuleNotFoundError: No module
+  named 'scripts.make_scenario'`, as predicted.
 
 Run: `python -m pytest tests/test_make_scenario.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'scripts.make_scenario'`
 
-- [ ] **Step 3: Implement `scripts/make_scenario.py`**
+- [x] **Step 3: Implement `scripts/make_scenario.py`** — done 2026-09-24, with the amendments below.
 
 ```python
 from __future__ import annotations
@@ -3762,12 +3766,40 @@ Expected ground truth for a bursty idle instance is `revised`, because R-3 fires
 Skeptic's schedule-signal check widens the window, after which R-4 fires. That is the canonical
 behaviour reproducing itself on unseen input — the point of this task.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests** — done 2026-09-24; three tests pass, and `--score 10` reports ten
+  unseen tenancies with precision 1.0, recall 1.0, verdict accuracy 1.0, deterministic, 0 failing.
 
 Run: `python -m pytest tests/test_make_scenario.py -v`
 Expected: 2 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit** — done 2026-09-24, as `3516933` (the loop defect it found was committed
+  separately as `ccc0322`, and the evidence-filing fix as `23accdc`).
+
+**Amendment (2026-09-24, as built).** Three things differ from the draft above, all recorded here
+rather than smoothed over:
+
+1. **The burst is placed by window arithmetic, not by a fixed date.** The draft pinned the month-end
+   burst to `2026-09-01T02:00:00Z` with `now = 2026-10-05` — 34 days back, outside both the 7-day
+   window the run requests *and* the 31-day window the Skeptic widens to. The burst would never have
+   materialised, so the ground truth's `revised` verdict could not have happened and the test would
+   have failed against a *correct* agent. The burst is now derived from the scenario's `now`, 20 days
+   back: inside 31 days, outside 7. That is the only arrangement in which the re-check mechanism can
+   reproduce itself, and it is explained in the module docstring because it is the load-bearing part.
+2. **`scenario_id` comes from the seed, not the output directory** (found by the draft's own
+   determinism test once it was written): the same seed written to two paths must produce
+   byte-identical files, or held-out evidence can never be diffed.
+3. **Ground truth covers volumes and reserved public IPs too**, with attached twins placed in
+   `must_not_flag` — the draft generated only compute instances, so R-1 and R-2 were never exercised
+   on unseen input. A `--score N` mode was added as well, and `scripts/run_examples.sh` writes its
+   results to `output_examples/held_out.txt` so the held-out numbers are generated evidence rather
+   than a claim in prose.
+
+**What this task found, which is the point of it:** seed 6 carries a shape no committed scenario has
+(an idle, bursty, *undeclared* instance) and exposed a real defect — the re-check re-derived that
+instance's `unattributed` finding identically, and the loop superseded the untouched original, so the
+report claimed a change of mind that never happened. Fixed in `app/loop.py` (`ccc0322`) with the
+shape pinned in `tests/test_loop.py`. Ten seeds now score 1.0/1.0/1.0, 0 failing; before the fix,
+seed 6 scored 0.8 on verdict accuracy.
 
 ```bash
 git add scripts/make_scenario.py tests/test_make_scenario.py
@@ -3807,6 +3839,27 @@ The three committed scenarios regenerate with identical findings, statuses, clai
 evidence that these fixes changed only the paths where something goes wrong. Full record:
 `docs/decisions.md`, 2026-09-24.
 
+### Held-out pass (Task 16, 2026-09-24)
+
+Task 16 was built before the 17 Oct checkpoint because it needs no credentials and so is the one
+stretch item that can be verified now. It paid for itself immediately: ten generated tenancies
+exposed two defects that neither the three hand-written scenarios nor the independent review of them
+had surfaced.
+
+1. **A re-check that changed nothing was reported as a revision** (`app/loop.py`). An idle, bursty,
+   *undeclared* instance is re-investigated for its cost verdict, and the Scout — working per
+   resource, not per class — re-derives its `unattributed` finding identically. Supersede matched on
+   resource and class alone, so the untouched original was marked `rejected` and its identical repeat
+   `revised`: a change of mind the agent never had. Supersede now requires a genuinely different
+   conclusion; a repeat is recorded as `duplicate_finding` and dropped.
+2. **The committed traces were one scenario behind** (`scripts/run_examples.sh`). Artifacts were filed
+   by file mtime, and two runs land in the same second, so `trace-example_2.jsonl` shipped carrying
+   example_1's run. Paths are now read from the report the run wrote, and
+   `tests/test_committed_evidence.py` asserts every committed artifact belongs to its own report.
+
+Ten held-out seeds score precision 1.0, recall 1.0, verdict accuracy 1.0, deterministic, 0 failing;
+before the loop fix, seed 6 scored 0.8 on verdicts. The lesson is in `docs/insights.md`.
+
 ---
 
 ## Definition of done
@@ -3820,10 +3873,11 @@ Mapped to the spec's acceptance criteria (§13). Every line must be observed, no
 | 3. A run finishes well inside 10 minutes, no silent caps | Task 11 `test_max_rounds_is_enforced_and_logged_as_capped`, `test_the_soft_wall_clock_is_logged_as_a_cap_but_does_not_stop_the_run`, `test_the_hard_wall_clock_stops_the_run_rather_than_letting_it_hang`; a capped run cannot present an un-concluded candidate as a finding |
 | 4. Trace shows four agents, handoff, a rejection with a reason, a re-check, a revision | Task 11 `test_the_trace_shows_at_least_two_agents_handing_off_and_a_recheck` |
 | 5. Three input examples and three matching outputs, differing meaningfully | Task 13, Task 14 Step 3 |
-| 6. `evals/` reports precision/recall; held-out scoring if Task 16 shipped | Task 13, Task 16 |
+| 6. `evals/` reports precision/recall; held-out scoring if Task 16 shipped | Task 13, **Task 16 shipped 2026-09-24** — `output_examples/held_out.txt`, `tests/test_make_scenario.py` |
 | 7. No secret, real OCID or employer artifact in the repo, examples, logs or video | `tests/test_mask_ocids.py` (tests the tool *and* scans every tracked file) |
 | 8. README discloses every required item | Task 14 Step 6 |
 | 9. Every README claim is one a script or a reviewer can check | Post-build review, above; `docs/decisions.md` |
+| 10. Every committed trace, state file and report belongs to the run it is filed under | `tests/test_committed_evidence.py` |
 | Regression sweep across every task | `python -m pytest -q` |
 
 ---

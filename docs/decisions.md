@@ -262,3 +262,47 @@ because the pattern is the same each time — the fix was right and the coverage
 The three scenarios regenerate byte-identically apart from the run id, which is the evidence that
 tightening the allowance changed nothing published.
 
+## 2026-09-24 — Held-out scoring (Task 16), and the two defects it found
+
+**Decision:** build the held-out scenario generator now rather than waiting for the 17 Oct
+checkpoint. It needs no credentials and no OCI tenancy, so unlike Task 15 it is verifiable today, and
+it is the strongest available answer to "are these outputs hardcoded" — the agent is scored on
+tenancies that did not exist when it was written. Three hand-written scenarios were written by the
+same person as the agent; generated ones were not.
+
+**What it found, in the first ten seeds:**
+
+1. **A re-check that changed nothing was reported as a revision.** Seed 6 generates an idle, bursty,
+   *undeclared* instance: round 1 proposes a `cost_waste` finding and an `unattributed` one, the
+   schedule signal sends the cost finding back for a wider window, and the Scout — working per
+   resource, not per class — re-derives the `unattributed` finding identically. The supersede rule
+   matched on resource and class alone, so it marked the untouched original `rejected` and its
+   identical repeat `revised`. That is a claim about the agent's reasoning that is simply false, in
+   the one document meant to make that reasoning visible. Fixed: supersede now requires a *different*
+   conclusion (rules, claim, impact — never the candidate id, which is new every round by design);
+   an identical re-derivation is recorded as `duplicate_finding` and dropped, and the earlier ruling
+   stands. `tests/test_loop.py` pins the shape, and seed 6 is pinned in the held-out test.
+2. **The committed traces were one scenario behind.** `scripts/run_examples.sh` filed each run's
+   trace, state and report by file mtime ("the newest file in `logs/`"), and two consecutive runs
+   land in the same second. `-nt` is false for equal timestamps, so the loop kept the earlier
+   candidate: `trace-example_2.jsonl` was committed carrying example_1's run (19 lines, "Audited 6
+   resources ... 4 findings accepted") and example_3 carried example_2's clean tenancy. The evidence
+   a judge reads was describing a different input. Fixed by reading `trace_path` and
+   `report_markdown_path` out of the report the run just wrote — the fact is already recorded, so
+   guessing was never necessary — and guarded by `tests/test_committed_evidence.py`, which asserts
+   every committed trace carries its own report's run id and narrative and that the state file's
+   tenancy count agrees with the report's.
+
+**Deviation from the plan, recorded rather than smoothed over:** Task 16's draft placed the
+month-end burst at a fixed absolute date 34 days before the scenario's `now` — outside both the
+7-day window the run requests and the 31-day window the Skeptic widens to. The burst would never
+have materialised, so the ground truth's `revised` verdict could not have occurred and the test
+would have failed against a *correct* agent. The burst is now derived from `now` (20 days back:
+inside 31 days, outside 7), which is the arrangement the re-check mechanism needs; the arithmetic is
+explained in the module docstring because it is the load-bearing part.
+
+**Lesson, recorded in `docs/insights.md`:** three scenarios written by the author test the author's
+assumptions. A generator tests the space. Both defects above were invisible to the committed
+scenarios and to a full-length independent review of them.
+
+
