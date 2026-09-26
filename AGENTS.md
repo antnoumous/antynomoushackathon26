@@ -32,17 +32,22 @@ Recommended pre-submission layout lives in the digest §4. Present: `run.py`, `D
   unattributed (shadow) infrastructure, with a critic agent that can reject a finding and force
   a re-investigation. Design approved 2026-09-24; see
   `docs/superpowers/specs/2026-09-24-oci-tenancy-auditor-design.md`.
-- **Stack:** Python. Hand-rolled bounded agent loop, no orchestration framework. `oci` SDK on
-  the live path, bundled JSON fixtures for sample mode. No UI. Reasoning in the spec §5.
+- **Stack:** Python. Hand-rolled bounded agent loop, no orchestration framework. Bundled JSON
+  fixtures drive sample mode; the `oci` SDK is pinned for the live adapters, which are **not built**
+  (Task 15), so nothing imports it yet. No UI. Reasoning in the spec §5.
 - **Budget:** ~20 h in the window; a frozen ~15 h must-ship list. Spec §11.
-- **Must-ship path: built and verified** (2026-09-24). Tasks 1–14 of the plan are complete:
-  63 tests green, and the fresh-clone path verified end to end — Python 3.11.16 venv,
-  `pip install -r requirements.txt`, credential-free `run.py`, `POST /run` returning HTTP 200 in
-  20 ms, and `evals/run_eval.py` scoring three scenarios at precision 1.0, recall 1.0, verdict
-  accuracy 1.0, deterministic. Evidence is generated, never hand-written:
+- **Must-ship path: built, reviewed and verified** (2026-09-24). Tasks 1–14 of the plan are
+  complete: the full suite passes (`pytest -q`), and the fresh-clone path was verified end to end —
+  Python 3.11.16 venv, `pip install -r requirements.txt`, credential-free `run.py`, `POST /run`
+  returning HTTP 200, and `evals/run_eval.py` scoring three scenarios at precision 1.0, recall 1.0,
+  verdict accuracy 1.0, deterministic. An independent whole-branch review found five blockers and
+  eleven lesser issues; all are fixed with regression tests, and the three scenarios regenerate
+  identically (see `docs/decisions.md`, 2026-09-24). Evidence is generated, never hand-written:
   `scripts/run_examples.sh` produces `output_examples/` and `logs/samples/`.
-- **Next step:** open Tasks 15 (live OCI adapters) and 16 (held-out scenario generator) — both
-  stretch, both decided at the 17 Oct checkpoint. A whole-branch review is due before either.
+- **Next step:** Tasks 15 (live OCI adapters) and 16 (held-out scenario generator) — both stretch,
+  both decided at the 17 Oct checkpoint. The whole-branch review they were gated behind is **done**;
+  its blockers are closed. Note that `SAMPLE_MODE=false` currently degrades to fixtures and says so
+  in the report and on stderr — the live adapters are what would change that, not a config flag.
 - **Pre-window:** create the lab tenancy (spec §5.2) so metric history exists by 15 Oct;
   confirm track name and partner stack on HackOS; choose the model provider; watch the 7 Oct
   Zetaris recording. **Docker path still unverified** — no Docker daemon on the build machine.
