@@ -67,7 +67,7 @@ Short and specific beats long and vague. Each entry:
 
 | What | Measurement |
 |---|---|
-| Full test suite | 84 tests, under 1 s on a fresh clone |
+| Full test suite | 109 tests, under 1 s on a fresh clone |
 | `POST /run`, sample mode | HTTP 200, 20 ms for 6 resources / 5 findings |
 | End-to-end CLI audit | ~1 s per scenario including all four agents |
 | Evaluation (3 scenarios) | precision 1.0, recall 1.0, verdict accuracy 1.0, deterministic |
@@ -120,6 +120,20 @@ rather than a progress bar.
 > carries its own report's run id and narrative. **Never infer identity from a timestamp when the
 > artifact names itself — and make the evidence you ship subject to a test, because a mismatched log
 > is worse than no log.**
+
+### The plan's SDK calls were remembered, not checked
+
+> **What we observed** → Task 15's draft adapter code, written a day earlier from memory, put
+> `list_volume_attachments` on `BlockstorageClient` (it is on `ComputeClient`), enumerated
+> instances only while the rule set also judges volumes and reserved IPs, and requested a 31-day
+> re-check window at 5-minute resolution — a combination Monitoring silently truncates, because
+> 5-minute data is retained for 30 days. → **why it happens** → a plan is written without the
+> library open; prose and code drafts age differently, and API shapes are exactly the detail
+> memory smooths over. → **what we did about it** → before writing any adapter, introspect the
+> pinned SDK offline (`inspect.signature`, `attribute_map`, `hasattr`) and search the provider's
+> retention docs; three of the four deviations were caught before a line of implementation existed.
+> **When a plan quotes an API, verify the quote against the pinned version before building it —
+> the plan is a hypothesis, the library is the fact.**
 
 ### The cap that could never fire
 

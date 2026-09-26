@@ -59,14 +59,16 @@ docker build -t driftwatch .
 docker run --rm -p 8000:8000 -e SAMPLE_MODE=true driftwatch
 ```
 
-**Only sample mode is implemented.** `SAMPLE_MODE=true` runs the full agent on the bundled
-scenarios with no credentials and no network, and that is how this submission is meant to be
-judged. Setting `SAMPLE_MODE=false` does **not** currently audit a real tenancy: every live
-adapter is a placeholder that raises, so all four sources degrade to the bundled fixtures, the run
-reports `status: partial` with `summary.backends` naming what actually answered, and a warning is
-printed to stderr. The live OCI adapters are planned stretch work (Task 15 of the implementation
-plan) and are not built. `oci` is pinned in `requirements.txt` for them, and nothing imports it
-today.
+**Only sample mode is verified.** `SAMPLE_MODE=true` runs the full agent on the bundled scenarios
+with no credentials and no network, and that is how this submission is meant to be judged.
+`SAMPLE_MODE=false` now wires the real OCI adapters — inventory (instances, volumes, reserved IPs),
+telemetry (`CpuUtilization` via the Monitoring service), and the file-backed IaC and policy sources —
+but **they have not been run against a live tenancy yet**: that verification needs the lab tenancy
+(`docs/lab-tenancy.md`) to exist first. Until then, treat a live run as unproven. The failure path
+is the tested one: without reachable credentials every OCI source raises `SourceError`, the loop
+degrades to the bundled fixtures, the run reports `status: partial` with `summary.backends` naming
+what actually answered, and a warning is printed to stderr. `oci` is imported lazily, so sample
+mode never touches the SDK.
 
 ## The money shot
 
@@ -95,8 +97,8 @@ You can watch this happen in `logs/samples/trace-example_1.jsonl`, and read it i
 
 ```
                      ┌──────────────────────────────────────────┐
-   four sources      │  inventory  telemetry  iac  policy       │   live adapters: placeholders,
-   one interface     │  ── each with a fixture twin ──          │   not built (Task 15 stretch)
+   four sources      │  inventory  telemetry  iac  policy       │   live adapters: built, offline-
+   one interface     │  ── each with a fixture twin ──          │   tested, tenancy-unverified
                      └──────────────────────────────────────────┘
                                         │
         ┌───────────────┬───────────────┴────────────┬───────────────┐
@@ -289,13 +291,17 @@ python scripts/make_scenario.py --score 8                        # generate and 
 - **Agent frameworks:** none. The loop is hand-rolled in `app/loop.py` — no LangGraph, CrewAI or
   AutoGen.
 - **Partner technologies:** none mounted, as stated above.
-- **Live path:** not implemented. `app/sources/live.py` raises for every source, so
-  `SAMPLE_MODE=false` degrades to the bundled fixtures, reports `status: partial` with
-  `summary.backends` naming what answered, and warns on stderr. The OCI adapters are Task 15 of the
-  plan. `.env.example` documents the variables they will need.
+- **Live path:** built, **not tenancy-verified**. `app/sources/oci_inventory.py` and
+  `oci_telemetry.py` are real OCI SDK adapters behind the `Source` interface, tested offline
+  against SDK-shaped stubs (`tests/test_live_adapters.py`) but never yet run against a live
+  tenancy — the lab tenancy in `docs/lab-tenancy.md` does not exist yet, and a run against a
+  real one is Task 15's final verification step. IaC and policy stay file-backed in both modes
+  (they are files, not OCI services). Without reachable credentials a `SAMPLE_MODE=false` run
+  degrades to fixtures, reports `status: partial` with `summary.backends` naming what answered,
+  and warns on stderr. `.env.example` documents every variable the adapters read.
 - **External tools and libraries:** `pydantic` (models), `fastapi` + `uvicorn` (`POST /run`),
-  `httpx` (API tests), `requests` (model calls), `pytest`, and `oci` — pinned for the live adapters,
-  which are not built, so **nothing imports it today**.
+  `httpx` (API tests), `requests` (model calls), `pytest`, and `oci` — pinned for the live
+  adapters, imported lazily inside their fetch paths so sample mode never loads the SDK.
 - **Data sources:** all synthetic. The scenarios under `data/scenarios/` are fixtures; their
   telemetry series are **materialised deterministically** from the compact specs in
   `data/scenarios/*/telemetry.json` (CRC32-seeded, so identical across processes) rather than
@@ -306,8 +312,9 @@ python scripts/make_scenario.py --score 8                        # generate and 
   committed or filmed.
 - **Adapted open-source code:** none. Every file was written for this submission.
 - **Known limitations:** the audit covers compute instances, block volumes and reserved public
-  IPs only — not databases, load balancers, object storage or networking. It reads no live system:
-  every committed result comes from fixtures. Cost figures are list prices from a bundled catalog,
+  IPs only — not databases, load balancers, object storage or networking. Every committed result
+  comes from fixtures; the live adapters are unverified against a tenancy. Cost figures are list
+  prices from a bundled catalog,
   not your invoice. A finding with `usd_per_month_upper_bound` impact is an upper bound, never a
   promised saving. Telemetry is CPU only, and a resource whose window is short has no CPU verdict
   at all rather than a hedged one. The IaC check reads Terraform declarations; a resource managed by
@@ -337,7 +344,7 @@ python scripts/make_scenario.py --score 8                        # generate and 
 | Path | Purpose |
 |---|---|
 | `run.py` | CLI entry point (`--serve` for HTTP) |
-| `app/sources/` | Four source adapters: fixture backends are real, live twins are placeholders (Task 15) |
+| `app/sources/` | Four source adapters: fixtures plus live OCI inventory/telemetry (built, offline-tested, tenancy-unverified) |
 | `app/agents/` | Planner, Scout, Skeptic, Writer — one file, one permission set each |
 | `app/loop.py` | Bounded orchestrator: caps, degradation, termination |
 | `app/analysis.py` | Every number the report contains |

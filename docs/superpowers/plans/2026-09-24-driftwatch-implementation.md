@@ -3451,7 +3451,11 @@ Do not start this task before Tasks 1–14 are complete and committed.
 - Consumes: `RunConfig`, the `Source` protocol.
 - Produces: `get_live_source(name: str, config: RunConfig) -> Source`.
 
-- [ ] **Step 1: Write the failing test (no tenancy required)**
+- [x] **Step 1: Write the failing test (no tenancy required)** — done 2026-09-26. Built wider than
+  the draft: besides construction and loud failure, the mapping functions are exercised against
+  SDK-shaped stubs (instance/volume/IP records, coverage arithmetic, the no-stream case), and the
+  whole module is hermetic via an autouse fixture pointing `OCI_CONFIG_FILE` at a path that does
+  not exist. The draft's mask_ocids test already lives in `tests/test_mask_ocids.py`.
 
 ```python
 # tests/test_live_adapters.py
@@ -3479,12 +3483,16 @@ def test_mask_ocids_rewrites_every_ocid_but_keeps_the_shape():
     assert "an9hxljr3f2a" not in masked
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails** — done 2026-09-26; 9 failures, all
+  `ModuleNotFoundError` for the two adapter modules, as expected.
 
-Run: `python -m pytest tests/test_live_adapters.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'app.sources.live'`
-
-- [ ] **Step 3: Implement the adapters**
+- [x] **Step 3: Implement the adapters** — done 2026-09-26, deviating from the draft in four ways,
+  all recorded in `docs/decisions.md`: volumes and reserved IPs are enumerated too (the draft's
+  ComputeClient-only inventory would have left R-1 and R-2 unfireable live); `list_volume_attachments`
+  lives on ComputeClient, not BlockstorageClient as the draft's shape implied; the telemetry adapter
+  widens resolution past the retention edge (5-minute data is kept 30 days, so a 744 h re-check at
+  5 m would silently come back short); and file-backed sources take the run's scenario directory
+  instead of a hardcoded `example_1` path.
 
 ```python
 # app/sources/live.py
@@ -3582,7 +3590,9 @@ class OCIInventorySource:
 window is shorter than requested, set `sufficient=False` and an `insufficient_reason`. It must
 share `materialise`-free logic — no fixture code, no interpolation, no defaulting.
 
-- [ ] **Step 4: Implement `scripts/mask_ocids.py`**
+- [x] **Step 4: Implement `scripts/mask_ocids.py`** — already built during the review closure
+  (2026-09-24), with a lower suffix threshold than this draft and tests in
+  `tests/test_mask_ocids.py`; not rebuilt here.
 
 ```python
 from __future__ import annotations
@@ -3613,7 +3623,10 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 5: Run the tests, then run live once against the lab tenancy**
+- [ ] **Step 5: Run the tests, then run live once against the lab tenancy** — tests done 2026-09-26
+  (109 passing, including the degradation path). **The live run is blocked on the lab tenancy**:
+  `docs/lab-tenancy.md` has the provisioning checklist; the month-end cron must be installed by
+  29 Sep so the 1 Oct burst exists in history during the window.
 
 Run: `python -m pytest tests/test_live_adapters.py -v`
 Then, with `.env` populated from the tenancy: `python run.py --input input_examples/example_1.json`
@@ -3859,6 +3872,45 @@ had surfaced.
 
 Ten held-out seeds score precision 1.0, recall 1.0, verdict accuracy 1.0, deterministic, 0 failing;
 before the loop fix, seed 6 scored 0.8 on verdicts. The lesson is in `docs/insights.md`.
+
+### Task 15 adapters built early (2026-09-26)
+
+Task 15's Steps 1–4 were built ahead of the 17 Oct checkpoint because none of them needs a tenancy —
+only Step 5's live verification does, and that is gated on `docs/lab-tenancy.md` existing. The
+checkpoint question changes from "should we build the live path?" to "did the live run work?",
+which is a much smaller thing to answer with two weeks of window left.
+
+Four deviations from the draft, all discovered by checking the pinned SDK (`oci==2.135.0`) rather
+than assuming its shape:
+
+1. **Inventory covers all three resource classes.** The draft enumerated instances only; R-1
+   (unattached volume) and R-2 (unattached reserved IP) would then never fire on a live tenancy —
+   two of the lab's six pathologies un-auditable. The built adapter lists volumes via
+   `BlockstorageClient.list_volumes`, reserved IPs via `VirtualNetworkClient.list_public_ips`
+   (`scope="REGION"`), and derives a volume's `attached` flag from `list_volume_attachments` —
+   which lives on **ComputeClient**, not BlockstorageClient as the draft implied. A volume object
+   says nothing about whether anything is mounted on it; the attachment does.
+2. **Telemetry resolution respects retention.** Monitoring keeps 5-minute-resolution data for
+   30 days. The Skeptic's re-check asks for 744 h (31 days) — at 5-minute resolution the service
+   would silently return a short window, and the coverage math would report the *adapter's*
+   request as the resource's insufficiency. `resolution_for()` widens to hourly past the 720 h
+   edge (hourly is kept 90 days), which is also the resolution the fixture series use.
+3. **File-backed sources take the run's scenario directory**, not a hardcoded `example_1` path —
+   a live run against the lab tenancy must read `data/scenarios/lab_live/iac.json`, and a
+   hardcoded path would have quietly scored the lab's resources against the demo's declarations.
+4. **Credentials fail as one named error.** Missing compartment and unreachable config file are
+   both reported together (`"; ".join(problems)`), naming `OCI_COMPARTMENT_ID` and the config
+   path/profile, so the stderr line tells the operator which of two things to fix.
+
+Hermeticity: every test pins `OCI_CONFIG_FILE` to a nonexistent path via an autouse fixture, and
+`tests/test_entrypoints.py`'s degradation test now does too — on a machine that *has* real OCI
+credentials, the suite must still exercise the failure path rather than silently auditing
+someone's tenancy during `pytest`. The SDK itself is imported lazily inside fetch paths, so
+sample mode never loads it (that claim is now tested by construction, not promised in prose).
+
+**Still open — Step 5:** one live run against the lab tenancy, which needs the tenancy provisioned
+by 29 Sep for the 1 Oct month-end burst to exist in history during the build window
+(`docs/lab-tenancy.md`).
 
 ---
 

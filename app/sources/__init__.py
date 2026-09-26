@@ -26,4 +26,4 @@ def get_source(name: str, config: RunConfig, scenario_dir: Path | None = None) -
 
     from app.sources import live  # imported lazily: sample mode never imports the OCI SDK
 
-    return live.get_live_source(name, config)
+    return live.get_live_source(name, config, scenario_dir=scenario_dir)

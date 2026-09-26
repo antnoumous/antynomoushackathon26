@@ -52,9 +52,11 @@ def test_run_pipeline_closes_the_log_handles_it_opens(monkeypatch, tmp_path):
 
 
 def test_a_live_run_that_only_got_fixtures_says_so(monkeypatch, tmp_path, capsys):
-    """The README-promised live path does not exist yet; a run must not quietly pretend it did."""
+    """A live run with no reachable tenancy must not quietly pretend it audited one."""
     monkeypatch.setenv("LOGS_DIR", str(tmp_path))
     monkeypatch.delenv("LLM_API_KEY", raising=False)
+    # Hermetic on any machine: even one that has real ~/.oci/config, the adapters must fail here.
+    monkeypatch.setenv("OCI_CONFIG_FILE", str(tmp_path / "no-such-config"))
     report, _ = run_pipeline({"sample_mode": False}, scenario_dir=SCEN)
 
     assert report.mode == "live"

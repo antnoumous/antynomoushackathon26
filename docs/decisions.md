@@ -305,4 +305,34 @@ explained in the module docstring because it is the load-bearing part.
 assumptions. A generator tests the space. Both defects above were invisible to the committed
 scenarios and to a full-length independent review of them.
 
+## 2026-09-26 — Task 15 adapters built now; only the live run waits for the tenancy
 
+**Decision:** build the live OCI adapters (Task 15 Steps 1–4) immediately rather than at the
+17 Oct checkpoint. The checkpoint gate was about *risk* — whether to spend window hours on a path
+that might not verify. It was never a rules constraint: only the Tinkerer Track is limited to
+work built during the window, and spec §5.2 already treats the lab tenancy as pre-window
+infrastructure. Steps 1–4 need no tenancy and no credentials; only Step 5's live run does.
+Building now converts the 17 Oct question from "should we build the live path?" into "did the
+live run work?" — a far smaller thing to answer with two weeks of window left.
+
+**The time-critical fact that forced the date.** The lab's false-positive workload is a *monthly*
+cron. Its burst must exist in Monitoring history during the window (15–20 Oct), and the only
+month-end inside reach is **1 Oct** — 1 Nov falls after submissions close. 5-minute-resolution
+metrics are retained 30 days, so a 1 Oct burst is still queryable on 20 Oct, but only if the
+tenancy and the cron exist by **29 Sep**. `docs/lab-tenancy.md` is the operational checklist
+(compartments, IAM read-only policy, four instances with their exact tags, the two orphans, the
+cron and load scripts, verification steps, masking rules). This is the entrant's errand, not
+code: the tenancy must be provisioned this week or the live re-check→revision demo is impossible
+and the live path shrinks to idle + orphan findings.
+
+**Deviations from the plan's draft, each caught by checking the pinned SDK rather than the
+draft:** inventory enumerates volumes and reserved IPs too (the draft's instances-only adapter
+would leave R-1/R-2 unfireable live); `list_volume_attachments` is on `ComputeClient`; telemetry
+resolution widens to hourly beyond 720 h because 5-minute data is retained only 30 days and a
+744 h re-check at 5 m would silently come back short; file-backed IaC/policy sources take the
+run's scenario directory instead of a hardcoded path. Full record in the plan's Task 15 section.
+
+**Hermeticity rule added:** every live-path test pins `OCI_CONFIG_FILE` at a nonexistent path —
+including the pre-existing degradation test in `tests/test_entrypoints.py`, which would otherwise
+have started auditing a real tenancy on any machine that has `~/.oci/config`. A test suite must
+never depend on the absence of credentials on the machine running it.
