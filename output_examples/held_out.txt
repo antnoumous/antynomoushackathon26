@@ -1,0 +1,7 @@
+held_out_1    precision 1.0  recall 1.0  verdicts 1.0  findings 8   status success  deterministic True
+held_out_2    precision 1.0  recall 1.0  verdicts 1.0  findings 4   status success  deterministic True
+held_out_3    precision 1.0  recall 1.0  verdicts 1.0  findings 6   status success  deterministic True
+held_out_4    precision 1.0  recall 1.0  verdicts 1.0  findings 5   status success  deterministic True
+held_out_5    precision 1.0  recall 1.0  verdicts 1.0  findings 7   status success  deterministic True
+held_out_6    precision 1.0  recall 1.0  verdicts 1.0  findings 6   status success  deterministic True
+6 held-out tenancies, 0 failing

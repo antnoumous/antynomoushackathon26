@@ -10,24 +10,25 @@ cd "$(dirname "$0")/.."
 PY="${PY:-.venv/bin/python}"
 mkdir -p output_examples logs/samples
 
-newest() {
-  local newest="" candidate
-  for candidate in $1; do
-    [[ -e "$candidate" ]] || continue
-    if [[ -z "$newest" || "$candidate" -nt "$newest" ]]; then newest="$candidate"; fi
-  done
-  printf '%s' "$newest"
-}
-
 for n in 1 2 3; do
   echo "=== example_$n ==="
   "$PY" run.py --input "input_examples/example_$n.json" \
     --scenario "data/scenarios/example_$n" \
     --out "output_examples/example_$n.json" > "output_examples/example_$n.log"
 
-  trace="$(newest 'logs/trace-*.jsonl')"
-  state="$(newest 'logs/state-*.jsonl')"
-  report="$(newest 'logs/report-*.md')"
+  # Which trace, state and report belong to this run is a fact the run already recorded, so read it
+  # from the report instead of guessing "the newest file". Two runs land in the same second, and an
+  # mtime tie silently copies the *previous* scenario's trace into the evidence: the committed
+  # traces were one scenario behind until this was fixed. `tests/test_evidence.py` now asserts that
+  # every committed trace carries its own report's run id and narrative.
+  paths="$("$PY" - "$n" <<'PYEOF'
+import json, pathlib, sys
+report = json.loads(pathlib.Path(f"output_examples/example_{sys.argv[1]}.json").read_text())
+trace = report["trace_path"]
+print(trace.replace("trace-", "state-", 1), report["report_markdown_path"], trace)
+PYEOF
+)"
+  read -r state report trace <<< "$paths"
   cp "$trace"  "logs/samples/trace-example_$n.jsonl"
   cp "$state"  "logs/samples/state-example_$n.jsonl"
   cp "$report" "output_examples/example_${n}_report.md"
@@ -38,3 +39,9 @@ echo
 echo "=== evaluation ==="
 "$PY" -m evals.run_eval 2>/dev/null | grep -E "^(example_|  must-not-flag|.*scenarios,)" > output_examples/eval.txt || true
 cat output_examples/eval.txt
+
+echo
+echo "=== held-out scoring: tenancies generated from a seed, not written by hand ==="
+"$PY" scripts/make_scenario.py --score 6 --out /tmp/driftwatch-held-out \
+  2>/dev/null | grep -E "^(held_out|[0-9]+ held)" > output_examples/held_out.txt || true
+cat output_examples/held_out.txt

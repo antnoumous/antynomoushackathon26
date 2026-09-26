@@ -1,5 +1,5 @@
 {
-  "run_id": "run-b577e51593",
+  "run_id": "run-434f3122ab",
   "status": "success",
   "mode": "sample",
   "sources": [
@@ -44,7 +44,7 @@
   },
   "findings": [],
   "undetermined": [],
-  "report_markdown_path": "logs/report-run-b577e51593.md",
-  "trace_path": "logs/trace-run-b577e51593.jsonl",
+  "report_markdown_path": "logs/report-run-434f3122ab.md",
+  "trace_path": "logs/trace-run-434f3122ab.jsonl",
   "caps_hit": []
 }
