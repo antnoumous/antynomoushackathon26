@@ -273,6 +273,7 @@ the report claimed a change of mind that never happened. Held-out scoring caught
 hand-written scenarios missed, and `tests/test_make_scenario.py` now pins that seed.
 
 ```bash
+# in the venv created above — --score needs the app's dependencies, --seed does not
 python scripts/make_scenario.py --seed 7 --out /tmp/held_out_7   # one tenancy, with its truth
 python scripts/make_scenario.py --score 8                        # generate and score eight
 ```
