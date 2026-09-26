@@ -33,8 +33,8 @@ Recommended pre-submission layout lives in the digest §4. Present: `run.py`, `D
   a re-investigation. Design approved 2026-09-24; see
   `docs/superpowers/specs/2026-09-24-oci-tenancy-auditor-design.md`.
 - **Stack:** Python. Hand-rolled bounded agent loop, no orchestration framework. Bundled JSON
-  fixtures drive sample mode; the `oci` SDK is pinned for the live adapters, which are **not built**
-  (Task 15), so nothing imports it yet. No UI. Reasoning in the spec §5.
+  fixtures drive sample mode; the `oci` SDK is pinned and imported lazily by the live adapters
+  (Task 15 Steps 1–4 built, offline-tested, **not yet run against a tenancy**). No UI. Reasoning in the spec §5.
 - **Budget:** ~20 h in the window; a frozen ~15 h must-ship list. Spec §11.
 - **Must-ship path: built, reviewed and verified** (2026-09-24). Tasks 1–14 of the plan are
   complete: the full suite passes (`pytest -q`), and the fresh-clone path was verified end to end —
@@ -50,13 +50,18 @@ Recommended pre-submission layout lives in the digest §4. Present: `run.py`, `D
   as a revision (`app/loop.py`) and committed traces filed under the wrong scenario
   (`scripts/run_examples.sh`) — both fixed and guarded (`tests/test_committed_evidence.py`). Held-out
   numbers live in `output_examples/held_out.txt`.
-- **Next step:** Task 15 (live OCI adapters) — still stretch, still decided at the 17 Oct checkpoint,
-  and it needs the lab tenancy (spec §5.2) to exist before it can be verified at all.
-  `SAMPLE_MODE=false` currently degrades to fixtures and says so in the report and on stderr; the live
-  adapters are what would change that, not a config flag.
-- **Pre-window:** create the lab tenancy (spec §5.2) so metric history exists by 15 Oct;
-  confirm track name and partner stack on HackOS; choose the model provider; watch the 7 Oct
-  Zetaris recording. **Docker path still unverified** — no Docker daemon on the build machine.
+- **Task 15 (live OCI adapters): Steps 1–4 built** (2026-09-26). `app/sources/oci_inventory.py` and
+  `oci_telemetry.py` are real SDK adapters behind the `Source` interface, tested offline against
+  SDK-shaped stubs (`tests/test_live_adapters.py`, hermetic — every test pins `OCI_CONFIG_FILE` at a
+  nonexistent path). 109 tests pass; committed scenarios regenerate byte-identically. **Step 5 — the
+  one live run — is blocked on the lab tenancy.** Without credentials, `SAMPLE_MODE=false` degrades
+  to fixtures, reports `status: partial` with `summary.backends`, and warns on stderr (tested).
+- **Pre-window, deadline-critical:** provision the lab tenancy **by Sun 29 Sep** per
+  `docs/lab-tenancy.md` — the month-end cron must fire **1 Oct** for the burst to exist in Monitoring
+  history during the window (5-min data is retained 30 days; the next month-end, 1 Nov, is after
+  submissions close). Also: confirm track name and partner stack on HackOS; choose the model
+  provider; watch the 7 Oct Zetaris recording. **Docker path still unverified** — no Docker daemon
+  on the build machine.
 - **Build window:** 15 Oct 2026 00:00 UTC → 20 Oct 2026 23:45 UTC (144 hours).
 
 ## Hard dates (all UTC)
