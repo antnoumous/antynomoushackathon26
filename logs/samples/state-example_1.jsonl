@@ -1,16 +1,16 @@
-{"kind": "hydrate", "run_id": "run-c55e297b35", "resources": 6, "declarations": 3, "rules": 5}
-{"kind": "assignment", "run_id": "run-c55e297b35", "round": 1, "focus": "initial", "resource_ids": ["ocid1.instance.oc1..••••aaa1", "ocid1.instance.oc1..••••bbb2", "ocid1.instance.oc1..••••ccc3", "ocid1.instance.oc1..••••ddd4", "ocid1.volume.oc1..••••eee5", "ocid1.publicip.oc1..••••fff6"], "lookback_hours": 168}
-{"kind": "candidate", "run_id": "run-c55e297b35", "candidate_id": "C-001", "resource_id": "ocid1.instance.oc1..••••bbb2", "rules": ["R-3"], "round": 1}
-{"kind": "candidate", "run_id": "run-c55e297b35", "candidate_id": "C-002", "resource_id": "ocid1.instance.oc1..••••ddd4", "rules": ["R-5"], "round": 1}
-{"kind": "candidate", "run_id": "run-c55e297b35", "candidate_id": "C-003", "resource_id": "ocid1.volume.oc1..••••eee5", "rules": ["R-1"], "round": 1}
-{"kind": "candidate", "run_id": "run-c55e297b35", "candidate_id": "C-004", "resource_id": "ocid1.publicip.oc1..••••fff6", "rules": ["R-2"], "round": 1}
-{"kind": "recheck", "run_id": "run-c55e297b35", "candidate_id": "C-001", "round": 1, "signal": "month-end", "lookback_hours": 744}
-{"kind": "ruling", "run_id": "run-c55e297b35", "candidate_id": "C-001", "verdict": "recheck", "round": 1}
-{"kind": "ruling", "run_id": "run-c55e297b35", "candidate_id": "C-002", "verdict": "accept", "round": 1}
-{"kind": "ruling", "run_id": "run-c55e297b35", "candidate_id": "C-003", "verdict": "accept", "round": 1}
-{"kind": "ruling", "run_id": "run-c55e297b35", "candidate_id": "C-004", "verdict": "accept", "round": 1}
-{"kind": "assignment", "run_id": "run-c55e297b35", "round": 2, "focus": "recheck", "resource_ids": ["ocid1.instance.oc1..••••bbb2"], "lookback_hours": 744}
-{"kind": "candidate", "run_id": "run-c55e297b35", "candidate_id": "C-005", "resource_id": "ocid1.instance.oc1..••••bbb2", "rules": ["R-4"], "round": 2}
-{"kind": "supersede", "run_id": "run-c55e297b35", "superseded": "C-001", "superseded_by": "C-005", "round": 2}
-{"kind": "ruling", "run_id": "run-c55e297b35", "candidate_id": "C-005", "verdict": "accept", "round": 2}
-{"kind": "report", "run_id": "run-c55e297b35", "status": "success", "findings": 5}
+{"kind": "hydrate", "run_id": "run-d4d614042b", "resources": 6, "declarations": 3, "rules": 5}
+{"kind": "assignment", "run_id": "run-d4d614042b", "round": 1, "focus": "initial", "resource_ids": ["ocid1.instance.oc1..••••aaa1", "ocid1.instance.oc1..••••bbb2", "ocid1.instance.oc1..••••ccc3", "ocid1.instance.oc1..••••ddd4", "ocid1.volume.oc1..••••eee5", "ocid1.publicip.oc1..••••fff6"], "lookback_hours": 168}
+{"kind": "candidate", "run_id": "run-d4d614042b", "candidate_id": "C-001", "resource_id": "ocid1.instance.oc1..••••bbb2", "rules": ["R-3"], "round": 1}
+{"kind": "candidate", "run_id": "run-d4d614042b", "candidate_id": "C-002", "resource_id": "ocid1.instance.oc1..••••ddd4", "rules": ["R-5"], "round": 1}
+{"kind": "candidate", "run_id": "run-d4d614042b", "candidate_id": "C-003", "resource_id": "ocid1.volume.oc1..••••eee5", "rules": ["R-1"], "round": 1}
+{"kind": "candidate", "run_id": "run-d4d614042b", "candidate_id": "C-004", "resource_id": "ocid1.publicip.oc1..••••fff6", "rules": ["R-2"], "round": 1}
+{"kind": "recheck", "run_id": "run-d4d614042b", "candidate_id": "C-001", "round": 1, "signal": "month-end", "lookback_hours": 744}
+{"kind": "ruling", "run_id": "run-d4d614042b", "candidate_id": "C-001", "verdict": "recheck", "round": 1}
+{"kind": "ruling", "run_id": "run-d4d614042b", "candidate_id": "C-002", "verdict": "accept", "round": 1}
+{"kind": "ruling", "run_id": "run-d4d614042b", "candidate_id": "C-003", "verdict": "accept", "round": 1}
+{"kind": "ruling", "run_id": "run-d4d614042b", "candidate_id": "C-004", "verdict": "accept", "round": 1}
+{"kind": "assignment", "run_id": "run-d4d614042b", "round": 2, "focus": "recheck", "resource_ids": ["ocid1.instance.oc1..••••bbb2"], "lookback_hours": 744}
+{"kind": "candidate", "run_id": "run-d4d614042b", "candidate_id": "C-005", "resource_id": "ocid1.instance.oc1..••••bbb2", "rules": ["R-4"], "round": 2}
+{"kind": "supersede", "run_id": "run-d4d614042b", "superseded": "C-001", "superseded_by": "C-005", "round": 2}
+{"kind": "ruling", "run_id": "run-d4d614042b", "candidate_id": "C-005", "verdict": "accept", "round": 2}
+{"kind": "report", "run_id": "run-d4d614042b", "status": "success", "findings": 5}

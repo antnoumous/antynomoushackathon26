@@ -216,6 +216,22 @@ def test_no_telemetry_means_no_cpu_finding_rather_than_a_zero(tmp_path):
     assert report.status == "partial"
 
 
+def test_a_corrupt_fixture_degrades_the_source_instead_of_crashing_the_run(tmp_path):
+    """Truncated JSON is the realistic corruption: a half-written file, not a missing one."""
+    corrupt = tmp_path / "corrupt"
+    corrupt.mkdir()
+    (corrupt / "inventory.json").write_text('{"scenario_id": "corrupt", "resources": [')
+    for name in ("telemetry.json", "iac.json", "policy.json"):
+        (corrupt / name).write_text((SCEN / name).read_text())
+
+    cfg, ctx = build(tmp_path, scenario=corrupt)
+    report = Orchestrator(ctx, scenario_dir=corrupt).run()
+
+    assert report.status == "partial"
+    assert [s for s in report.sources if s.name == "inventory" and s.degraded]
+    assert report.findings == []
+
+
 def test_more_resources_than_the_cap_are_reported_not_hidden(tmp_path):
     wide = tmp_path / "wide"
     wide.mkdir()
@@ -247,6 +263,9 @@ def test_more_resources_than_the_cap_are_reported_not_hidden(tmp_path):
     assert report.summary["resources_in_scope"] == 30
     assert report.summary["resources_examined"] == 25     # not 30: the report cannot overstate
     assert "cap_hit" in actions(ctx)
+    # The narrative is the line a human reads first, so it must not quote the tenancy size either.
+    assert "Audited 25 resources" in report.summary["narrative"]
+    assert "30" not in report.summary["narrative"]
 
 
 def test_a_broken_fixture_degrades_the_source_instead_of_crashing_the_run(tmp_path):

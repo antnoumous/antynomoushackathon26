@@ -122,8 +122,12 @@ coverage checks, tag parsing, IaC matching, threshold comparisons, cap enforceme
 and verdict eligibility. A model decides interpretation, ambiguous judgement, explanation and
 prose. **No figure in a report is produced by a model**: every number in a claim, a revised claim,
 a verdict's reason and the run narrative is checked against the evidence ledger by
-`app/agents/writer.py:assert_figures_traceable`, which raises rather than publish. Money figures
-are stricter still — a `300` in the text is not allowed merely because 300 is the soft wall clock.
+`app/agents/writer.py:assert_figures_traceable`, which raises rather than publish. Money is a
+stricter tier than magnitude: currency has to come from computed arithmetic or a resolved payload,
+so a `300` in the text is not allowed merely because 300 is the soft wall clock. The constants a
+report may state about *itself* — caps, round counts, the requested window — are derived from the
+run's own configuration rather than hardcoded, so lowering a cap through the request cannot leave a
+stale allowance behind.
 
 What that guarantee is *not* is a truthfulness oracle. It stops a number without evidence; it
 cannot stop a false sentence that contains no number. The defence there is structural: the prose a

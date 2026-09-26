@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pytest
 from app.agents.base import AgentContext
-from app.agents.writer import UntraceableFigureError, Writer, assert_figures_traceable
+from app.agents.writer import (UntraceableFigureError, Writer, assert_figures_traceable,
+                               structural_literals)
 from app.config import RunConfig
 from app.evidence import EvidenceLedger
 from app.generator import RulesGenerator
@@ -56,11 +57,29 @@ def test_a_figure_with_no_evidence_is_refused():
 
 def test_a_money_figure_is_never_allowed_because_the_number_is_a_cap_value():
     """300 is the soft wall clock; that must not make "300 USD" publishable."""
-    assert_figures_traceable("the soft budget is 300 seconds and the cap is 25 resources", set())
+    literals = structural_literals(RunConfig.from_env_and_request({}))
+    assert_figures_traceable("the soft budget is 300 seconds and the cap is 25 resources", literals)
     with pytest.raises(UntraceableFigureError):
-        assert_figures_traceable("this instance wastes 300 USD every month", set())
+        assert_figures_traceable("this instance wastes 300 USD every month", literals, computed=set())
     with pytest.raises(UntraceableFigureError):
-        assert_figures_traceable("about $300 is recoverable", set())
+        assert_figures_traceable("about $300 is recoverable", literals, computed=set())
+    # The same sentence is fine once the money is real computed arithmetic, which is the distinction
+    # the two sets exist to make.
+    assert_figures_traceable("this instance wastes 300 USD every month", literals, computed={"300"})
+
+
+def test_the_structural_literals_follow_the_run_not_a_hardcoded_list():
+    """Lower the cap in the request and the old value stops being publishable.
+
+    A frozen literal list is a standing allowance: 168 stays pre-approved for a run configured
+    around a 730-hour window, and any fabricated figure equal to one of those numbers sails through
+    the only guard there is.
+    """
+    lowered = structural_literals(
+        RunConfig.from_env_and_request({"caps": {"max_resources": 4}, "telemetry": {"lookback_hours": 24}}))
+    assert "4" in lowered and "24" in lowered
+    with pytest.raises(UntraceableFigureError):
+        assert_figures_traceable("the cap is 25 resources over a 168h window", lowered)
 
 
 def test_allowed_set_is_built_from_ledger_payloads(tmp_path):

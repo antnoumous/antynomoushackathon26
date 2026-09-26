@@ -238,3 +238,27 @@ confident, precise-looking output that no evidence supports. The lesson is recor
 summarised away: **every claim in the README is now something a script can check**, and
 `tests/test_mask_ocids.py` keeps the OCID claim honest by testing the tool and scanning the repo.
 
+### Follow-up pass on the same review
+
+Re-reading the full findings list the next day (the middle of it had been truncated in the session
+context) turned up three items that the first pass had left half-closed, and they are worth naming
+because the pattern is the same each time — the fix was right and the coverage was narrow:
+
+- **The magnitude whitelist was still a standing allowance** (finding 6). Currency was already
+  evidence-only, but a fabricated *non-currency* figure equal to a cap constant still sailed through
+  `assert_figures_traceable`, because the allowed set was a hardcoded list (`0-5, 7, 10, 20, 25, 41,
+  60, 168, 300, 540, 730, 744`). It is now derived from the run: `structural_literals(config)` reads
+  the caps, round count, re-check budget and lookback out of the configuration, so a request that
+  lowers `max_resources` also drops `25` from the allowance. Fixing it exposed a second flaw in our
+  own rule — with `300` legitimately a structural constant, `"300 USD"` became publishable — so the
+  guard now takes **two tiers**: `allowed` for magnitudes, `computed` (payload or code arithmetic)
+  for money. A single set cannot express the difference between a duration and a price.
+- **The cap's narrative half was untested** (finding 2). `summary.resources_examined` was fixed and
+  tested, but the narrative — the line a human reads first — was only correct by construction. The
+  cap test now asserts `"Audited 25 resources"` and that the tenancy size `30` appears nowhere.
+- **The corrupt-fixture path was untested** (finding 9). A *missing* fixture directory was covered; a
+  half-written JSON file is the realistic corruption, and it is now a test too.
+
+The three scenarios regenerate byte-identically apart from the run id, which is the evidence that
+tightening the allowance changed nothing published.
+

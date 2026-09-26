@@ -1,5 +1,5 @@
 {
-  "run_id": "run-d6317e3fe9",
+  "run_id": "run-f3d3575eef",
   "status": "success",
   "mode": "sample",
   "sources": [
@@ -160,7 +160,7 @@
       "reason": "coverage 20h of 168h requested"
     }
   ],
-  "report_markdown_path": "logs/report-run-d6317e3fe9.md",
-  "trace_path": "logs/trace-run-d6317e3fe9.jsonl",
+  "report_markdown_path": "logs/report-run-f3d3575eef.md",
+  "trace_path": "logs/trace-run-f3d3575eef.jsonl",
   "caps_hit": []
 }

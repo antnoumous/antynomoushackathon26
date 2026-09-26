@@ -3798,6 +3798,12 @@ resource, with model timeouts trimmed to the remaining budget); a missing fixtur
 precision for a scenario with no expected findings (now `n/a`); `mask_ocids.py` missing short-suffix
 OCIDs; and four README claims that overstated the code.
 
+A follow-up pass over the same findings list closed three half-closed items: the magnitude whitelist
+(finding 6) is now derived from the run's configuration instead of hardcoded, with money checked
+against a second, stricter tier of computed figures; the cap's narrative half is asserted rather
+than correct-by-construction (finding 2); and a corrupt — not merely missing — fixture is a test
+(finding 9). The three scenarios regenerate byte-identically apart from the run id.
+
 The three committed scenarios regenerate with identical findings, statuses, claims and caps — the
 evidence that these fixes changed only the paths where something goes wrong. Full record:
 `docs/decisions.md`, 2026-09-24.
