@@ -3366,10 +3366,9 @@ development venv hides this class of failure. The app now also refuses to import
 one actionable line, so a wrong interpreter cannot masquerade as thirteen unrelated bugs.
 
 Verified: Python 3.11.16 venv, `pip install -r requirements.txt`, **63 tests passed** (the suite has
-since grown to 82 — see the post-build review at the end of this plan), a credential-free `run.py`
-writing a full report, and `POST /run` answering HTTP 200 in 20 ms. Re-verified from a fresh clone
-after the review fixes: 82 passed, CLI exit 0, `POST /run` HTTP 200, evaluator "3 scenarios, 0
-failing".
+grown since — see the post-build review at the end of this plan), a credential-free `run.py` writing
+a full report, and `POST /run` answering HTTP 200 in 20 ms. Re-verified from a fresh clone after the
+review fixes: the full suite, CLI exit 0, `POST /run` HTTP 200, evaluator "3 scenarios, 0 failing".
 
 - [ ] **Step 5: Verify the Docker path** — **NOT PERFORMED 2026-09-24: no Docker daemon on the build machine**
 

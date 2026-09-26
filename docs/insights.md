@@ -67,7 +67,7 @@ Short and specific beats long and vague. Each entry:
 
 | What | Measurement |
 |---|---|
-| Full test suite | 82 tests, 0.9 s on a fresh clone |
+| Full test suite | 84 tests, under 1 s on a fresh clone |
 | `POST /run`, sample mode | HTTP 200, 20 ms for 6 resources / 5 findings |
 | End-to-end CLI audit | ~1 s per scenario including all four agents |
 | Evaluation (3 scenarios) | precision 1.0, recall 1.0, verdict accuracy 1.0, deterministic |
