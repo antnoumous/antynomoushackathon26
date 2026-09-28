@@ -59,6 +59,12 @@ docker build -t driftwatch .
 docker run --rm -p 8000:8000 -e SAMPLE_MODE=true driftwatch
 ```
 
+**The container recipe is verified**: it was built and served on a clean Ubuntu 24.04 VM using
+podman (image 556 MB; `/health` returned `{"status":"ok"}` and `POST /run` with
+`input_examples/example_1.json` returned the full report). That VM is arm64, so the *recipe* —
+base image, pinned requirements, entry points — is proven; the x86 image pull a judge on Intel
+would do was not exercised on it.
+
 **Sample mode is the judged path; the live path is real and has been run against a tenancy.**
 `SAMPLE_MODE=true` runs the full agent on the bundled scenarios with no credentials and no
 network. `SAMPLE_MODE=false` wires the real OCI adapters — inventory (instances, volumes,

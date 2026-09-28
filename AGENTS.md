@@ -63,9 +63,13 @@ Recommended pre-submission layout lives in the digest §4. Present: `run.py`, `D
   `~/.oci/config` `[DRIFTWATCH2]` (read-only) / `[PROVISIONER2]` (build-time only); repo `.env`
   wired. The original Free-Tier tenancy (credit expired mid-Aug) is untouched as fallback. Paid
   costs ride the $300 trial credit (expires ~27 Oct); teardown due 21 Oct.
-- **Still open pre-window:** confirm track name and partner stack on HackOS; choose the model
-  provider (`LLM_*` in `.env` unset — live runs currently use the deterministic writer); watch the
-  7 Oct Zetaris recording. **Docker path still unverified** — no Docker daemon on the build machine.
+- **Still open pre-window:** confirm track name and partner stack on HackOS; watch the 7 Oct
+  Zetaris recording. **Docker recipe verified** (2026-09-28, podman on the arm64 lab sandbox:
+  build OK, `/health` + `POST /run` answered; x86 pull not exercised — no x86 daemon anywhere).
+  Fresh-export (git-less) install→pytest→run→/run→evals verified on the same sandbox; the OCID
+  guard was fixed for that path (`output_examples/fresh_verify.txt`). Model provider wired:
+  `qwen3.8-flash` via Alibaba Token Plan in `.env` (sample mode stays credential-free); first
+  model-driven live run exercised the figure-guard rewrite path.
 - **Build window:** 15 Oct 2026 00:00 UTC → 20 Oct 2026 23:45 UTC (144 hours).
 
 ## Hard dates (all UTC)
