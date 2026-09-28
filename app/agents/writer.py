@@ -82,10 +82,51 @@ class Writer(Agent):
         resource = self.ctx.state.facts["resources"].get(resource_id)
         return text if resource is None else text.replace(resource.display_name, "[resource]")
 
+    def _name_of(self, resource_id: str) -> str:
+        resource = self.ctx.state.facts["resources"].get(resource_id)
+        return resource.display_name if resource else resource_id
+
+    def _size_of(self, resource_id: str):
+        resource = self.ctx.state.facts["resources"].get(resource_id)
+        return getattr(resource, "size_gb", None) if resource else None
+
     def synthesise(self, *, candidates: list[Candidate], rulings: dict[str, Ruling],
                    undetermined: list[Undetermined], sources: list[SourceStatus],
                    status: str, caps_hit: list[str]) -> RunReport:
         allowed, computed = self.allowed_figures(candidates)
+        # A model-authored claim that fails the figure guard is rewritten from the rule
+        # engine's own templates — deterministic prose the guard already passes — and the
+        # swap is visible on the trace. Refusing to finish the run because a hosted model
+        # hallucinated a number is a worse outcome than a plainer sentence about it.
+        for candidate in candidates:
+            ruling = rulings[candidate.candidate_id]
+            for field, text in (("claim", candidate.claim),
+                                ("revised_claim", ruling.revised_claim)):
+                if not text:
+                    continue
+                try:
+                    assert_figures_traceable(self._mask(text, candidate.resource_id),
+                                             allowed, computed)
+                except UntraceableFigureError as exc:
+                    if not candidate.matched_rule_ids:
+                        raise                          # nothing to honestly rewrite from: the
+                    replacement = self.ctx.generator.complete(   # refusal stands
+                        prompt="", schema={"name": "finding_claim"},
+                        context={"rule_id": candidate.matched_rule_ids[0],
+                                 "resource_name": self._name_of(candidate.resource_id),
+                                 "stats": candidate.stats,
+                                 "iac_match_rule": candidate.iac_match_rule,
+                                 "size_gb": self._size_of(candidate.resource_id)})["claim"]
+                    assert_figures_traceable(self._mask(replacement, candidate.resource_id),
+                                             allowed, computed)      # the rule engine must also pass
+                    self._emit("figure_guard_rewrite", target_agent=None,
+                               input_summary=f"{candidate.candidate_id} {field}",
+                               output_summary=f"model prose rejected ({exc}); rule template used",
+                               status="recovered")
+                    if field == "claim":
+                        candidate.claim = replacement
+                    else:
+                        ruling.revised_claim = replacement
         # A finding is `revised` when an earlier finding about the same resource and class was
         # withdrawn — that pairing is the visible trace of the agent changing its mind.
         withdrawn = {(c.resource_id, c.finding_class) for c in candidates

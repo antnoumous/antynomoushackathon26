@@ -76,9 +76,32 @@ class RulesGenerator:
 class ModelGenerator:
     """OpenAI-compatible chat completions. Never instantiated in sample mode."""
 
+    # The call sites pass a schema by name only ({"name": "finding_claim"}), which the rule
+    # engine can switch on but a model cannot: it needs the shape spelled out. These mirror
+    # RulesGenerator's contract exactly — same keys, same requiredness.
+    SCHEMAS: dict[str, dict] = {
+        "finding_claim": {"type": "object",
+                          "properties": {"claim": {"type": "string"},
+                                         "confidence": {"type": "number", "minimum": 0, "maximum": 1}},
+                          "required": ["claim", "confidence"]},
+        "verdict_reason": {"type": "object",
+                           "properties": {"reason": {"type": "string"},
+                                          "confidence": {"type": "number", "minimum": 0, "maximum": 1}},
+                           "required": ["reason", "confidence"]},
+        "run_summary": {"type": "object",
+                        "properties": {"summary": {"type": "string"},
+                                       "confidence": {"type": "number"}},
+                        "required": ["summary", "confidence"]},
+    }
+
     def __init__(self, base_url: str, api_key: str, model: str, timeout_s: int = 60) -> None:
         self.base_url, self.api_key, self.model, self.timeout_s = base_url, api_key, model, timeout_s
         self._deadline: float | None = None
+        # Partner-call rule: every outbound call has a timeout and a fallback. If the model
+        # errors, times out, or answers off-schema, this generator degrades to the deterministic
+        # rule engine per call — the run finishes on prose the loop already proves, instead of
+        # crashing mid-audit because a hosted endpoint had a bad minute.
+        self._fallback = RulesGenerator()
 
     def set_deadline(self, deadline: float | None) -> None:
         """The run's wall-clock deadline, so no single call can outlive the run's budget."""
@@ -98,17 +121,41 @@ class ModelGenerator:
                    api_key=api_key, model=os.environ.get("LLM_MODEL", "gpt-4o-mini"))
 
     def complete(self, *, prompt: str, schema: dict, context: dict) -> dict:
+        try:
+            return self._complete_model(prompt=prompt, schema=schema, context=context)
+        except Exception:                              # noqa: BLE001 - documented per-call fallback
+            return self._fallback.complete(prompt=prompt, schema=schema, context=context)
+
+    def _complete_model(self, *, prompt: str, schema: dict, context: dict) -> dict:
+        # Call sites pass {"name": ...} and sometimes an empty prompt (the rule engine needs
+        # neither; a model needs both). Expand to the real schema and render the context into
+        # the prompt so every backend produces the same shape from the same inputs.
+        name = schema.get("name")
+        full_schema = self.SCHEMAS.get(name) if isinstance(name, str) else None
+        if full_schema is None:
+            raise KeyError(name)
+        brief = (f"{prompt}\nContext: {json.dumps(context, default=str)}"
+                 if prompt else f"Produce the {name} for this context: {json.dumps(context, default=str)}")
+        # response_format=json_object requires the word "json" to appear in the messages on
+        # OpenAI-compatible endpoints (Token Plan rejects the request otherwise with a 400).
+        # The schema is JSON, so saying so is also the honest instruction.
         response = requests.post(
             f"{self.base_url}/chat/completions",
             headers={"Authorization": f"Bearer {self.api_key}"},
             json={"model": self.model, "response_format": {"type": "json_object"},
-                  "messages": [{"role": "system", "content": json.dumps(schema)},
-                               {"role": "user", "content": prompt}]},
+                  "messages": [{"role": "system",
+                                "content": "Respond with a single JSON object matching this "
+                                           f"JSON schema, no prose around it.\n{json.dumps(full_schema)}"},
+                               {"role": "user", "content": brief}]},
             timeout=self.current_timeout(),
         )
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]
-        return json.loads(content)
+        out = json.loads(content)
+        missing = [k for k in full_schema["required"] if k not in out]
+        if missing:
+            raise ValueError(f"model response for {name} missing {missing}")
+        return out
 
 
 def get_generator(config: RunConfig) -> Generator:

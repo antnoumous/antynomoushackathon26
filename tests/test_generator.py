@@ -69,3 +69,60 @@ def test_a_model_call_timeout_shrinks_to_fit_the_run_budget(monkeypatch):
 
     generator.set_deadline(99.0)                        # the budget is already gone
     assert generator.current_timeout() == 1.0
+
+
+class _Resp:
+    def __init__(self, content, status=200):
+        self._content, self.status_code = content, status
+    def raise_for_status(self):
+        if self.status_code != 200:
+            raise RuntimeError(f"http {self.status_code}")
+    def json(self):
+        return {"choices": [{"message": {"content": self._content}}]}
+
+
+def _ok_post(content):
+    def post(url, headers=None, json=None, timeout=None):
+        return _Resp(content)
+    return post
+
+
+def test_model_generator_expands_named_schemas_and_posts_the_full_one(monkeypatch):
+    """Call sites hand the generator {"name": ...}; the model must receive a real schema and the
+    context, or it cannot answer the shape the loop consumes (found on the first model live run).
+    The stub mirrors requests.post's signature: a payload mismatch that the error fallback would
+    otherwise swallow must fail loudly here, not degrade silently."""
+    seen = {}
+    def post(url, headers=None, json=None, timeout=None):
+        assert url.endswith("/chat/completions")
+        seen.update(json)
+        return _Resp('{"claim": "detached volume", "confidence": 0.6}')
+    monkeypatch.setattr("app.generator.requests.post", post)
+    gen = ModelGenerator("https://example.invalid/v1", FAKE_KEY, "m")
+    out = gen.complete(prompt="say the finding", schema={"name": "finding_claim"},
+                       context={"rule_id": "R-1", "resource_name": "vol-x"})
+    assert out == {"claim": "detached volume", "confidence": 0.6}
+    assert "claim" in seen["messages"][0]["content"]        # full schema, not just the name
+    assert "vol-x" in seen["messages"][1]["content"]        # context rendered into the prompt
+
+
+def test_model_generator_falls_back_to_rules_on_http_error(monkeypatch):
+    def boom(url, headers=None, json=None, timeout=None):
+        return _Resp(None, status=500)
+    monkeypatch.setattr("app.generator.requests.post", boom)
+    gen = ModelGenerator("https://example.invalid/v1", FAKE_KEY, "m")
+    out = gen.complete(prompt="", schema={"name": "run_summary"},
+                       context={"resources": 6, "sources": 4, "accepted": 3,
+                                "rejected": 0, "undetermined": 4})
+    assert "6 resources" in out["summary"]                  # RulesGenerator's text
+
+
+def test_model_generator_falls_back_on_off_schema_answers(monkeypatch):
+    """A model that returns valid JSON of the wrong shape is as unusable as an HTTP 500."""
+    monkeypatch.setattr("app.generator.requests.post",
+                        _ok_post('{"claim": "no confidence attached"}'))
+    gen = ModelGenerator("https://example.invalid/v1", FAKE_KEY, "m")
+    out = gen.complete(prompt="", schema={"name": "finding_claim"},
+                       context={"rule_id": "R-2", "resource_name": "ip-x",
+                                "stats": {}, "iac_match_rule": None})
+    assert set(out) == {"claim", "confidence"}              # rule engine's shape, model's failure
