@@ -336,3 +336,32 @@ run's scenario directory instead of a hardcoded path. Full record in the plan's 
 including the pre-existing degradation test in `tests/test_entrypoints.py`, which would otherwise
 have started auditing a real tenancy on any machine that has `~/.oci/config`. A test suite must
 never depend on the absence of credentials on the machine running it.
+
+## 2026-09-28 — Lab tenancy home region: ap-batam-1
+
+**Decision:** the lab tenancy's home region is **ap-batam-1** (Jakarta/Batam, Indonesia), not the
+ap-singapore-1 used in earlier drafts. `.env.example` and `docs/lab-tenancy.md` updated; the
+`ap-singapore-1` strings in `tests/test_mask_ocids.py` stay — they are synthetic OCID fixtures,
+not a region assumption.
+
+**Consequences.** Always Free compute must be created in the home region, which ap-batam-1 is —
+fine. It is a newer, single-AD region, so the A1 (ARM) capacity-retry-across-ADs fallback in the
+checklist does not apply there: verify A1 availability via the Console's Always Free badge or
+Limits page before planning around ARM instances. Pricing is OCI-published USD and uniform
+across regions, so the ≈ $8.6/month orphan estimate stands.
+
+## 2026-09-28 — Lab moves to a fresh trial tenancy; ap-batam-1 abandoned for the live path
+
+**Findings, all verified by live API calls:** the original tenancy (created 15 Jul 2026) passed
+its 30-day trial credit ~mid-Aug; it can no longer launch paid shapes. In ap-batam-1 it also
+sees *no* E2.1.Micro shapes at all (`list_shapes` → A1.Flex + A2.Flex only), and A1.Flex is
+"Out of host capacity" with no second AD to retry in. A bare A2 launch fails with the
+unpayable-account signature ("valid ratio range: 0-0"). The Always-Free compute story the
+checklist assumed does not hold in this region/account.
+
+**Decision:** build the lab in a new trial tenancy (singapore recommended) whose $300 credit
+covers the run; if A1 crunches again there, launch 1-OCPU E4.Flex on credit (~$100 for the
+window, alert at $50). Risk noted honestly: OCI permits one free account per person, so the
+fresh trial is a ToS-grey choice the entrant carries personally; the Batam lab remains intact
+as a free-tier fallback and its IAM/network/volume assets are already built. The month-end
+deadline (cron installed before 1 Oct) is unchanged.
