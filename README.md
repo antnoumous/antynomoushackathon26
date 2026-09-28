@@ -59,16 +59,16 @@ docker build -t driftwatch .
 docker run --rm -p 8000:8000 -e SAMPLE_MODE=true driftwatch
 ```
 
-**Only sample mode is verified.** `SAMPLE_MODE=true` runs the full agent on the bundled scenarios
-with no credentials and no network, and that is how this submission is meant to be judged.
-`SAMPLE_MODE=false` now wires the real OCI adapters — inventory (instances, volumes, reserved IPs),
-telemetry (`CpuUtilization` via the Monitoring service), and the file-backed IaC and policy sources —
-but **they have not been run against a live tenancy yet**: that verification needs the lab tenancy
-(`docs/lab-tenancy.md`) to exist first. Until then, treat a live run as unproven. The failure path
-is the tested one: without reachable credentials every OCI source raises `SourceError`, the loop
-degrades to the bundled fixtures, the run reports `status: partial` with `summary.backends` naming
-what actually answered, and a warning is printed to stderr. `oci` is imported lazily, so sample
-mode never touches the SDK.
+**Sample mode is the judged path; the live path is real and has been run against a tenancy.**
+`SAMPLE_MODE=true` runs the full agent on the bundled scenarios with no credentials and no
+network. `SAMPLE_MODE=false` wires the real OCI adapters — inventory (instances, volumes,
+reserved IPs), telemetry (`CpuUtilization` via the Monitoring service), and the file-backed IaC
+and policy sources — against a lab tenancy (`docs/lab-tenancy.md`); the first live runs found
+and fixed five defects (telemetry query scoping, terminated-instance ghosts, missing price rows,
+a skipped fixture fallback in the Scout, and an unmasked-id join). Without reachable credentials
+every OCI source raises `SourceError`, the loop degrades to the bundled fixtures, the run reports
+`status: partial` with `summary.backends` naming what actually answered, and a warning is printed
+to stderr. `oci` is imported lazily, so sample mode never touches the SDK.
 
 ## The money shot
 
@@ -283,38 +283,49 @@ python scripts/make_scenario.py --score 8                        # generate and 
 ## Disclosure
 
 - **Models and providers:** live mode calls one OpenAI-compatible `chat/completions` endpoint,
-  configured by `LLM_BASE_URL` and `LLM_MODEL`. **No live provider is configured in this
-  repository**, and every committed run used the deterministic rule engine in
-  `app/generator.py:RulesGenerator`. Setting `LLM_API_KEY` switches the judgement path to a model
-  without any other change — and the figure guard then applies to that model's prose in all four
-  places it can appear (claim, revised claim, verdict reason, run narrative).
+  configured by `LLM_BASE_URL` and `LLM_MODEL` (`.env`, gitignored, points at an Alibaba Cloud
+  Model Studio token-plan endpoint running `qwen3.8-flash`; sample mode and the judge's run need
+  no key and call no model). **Every committed artifact — `output_examples/`, `logs/samples/`,
+  `evals/` — was produced by the deterministic rule engine** (`app/generator.py:RulesGenerator`),
+  so results are reproducible without a provider. The model path is exercised live: on the lab
+  tenancy it proposed claims that the figure guard rejected for unbacked numbers and rewrote from
+  rule templates — visible as `figure_guard_rewrite` events on the run trace, which is the
+  designed behaviour. Any model prose is checked by the figure guard in all four places it can
+  appear (claim, revised claim, verdict reason, run narrative).
 - **Agent frameworks:** none. The loop is hand-rolled in `app/loop.py` — no LangGraph, CrewAI or
   AutoGen.
 - **Partner technologies:** none mounted, as stated above.
-- **Live path:** built, **not tenancy-verified**. `app/sources/oci_inventory.py` and
-  `oci_telemetry.py` are real OCI SDK adapters behind the `Source` interface, tested offline
-  against SDK-shaped stubs (`tests/test_live_adapters.py`) but never yet run against a live
-  tenancy — the lab tenancy in `docs/lab-tenancy.md` does not exist yet, and a run against a
-  real one is Task 15's final verification step. IaC and policy stay file-backed in both modes
-  (they are files, not OCI services). Without reachable credentials a `SAMPLE_MODE=false` run
-  degrades to fixtures, reports `status: partial` with `summary.backends` naming what answered,
-  and warns on stderr. `.env.example` documents every variable the adapters read.
+- **Live path:** built and **run against a live lab tenancy** (created 28 Sep per
+  `docs/lab-tenancy.md`). `app/sources/oci_inventory.py` and `oci_telemetry.py` are real OCI SDK
+  adapters behind the `Source` interface, exercised offline against SDK-shaped stubs
+  (`tests/test_live_adapters.py`) and live against compute, block volume, public IP and Monitoring
+  APIs; the first live + degraded runs surfaced five defects, all fixed with regression tests. IaC
+  and policy stay file-backed in both modes (they are files, not OCI services). Without reachable
+  credentials a `SAMPLE_MODE=false` run degrades to fixtures, reports `status: partial` with
+  `summary.backends` naming what answered, and warns on stderr. `.env.example` documents every
+  variable the adapters read.
 - **External tools and libraries:** `pydantic` (models), `fastapi` + `uvicorn` (`POST /run`),
   `httpx` (API tests), `requests` (model calls), `pytest`, and `oci` — pinned for the live
   adapters, imported lazily inside their fetch paths so sample mode never loads the SDK.
-- **Data sources:** all synthetic. The scenarios under `data/scenarios/` are fixtures; their
-  telemetry series are **materialised deterministically** from the compact specs in
+- **Data sources:** `data/scenarios/example_1..3` and `iac`/`policy` are synthetic fixtures —
+  example telemetry is **materialised deterministically** from the compact specs in
   `data/scenarios/*/telemetry.json` (CRC32-seeded, so identical across processes) rather than
-  captured from any real system. `data/pricing.json` holds rounded OCI list rates for cost
-  estimation only. **No employer, customer or third-party data is present anywhere in this
-  repository**, and a test fails the build if an unmasked OCID appears in any tracked file
+  captured from any real system. One exception, disclosed on its face: `data/scenarios/lab_live`
+  is a **capture of the author's own lab tenancy** (four throwaway instances, one orphan volume,
+  one reserved IP), with every OCID masked by `scripts/mask_ocids.py` before it was committed and
+  a `README.md` inside the directory saying so. It exists as the fixture fallback the live path
+  degrades to. `data/pricing.json` holds rounded OCI list rates for cost estimation only.
+  **No employer, customer or third-party data is present anywhere in this repository**, and a
+  test fails the build if an unmasked OCID appears in any tracked file
   (`tests/test_mask_ocids.py`). `scripts/mask_ocids.py` masks real OCIDs before any artifact is
   committed or filmed.
 - **Adapted open-source code:** none. Every file was written for this submission.
 - **Known limitations:** the audit covers compute instances, block volumes and reserved public
   IPs only — not databases, load balancers, object storage or networking. Every committed result
-  comes from fixtures; the live adapters are unverified against a tenancy. Cost figures are list
-  prices from a bundled catalog,
+  comes from fixtures or from the masked lab capture described above; the live adapters have run
+  against the lab tenancy but not at full telemetry maturity (the tenancy is too young for the
+  168 h CPU rules until ~5 Oct — see `docs/lab-tenancy.md`). Cost figures are list prices
+  from a bundled catalog,
   not your invoice. A finding with `usd_per_month_upper_bound` impact is an upper bound, never a
   promised saving. Telemetry is CPU only, and a resource whose window is short has no CPU verdict
   at all rather than a hedged one. The IaC check reads Terraform declarations; a resource managed by
