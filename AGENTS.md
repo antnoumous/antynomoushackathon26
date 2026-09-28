@@ -64,12 +64,15 @@ Recommended pre-submission layout lives in the digest §4. Present: `run.py`, `D
   wired. The original Free-Tier tenancy (credit expired mid-Aug) is untouched as fallback. Paid
   costs ride the $300 trial credit (expires ~27 Oct); teardown due 21 Oct.
 - **Still open pre-window:** confirm track name and partner stack on HackOS; watch the 7 Oct
-  Zetaris recording. **Docker recipe verified** (2026-09-28, podman on the arm64 lab sandbox:
-  build OK, `/health` + `POST /run` answered; x86 pull not exercised — no x86 daemon anywhere).
-  Fresh-export (git-less) install→pytest→run→/run→evals verified on the same sandbox; the OCID
-  guard was fixed for that path (`output_examples/fresh_verify.txt`). Model provider wired:
-  `qwen3.8-flash` via Alibaba Token Plan in `.env` (sample mode stays credential-free); first
-  model-driven live run exercised the figure-guard rewrite path.
+  Zetaris recording. **Packaging fully verified** (2026-09-28): repo pushed to the public remote
+  (was 39 commits stale — caught by the first x86 verification attempt); fresh anonymous clone →
+  116 tests → credential-free `run.py` pass; container verified on **x86** (Docker Desktop
+  linux/amd64, Windows 11 work machine — build, `/health`, `POST /run` with figures identical to
+  committed artifacts) and on **arm64** (podman, lab sandbox); fresh-export (git-less tar)
+  install→pytest→run→/run→evals verified; the OCID guard was fixed for the git-less path
+  (`output_examples/fresh_verify.txt`). Model provider wired: `qwen3.8-flash` via Alibaba Token
+  Plan in `.env` (sample mode stays credential-free); first model-driven live run exercised the
+  figure-guard rewrite path.
 - **Build window:** 15 Oct 2026 00:00 UTC → 20 Oct 2026 23:45 UTC (144 hours).
 
 ## Hard dates (all UTC)

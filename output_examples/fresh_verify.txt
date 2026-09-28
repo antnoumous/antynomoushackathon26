@@ -18,3 +18,16 @@ example_3    precision 1.0   recall 1.0    verdicts 1.0   findings 4   status su
 == container
 build: OK
 serve: /health ok + POST /run full report (see README)
+
+== x86 container verification, work machine (Windows 11, Docker Desktop 4.83.0 / Engine 29.6.2, linux/amd64), 2026-09-28 ==
+Clone path: git pull to 6e34b90 (40 commits) from the public repo — the judge's exact first move.
+docker build -t driftwatch . : OK, 11/11 steps, image amd64 (ID 210b3d9dacab), 684 MB uncompressed / ~95 MB compressed.
+/health            -> {"status":"ok"} (HTTP 200)
+POST /run example_1 -> HTTP 200, 0.079 s, 4146-byte body: status success, mode sample, all four
+                      sources backend=fixture, sources_degraded=0; 6 resources, 4 accepted / 1 rejected
+                      / 1 undetermined, 5 findings; spend $196.18/mo, waste $105.66/mo; caps_hit [].
+                      Container logs show the Planner->Scout->Skeptic->Writer loop with evidence refs
+                      E-001..E-016 — executed, not canned.
+Figures match output_examples/example_1.json byte-for-byte across arm64 sandbox (python run) and
+x86 container (this run): determinism is architecture-independent, as designed.
+Sample mode only; no OCI_*/LLM_* vars were set on that machine, nothing from it touched this repo.

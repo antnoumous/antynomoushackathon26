@@ -59,11 +59,13 @@ docker build -t driftwatch .
 docker run --rm -p 8000:8000 -e SAMPLE_MODE=true driftwatch
 ```
 
-**The container recipe is verified**: it was built and served on a clean Ubuntu 24.04 VM using
-podman (image 556 MB; `/health` returned `{"status":"ok"}` and `POST /run` with
-`input_examples/example_1.json` returned the full report). That VM is arm64, so the *recipe* —
-base image, pinned requirements, entry points — is proven; the x86 image pull a judge on Intel
-would do was not exercised on it.
+**The container path is fully verified on x86**: built and served on Docker Desktop
+(Engine 29.6.2, `linux/amd64`, Windows 11) from a public-repo clone — image builds amd64 at
+684 MB, `/health` returns `{"status":"ok"}`, and `POST /run` with
+`input_examples/example_1.json` returns byte-identical figures to the committed artifacts
+($196.18 spend / $105.66 waste, 4 accepted / 1 rejected / 1 undetermined) — cross-architecture
+determinism proven, arm64 sandbox and x86 PC agree. It was also built and served on arm64
+(podman, Ubuntu 24.04). Evidence: `output_examples/fresh_verify.txt`.
 
 **Sample mode is the judged path; the live path is real and has been run against a tenancy.**
 `SAMPLE_MODE=true` runs the full agent on the bundled scenarios with no credentials and no
