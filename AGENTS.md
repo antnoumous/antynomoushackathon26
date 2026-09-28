@@ -50,18 +50,22 @@ Recommended pre-submission layout lives in the digest §4. Present: `run.py`, `D
   as a revision (`app/loop.py`) and committed traces filed under the wrong scenario
   (`scripts/run_examples.sh`) — both fixed and guarded (`tests/test_committed_evidence.py`). Held-out
   numbers live in `output_examples/held_out.txt`.
-- **Task 15 (live OCI adapters): Steps 1–4 built** (2026-09-26). `app/sources/oci_inventory.py` and
-  `oci_telemetry.py` are real SDK adapters behind the `Source` interface, tested offline against
-  SDK-shaped stubs (`tests/test_live_adapters.py`, hermetic — every test pins `OCI_CONFIG_FILE` at a
-  nonexistent path). 109 tests pass; committed scenarios regenerate byte-identically. **Step 5 — the
-  one live run — is blocked on the lab tenancy.** Without credentials, `SAMPLE_MODE=false` degrades
-  to fixtures, reports `status: partial` with `summary.backends`, and warns on stderr (tested).
-- **Pre-window, deadline-critical:** provision the lab tenancy **by Sun 29 Sep** per
-  `docs/lab-tenancy.md` — the month-end cron must fire **1 Oct** for the burst to exist in Monitoring
-  history during the window (5-min data is retained 30 days; the next month-end, 1 Nov, is after
-  submissions close). Also: confirm track name and partner stack on HackOS; choose the model
-  provider; watch the 7 Oct Zetaris recording. **Docker path still unverified** — no Docker daemon
-  on the build machine.
+- **Task 15 (live OCI adapters): Steps 1–4 built** (2026-09-26); **Step 5 — live runs against the
+  lab tenancy — done** (2026-09-28). `app/sources/oci_inventory.py` and `oci_telemetry.py` are real
+  SDK adapters behind the `Source` interface; 113 tests pass, hermetic offline suite intact. The first
+  live + degraded runs found five defects, all fixed with regression tests: telemetry query grammar
+  (compartmentId must be the API argument, not a filter), terminated-instance ghosts, missing
+  A2/E5 pricing rows, the Scout's missing fixture fallback, and the real-OCID→masked fixture join.
+  Committed fixtures live in `data/scenarios/lab_live/`. The month-end cron is verified installed on
+  `lab-batch-01` for 1 Oct 02:00; metric coverage satisfies the rules' 0.8 ratio ~5 Oct.
+- **Lab tenancy (trial, ap-batam-1):** everything provisioned via API — `lab-prod`/`lab-test`, VCN,
+  4× A1 instances with checklist tags + cloud-init workloads, both orphans. Credentials:
+  `~/.oci/config` `[DRIFTWATCH2]` (read-only) / `[PROVISIONER2]` (build-time only); repo `.env`
+  wired. The original Free-Tier tenancy (credit expired mid-Aug) is untouched as fallback. Paid
+  costs ride the $300 trial credit (expires ~27 Oct); teardown due 21 Oct.
+- **Still open pre-window:** confirm track name and partner stack on HackOS; choose the model
+  provider (`LLM_*` in `.env` unset — live runs currently use the deterministic writer); watch the
+  7 Oct Zetaris recording. **Docker path still unverified** — no Docker daemon on the build machine.
 - **Build window:** 15 Oct 2026 00:00 UTC → 20 Oct 2026 23:45 UTC (144 hours).
 
 ## Hard dates (all UTC)
