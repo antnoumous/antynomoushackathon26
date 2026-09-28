@@ -43,11 +43,22 @@ def test_the_env_example_placeholder_is_not_touched():
 
 
 def test_no_unmasked_ocid_is_committed_anywhere_in_the_repository():
-    """The whole-repo check, run as a test so a future commit cannot quietly reintroduce one."""
+    """The whole-repo check, run as a test so a future commit cannot quietly reintroduce one.
+
+    It scans exactly what git tracks (or would track: `git ls-files --cached --others
+    --exclude-standard`), which honours the guard's contract — "committed, anywhere" — and
+    keeps a developer's live-run scratch under logs/ from failing the suite on their own
+    machine. .env files are the designed home of real identifiers and are skipped; every
+    other tracked file is checked."""
+    import subprocess
     from scripts.mask_ocids import OCID
+    listing = subprocess.run(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+        capture_output=True, text=True, check=True).stdout.splitlines()
     offenders = []
-    for path in Path(".").rglob("*"):
-        if not path.is_file() or any(part in {".git", ".venv", "__pycache__"} for part in path.parts):
+    for entry in listing:
+        path = Path(entry)
+        if not path.is_file():
             continue
         if path.name == Path(__file__).name:      # this file must contain example ids to test with
             continue

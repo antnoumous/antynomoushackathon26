@@ -35,7 +35,7 @@ Cost: **$0/month inside the free envelope** for 4 instances; the two orphans cos
 
   (Read-only everywhere — the agent never writes to the tenancy.)
 - [ ] API key uploaded for that user; `~/.oci/config` written on this Mac with a
-    `[DRIFTWATCH]` profile (region `ap-singapore-1`, or wherever you build).
+    `[DRIFTWATCH]` profile (home region `ap-batam-1` — everything lives in the home region).
 - [ ] Copy `.env.example` → `.env` and fill the OCI block:
     `OCI_CONFIG_FILE=~/.oci/config`, `OCI_PROFILE=DRIFTWATCH`, `OCI_REGION=...`,
     `OCI_COMPARTMENT_ID=<lab-prod OCID>`. **`.env` stays gitignored; never commit it.**

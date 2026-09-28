@@ -117,7 +117,11 @@ class OCIInventorySource:
         for compartment_id in compartments:
             instances = self._list(compute.list_instances, compartment_id=compartment_id,
                                    retry_strategy=oci.retry.NoneRetryStrategy())
-            records.extend(instance_record(instance) for instance in instances)
+            # TERMINATED means already deleted — billing stopped and no telemetry follows. An
+            # auditor that treats ghosts as running resources invents spend (found on the first
+            # live run, where a terminated shape-probe crash-locked pricing on its old shape).
+            records.extend(instance_record(instance) for instance in instances
+                           if instance.lifecycle_state != "TERMINATED")
 
             attachments = self._list(compute.list_volume_attachments,
                                      compartment_id=compartment_id,

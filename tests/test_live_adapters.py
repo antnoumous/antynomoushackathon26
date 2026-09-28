@@ -160,3 +160,72 @@ def test_recheck_windows_widen_the_resolution_past_the_retention_edge():
     assert resolution_for(168, 5) == 5
     assert resolution_for(720, 5) == 5
     assert resolution_for(744, 5) == 60
+
+
+# --- defects found by the first live run (2026-09-28), pinned so they stay fixed ---------------
+
+def test_telemetry_query_carries_no_compartment_filter():
+    """The live Monitoring service rejects compartmentId as a query filter in oci_computeagent
+    ("Not Supported yet"); scoping is the compartment_id argument, one call per compartment."""
+    from app.sources.oci_telemetry import _query
+    assert "compartmentId" not in _query(5)
+    assert _query(5) == "CpuUtilization[5m].mean()"
+
+
+def test_fetch_skips_terminated_instances(monkeypatch):
+    """A terminated instance is deleted: billing stopped, no telemetry follows. The first live
+    run put a terminated shape-probe into inventory and it crash-locked cost mapping on an
+    unknown shape — ghosts must never reach the analysis stage."""
+    import oci
+    import app.sources.oci_inventory as inv
+
+    now = datetime(2026, 9, 28, tzinfo=timezone.utc)
+    def instance(iid, state):
+        return SimpleNamespace(id=iid, display_name="probe" if "gone" in iid else "live-one",
+                               compartment_id="ocid1.compartment.oc1..••••lab",
+                               lifecycle_state=state, time_created=now,
+                               shape="VM.Standard.A1.Flex",
+                               shape_config=SimpleNamespace(ocpus=1.0, memory_in_gbs=6.0),
+                               freeform_tags={})
+    rows = {"list_instances": [instance("ocid1.instance.oc1..••••run1", "RUNNING"),
+                               instance("ocid1.instance.oc1..••••gone1", "TERMINATED")],
+            "list_volume_attachments": [], "list_volumes": [], "list_public_ips": []}
+
+    class FakeClient:
+        def __init__(self, *a, **k): pass
+    for cname in ("ComputeClient", "BlockstorageClient", "VirtualNetworkClient"):
+        fake = type(cname, (FakeClient,), {})
+        for rname, data in rows.items():
+            setattr(fake, rname, lambda self, _d=data, **k: _d)
+        monkeypatch.setattr(oci.core, cname, fake)
+    monkeypatch.setattr(oci.pagination, "list_call_get_all_results",
+                        lambda op, **k: SimpleNamespace(data=op()))
+    monkeypatch.setattr(inv, "load_sdk_config", lambda: {})
+
+    cfg = live_cfg(compartment_ids=["ocid1.compartment.oc1..••••lab"])
+    result = inv.OCIInventorySource(cfg).fetch(scope_for(cfg))
+    assert [r["resource_id"] for r in result.records] == ["ocid1.instance.oc1..••••run1"]
+
+
+def test_telemetry_calls_the_service_once_per_compartment(monkeypatch):
+    """Scope must arrive as the API argument — and every compartment in the scope must be asked,
+    not just the first."""
+    import oci
+    import app.sources.oci_telemetry as tel
+
+    calls: list[tuple[str, str]] = []
+
+    class FakeMonitoring:
+        def __init__(self, *a, **k): pass
+        def summarize_metrics_data(self, compartment_id, details, **k):
+            calls.append((compartment_id, details.query))
+            return SimpleNamespace(data=[])
+    monkeypatch.setattr(oci.monitoring, "MonitoringClient", FakeMonitoring)
+    monkeypatch.setattr(tel, "load_sdk_config", lambda: {})
+
+    c1, c2 = "ocid1.compartment.oc1..••••one", "ocid1.compartment.oc1..••••two"
+    cfg = live_cfg(compartment_ids=[c1, c2])
+    result = tel.OCITelemetrySource(cfg).fetch(scope_for(cfg))
+    assert [cid for cid, _ in calls] == [c1, c2]
+    assert all("compartmentId" not in q for _, q in calls)
+    assert result.records == []

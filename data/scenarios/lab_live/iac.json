@@ -1,0 +1,14 @@
+{
+  "scenario_id": "lab_live",
+  "declarations": [
+    {"address": "oci_core_instance.lab_web_01", "resource_type": "oci_core_instance",
+     "declared_name": "lab-web-01", "file_path": "terraform/compute.tf",
+     "last_commit": "not-a-git-repo", "commit_message": "steady-load web demo host", "author": "ant"},
+    {"address": "oci_core_instance.lab_batch_01", "resource_type": "oci_core_instance",
+     "declared_name": "lab-batch-01", "file_path": "terraform/batch.tf",
+     "last_commit": "not-a-git-repo", "commit_message": "month-end batch worker, runs 1st 02:00", "author": "ant"},
+    {"address": "oci_core_instance.lab_reports_01", "resource_type": "oci_core_instance",
+     "declared_name": "lab-reports-01", "file_path": "terraform/reports.tf",
+     "last_commit": "not-a-git-repo", "commit_message": "idle demo host, intentionally running", "author": "ant"}
+  ]
+}

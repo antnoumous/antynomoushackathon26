@@ -66,9 +66,11 @@ def series_records(streams: list[Any], lookback_hours: int, resolution_minutes: 
     return records
 
 
-def _query(compartment_ids: list[str], resolution_minutes: int) -> str:
-    filters = " or ".join(f'compartmentId = "{compartment_id}"' for compartment_id in compartment_ids)
-    return f"{METRIC}[{resolution_minutes}m].mean() {{{filters}}}"
+def _query(resolution_minutes: int) -> str:
+    # The live Monitoring service rejects compartmentId as a query filter in the
+    # oci_computeagent namespace ("Not Supported yet"); scoping happens via the
+    # compartment_id argument of summarize_metrics_data, one call per compartment.
+    return f"{METRIC}[{resolution_minutes}m].mean()"
 
 
 class OCITelemetrySource:
@@ -94,23 +96,26 @@ class OCITelemetrySource:
 
         now = datetime.now(timezone.utc)
         resolution = resolution_for(scope.lookback_hours, scope.resolution_minutes)
-        details_kwargs = {
-            "namespace": NAMESPACE,
-            "query": _query(compartments, resolution),
-            "start_time": now - timedelta(hours=scope.lookback_hours),
-            "end_time": now,
-            "resolution": f"{resolution}m",
-        }
         import oci
         from oci.monitoring import MonitoringClient
         from oci.monitoring.models import SummarizeMetricsDataDetails
+        streams: list[Any] = []
         try:
             client = MonitoringClient(sdk, timeout=TIMEOUT_S)
-            response = client.summarize_metrics_data(
-                SummarizeMetricsDataDetails(**details_kwargs),
-                retry_strategy=oci.retry.NoneRetryStrategy())
+            for cid in compartments:      # the service scopes by argument, not by query filter
+                response = client.summarize_metrics_data(
+                    cid,
+                    SummarizeMetricsDataDetails(
+                        namespace=NAMESPACE,
+                        query=_query(resolution),
+                        start_time=now - timedelta(hours=scope.lookback_hours),
+                        end_time=now,
+                        resolution=f"{resolution}m",
+                    ),
+                    retry_strategy=oci.retry.NoneRetryStrategy())
+                streams.extend(response.data or [])
         except Exception as exc:                      # noqa: BLE001 - named, degraded upstream
             raise SourceError(f"summarize_metrics_data failed: {exc}") from exc
 
-        records = series_records(response.data or [], scope.lookback_hours, resolution, now)
+        records = series_records(streams, scope.lookback_hours, resolution, now)
         return SourceResult(source=self.name, backend="live", records=records)

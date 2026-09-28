@@ -365,3 +365,36 @@ window, alert at $50). Risk noted honestly: OCI permits one free account per per
 fresh trial is a ToS-grey choice the entrant carries personally; the Batam lab remains intact
 as a free-tier fallback and its IAM/network/volume assets are already built. The month-end
 deadline (cron installed before 1 Oct) is unchanged.
+
+## 2026-09-28 — Lab rebuilt in the trial tenancy; first live run found three defects, all fixed
+
+**What happened:** the new trial tenancy (home region ap-batam-1, same keys re-uploaded) has
+working capacity: A1.Flex launched instantly where the dead Free-Tier tenancy was blocked. Full
+lab built via API: compartments, VCN, both orphans, four instances with checklist tags and
+cloud-installed workloads — batch-01's month-end cron verified in place, web-01 reporting a
+steady ~50.5% CPU. The trial's $300 credit covers the paid-side costs; A1s stay inside the
+free 3,000 OCPU-h envelope.
+
+**Defects the first live run (Task 15 Step 5) found — none visible to any offline test:**
+1. `app/sources/oci_telemetry.py` built queries as `mean() {compartmentId = "…"}`, which the
+   live Monitoring service rejects ("Not Supported yet" / parse errors). The service scopes by
+   the compartment_id *argument*; the adapter now issues one call per compartment.
+2. `app/sources/oci_inventory.py` kept TERMINATED instances. A deleted shape-probe entered the
+   inventory, and its old E5 shape — which no running resource can report — crash-locked
+   pricing with a KeyError. Terminated means deleted: filtered at the source.
+3. `data/pricing.json` was missing A2.Flex and E5.Flex rates that real tenancies report. Added
+   from OCI list pricing. (Also: the whole-repo OCID guard now scans git-tracked files instead
+   of every file on disk — live-run scratch under logs/ made the suite unrunnable on the very
+   machine doing the live work, while the contract is only about *committed* content.)
+
+**Verified after fixes:** 112 tests pass; a full live audit returns status success, mixed
+backends inventory+telemetry live / iac+policy fixture, 6 resources, 3 findings (both orphans
+as cost_waste, sandbox as unattributed), 4 compute instances honestly undetermined because
+metric coverage (17 h of 168 h) cannot satisfy min_coverage_ratio until ~5 Oct. The live path
+works; what it says is limited by the tenancy's age, which is exactly what it should say.
+
+**Lab facts for later steps:** scenario dir `data/scenarios/lab_live/` (iac/policy committed;
+its inventory/telemetry fallback fixtures per checklist §6 still pending — captured from a
+mask_ocids pass first). Request JSON with both compartment OCIDs lives at /tmp (ephemeral);
+regenerate from docs/lab-tenancy.md §6. LLM_* keys unset: the live run used the deterministic
+writer, not the model.
