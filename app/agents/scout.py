@@ -53,23 +53,53 @@ class Scout(Agent):
         result = self._fetch_with_recovery("telemetry", scope)
         if result is None:
             return None
+        # A live inventory carries real OCIDs while a fixture fallback carries masked ones; the
+        # join compares both masked (idempotent, so masked-vs-masked matches unchanged) or a
+        # mixed degraded run would abstain on every resource while holding usable series.
+        from scripts.mask_ocids import mask_text
+        wanted = mask_text(resource_id)[0]
         for record in result.records:
-            if record["resource_id"] == resource_id:
+            if mask_text(record["resource_id"])[0] == wanted:
                 return MetricSeries(**record)
         return None
 
     def _fetch_with_recovery(self, name: str, scope: Scope):
         """One retry, then the fixture backend, then None. Never invents records."""
         source = self.ctx.sources[name]
+        last_error: Exception | None = None
         for attempt in (1, 2):
             try:
                 result = source.fetch(scope)
                 self._source_status[name] = SourceStatus(name=name, backend=result.backend)
                 return result
             except Exception as exc:                      # noqa: BLE001 - logged, then degraded
+                last_error = exc
                 self._emit("source_call_failed", input_summary=f"{name} attempt {attempt}",
                            output_summary=f"{type(exc).__name__}: {exc}", status="retrying",
                            retry_count=attempt - 1)
+        # The docstring promised the fixture backend; the Planner's hydrate path has it, and a
+        # per-resource telemetry fetch must degrade the same way or a mid-run API failure would
+        # silently downgrade every cost rule to abstain (found on the lab's first degraded run).
+        if self.ctx.scenario_dir is not None:
+            try:
+                from app.sources import get_source
+                fallback = get_source(name, self.ctx.config.model_copy(
+                    update={"sample_mode": True}), scenario_dir=self.ctx.scenario_dir)
+                result = fallback.fetch(scope)
+            except Exception as exc:                      # noqa: BLE001 - a missing fixture degrades
+                self._emit("source_unavailable", input_summary=name,
+                           output_summary=f"fallback failed: {type(exc).__name__}: {exc}",
+                           status="failed", retry_count=1)
+                self._source_status[name] = SourceStatus(
+                    name=name, backend="none", degraded=True,
+                    reason=f"fallback failed: {exc}")
+                return None
+            self._emit("source_degraded", input_summary=name,
+                       output_summary="fell back to fixture data", status="degraded",
+                       retry_count=1)
+            self._source_status[name] = SourceStatus(name=name, backend="fixture",
+                                                     degraded=True, reason=str(last_error))
+            return result
         self._emit("source_call_failed", input_summary=name,
                    output_summary="both attempts failed; source treated as unavailable",
                    status="failed", retry_count=1)

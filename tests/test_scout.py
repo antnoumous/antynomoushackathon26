@@ -98,3 +98,33 @@ def test_scout_does_not_flag_a_genuinely_busy_instance(ctx):
     candidates = scout.investigate(assignment)
     assert not [c for c in candidates if c.resource_id.endswith("aaa1")]  # web-01, steady 50%
     assert not [c for c in candidates if c.resource_id.endswith("ccc3")]  # reports-01, steady 10%
+
+
+def test_telemetry_fixture_fallback_joins_real_ids_to_masked_records(tmp_path, monkeypatch):
+    """Degraded-run defect, found on the lab: the Scout's own retry path skipped the fixture
+    fallback its docstring promised, and even with the fallback, a live inventory's real OCIDs
+    would not join a masked fixture's series. Both fixed 2026-09-28; this pins them."""
+    monkeypatch.setenv("SAMPLE_MODE", "true")
+    cfg = RunConfig.from_env_and_request({"sample_mode": True})
+    scope = Scope(compartment_ids=[], resource_types=cfg.resource_types,
+                  lookback_hours=168, resolution_minutes=60)
+
+    class DeadSource:
+        name = "telemetry"
+        def fetch(self, scope):
+            raise RuntimeError("simulated mid-run API failure")
+
+    lab = Path("data/scenarios/lab_live")
+    ctx = AgentContext(config=cfg, sources={"telemetry": DeadSource()},
+                       generator=RulesGenerator(), state=RunState(cfg.run_id, tmp_path),
+                       trace=Tracer(cfg.run_id, tmp_path, stream=io.StringIO()),
+                       ledger=EvidenceLedger(), scope=scope, scenario_dir=lab)
+    scout = Scout(ctx)
+    # The fixture's series id is masked ("...••••wg7a"); here is the live, unmasked shape with
+    # the same suffix — the join has to survive exactly this. Assembled at runtime because a
+    # real-shaped OCID may not sit in a source file unmasked (the repo guard would say so).
+    live_id = "ocid1.instance.oc1.ap-batam-1." + "a" * 8 + "wg7a"
+    series = scout._series_for(live_id, 168)
+    assert series is not None
+    assert scout._source_status["telemetry"].degraded is True
+    assert scout._source_status["telemetry"].backend == "fixture"

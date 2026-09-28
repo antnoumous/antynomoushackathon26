@@ -26,7 +26,8 @@ def run_pipeline(request: dict, scenario_dir: Path | None = None) -> tuple[RunRe
     trace = Tracer(config.run_id, config.logs_dir)
     try:
         ctx = AgentContext(config=config, sources=sources, generator=get_generator(config),
-                           state=state, trace=trace, ledger=EvidenceLedger(), scope=scope)
+                           state=state, trace=trace, ledger=EvidenceLedger(), scope=scope,
+                           scenario_dir=scenario_dir)
         report = Orchestrator(ctx, scenario_dir=scenario_dir).run()
     finally:
         # Both writers hold an open handle for the whole run; closing them here keeps a long-lived

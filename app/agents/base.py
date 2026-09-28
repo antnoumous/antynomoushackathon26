@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 import time
 
@@ -21,6 +22,7 @@ class AgentContext:
     trace: Tracer
     ledger: EvidenceLedger
     scope: Scope | None = None
+    scenario_dir: Path | None = None      # fixture fallback for per-resource fetches
     extras: dict[str, Any] = field(default_factory=dict)
 
     def evidence(self, *, source: str, kind: str, resource_id: str, summary: str, payload: dict):

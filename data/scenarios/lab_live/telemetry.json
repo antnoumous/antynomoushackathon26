@@ -1,0 +1,40 @@
+{
+ "scenario_id": "lab_live",
+ "note": "per-series baseline (p50) / jitter (p90-p50) from the first live capture, 2026-09-28; hourly materialisation. Fallback only \u2014 a live run reads the tenancy directly.",
+ "captured_at": "2026-09-28T05:11:23.610968+00:00",
+ "now": "2026-09-28T05:11:23Z",
+ "series": [
+  {
+   "resource_id": "ocid1.instance.oc1.ap-batam-1..••••coba",
+   "metric": "CpuUtilization",
+   "start": "2026-09-28 03:15:00+00:00",
+   "baseline": 0.4,
+   "jitter": 0.8,
+   "bursts": []
+  },
+  {
+   "resource_id": "ocid1.instance.oc1.ap-batam-1..••••wg7a",
+   "metric": "CpuUtilization",
+   "start": "2026-09-28 03:15:00+00:00",
+   "baseline": 0.4,
+   "jitter": 1.1,
+   "bursts": []
+  },
+  {
+   "resource_id": "ocid1.instance.oc1.ap-batam-1..••••i7ia",
+   "metric": "CpuUtilization",
+   "start": "2026-09-28 03:15:00+00:00",
+   "baseline": 50.6,
+   "jitter": 0.8,
+   "bursts": []
+  },
+  {
+   "resource_id": "ocid1.instance.oc1.ap-batam-1..••••ianq",
+   "metric": "CpuUtilization",
+   "start": "2026-09-28 03:15:00+00:00",
+   "baseline": 0.3,
+   "jitter": 1.6,
+   "bursts": []
+  }
+ ]
+}

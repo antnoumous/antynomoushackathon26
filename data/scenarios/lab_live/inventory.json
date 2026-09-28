@@ -1,0 +1,92 @@
+{
+ "scenario_id": "lab_live",
+ "note": "masked capture of the live lab inventory (2026-09-28); fallback only \u2014 a live run reads the tenancy directly",
+ "captured_at": "2026-09-28T05:11:23.610968+00:00",
+ "resources": [
+  {
+   "resource_id": "ocid1.instance.oc1.ap-batam-1..••••coba",
+   "resource_class": "compute_instance",
+   "display_name": "lab-batch-01",
+   "compartment_id": "ocid1.compartment.oc1..••••y5ma",
+   "lifecycle_state": "RUNNING",
+   "time_created": "2026-09-28T03:10:30.387000+00:00",
+   "shape": "VM.Standard.A1.Flex",
+   "ocpus": 1.0,
+   "memory_gb": 6.0,
+   "tags": {
+    "schedule": "month-end",
+    "role": "batch",
+    "env": "prod",
+    "iac_address": "oci_core_instance.lab_batch_01"
+   }
+  },
+  {
+   "resource_id": "ocid1.instance.oc1.ap-batam-1..••••wg7a",
+   "resource_class": "compute_instance",
+   "display_name": "lab-reports-01",
+   "compartment_id": "ocid1.compartment.oc1..••••y5ma",
+   "lifecycle_state": "RUNNING",
+   "time_created": "2026-09-28T03:11:01.501000+00:00",
+   "shape": "VM.Standard.A1.Flex",
+   "ocpus": 1.0,
+   "memory_gb": 6.0,
+   "tags": {
+    "env": "prod",
+    "iac_address": "oci_core_instance.lab_reports_01"
+   }
+  },
+  {
+   "resource_id": "ocid1.instance.oc1.ap-batam-1..••••i7ia",
+   "resource_class": "compute_instance",
+   "display_name": "lab-web-01",
+   "compartment_id": "ocid1.compartment.oc1..••••y5ma",
+   "lifecycle_state": "RUNNING",
+   "time_created": "2026-09-28T03:10:45.986000+00:00",
+   "shape": "VM.Standard.A1.Flex",
+   "ocpus": 1.0,
+   "memory_gb": 6.0,
+   "tags": {
+    "owner": "ant",
+    "env": "prod",
+    "iac_address": "oci_core_instance.lab_web_01"
+   }
+  },
+  {
+   "resource_id": "ocid1.volume.oc1.ap-batam-1..••••2szq",
+   "resource_class": "block_volume",
+   "display_name": "vol-orphan-50g",
+   "compartment_id": "ocid1.compartment.oc1..••••y5ma",
+   "lifecycle_state": "AVAILABLE",
+   "time_created": "2026-09-28T03:08:40.774000+00:00",
+   "size_gb": 50,
+   "attached": false,
+   "tags": {
+    "project": "driftwatch"
+   }
+  },
+  {
+   "resource_id": "ocid1.publicip.oc1.ap-batam-1..••••bh4q",
+   "resource_class": "reserved_public_ip",
+   "display_name": "ip-orphan",
+   "compartment_id": "ocid1.compartment.oc1..••••y5ma",
+   "lifecycle_state": "AVAILABLE",
+   "time_created": "2026-09-28T03:08:34.551000+00:00",
+   "attached": false,
+   "tags": {
+    "project": "driftwatch"
+   }
+  },
+  {
+   "resource_id": "ocid1.instance.oc1.ap-batam-1..••••ianq",
+   "resource_class": "compute_instance",
+   "display_name": "lab-sandbox-tmp",
+   "compartment_id": "ocid1.compartment.oc1..••••d3va",
+   "lifecycle_state": "RUNNING",
+   "time_created": "2026-09-28T03:11:17.048000+00:00",
+   "shape": "VM.Standard.A1.Flex",
+   "ocpus": 1.0,
+   "memory_gb": 6.0,
+   "tags": {}
+  }
+ ]
+}
