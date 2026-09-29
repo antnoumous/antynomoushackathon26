@@ -34,7 +34,7 @@ Recommended pre-submission layout lives in the digest §4. Present: `run.py`, `D
   `docs/superpowers/specs/2026-09-24-oci-tenancy-auditor-design.md`.
 - **Stack:** Python. Hand-rolled bounded agent loop, no orchestration framework. Bundled JSON
   fixtures drive sample mode; the `oci` SDK is pinned and imported lazily by the live adapters
-  (Task 15 Steps 1–4 built, offline-tested, **not yet run against a tenancy**). No UI. Reasoning in the spec §5.
+  (Task 15 built, offline-tested **and run live against the lab tenancy**). No UI. Reasoning in the spec §5.
 - **Budget:** ~20 h in the window; a frozen ~15 h must-ship list. Spec §11.
 - **Must-ship path: built, reviewed and verified** (2026-09-24). Tasks 1–14 of the plan are
   complete: the full suite passes (`pytest -q`), and the fresh-clone path was verified end to end —
@@ -57,7 +57,8 @@ Recommended pre-submission layout lives in the digest §4. Present: `run.py`, `D
   (compartmentId must be the API argument, not a filter), terminated-instance ghosts, missing
   A2/E5 pricing rows, the Scout's missing fixture fallback, and the real-OCID→masked fixture join.
   Committed fixtures live in `data/scenarios/lab_live/`. The month-end cron is verified installed on
-  `lab-batch-01` for 1 Oct 02:00; metric coverage satisfies the rules' 0.8 ratio ~5 Oct.
+  `lab-batch-01` for 1 Oct 02:00 **UTC** (= 10:00 SGT; instance clock is UTC); metric coverage
+  satisfies the rules' 0.8 ratio from ~4 Oct.
 - **Lab tenancy (trial, ap-batam-1):** everything provisioned via API — `lab-prod`/`lab-test`, VCN,
   4× A1 instances with checklist tags + cloud-init workloads, both orphans. Credentials:
   `~/.oci/config` `[DRIFTWATCH2]` (read-only) / `[PROVISIONER2]` (build-time only); repo `.env`
