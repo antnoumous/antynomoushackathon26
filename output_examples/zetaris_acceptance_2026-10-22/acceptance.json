@@ -1,0 +1,138 @@
+{
+  "base": {
+    "expected_sha256": "58729b59912976e202d4c002c144e4701193f6a54a7300b50869cbbab1bc205f",
+    "finding_keys": [
+      [
+        "bbb2",
+        "cost_waste",
+        "revised"
+      ],
+      [
+        "ddd4",
+        "unattributed",
+        "accepted"
+      ],
+      [
+        "eee5",
+        "cost_waste",
+        "accepted"
+      ],
+      [
+        "fff6",
+        "cost_waste",
+        "accepted"
+      ]
+    ],
+    "policy_backend": "live",
+    "policy_degraded": false,
+    "provenance_sha256": "58729b59912976e202d4c002c144e4701193f6a54a7300b50869cbbab1bc205f",
+    "report_status": "success",
+    "rule_ids": [
+      "R-1",
+      "R-2",
+      "R-3",
+      "R-4",
+      "R-5"
+    ],
+    "rules_selected": 5,
+    "run_id": "run-1b45693137",
+    "snapshot_id": "example1_base_v2",
+    "source_outcomes": [
+      {
+        "backend": "fixture",
+        "degraded": false,
+        "name": "inventory"
+      },
+      {
+        "backend": "fixture",
+        "degraded": false,
+        "name": "iac"
+      },
+      {
+        "backend": "live",
+        "degraded": false,
+        "name": "policy"
+      },
+      {
+        "backend": "fixture",
+        "degraded": false,
+        "name": "telemetry"
+      }
+    ]
+  },
+  "changed_finding_keys": {
+    "only_in_base": [
+      [
+        "eee5",
+        "cost_waste",
+        "accepted"
+      ]
+    ],
+    "only_in_variant": []
+  },
+  "expected_effect": {
+    "effect_observed": true,
+    "rules_removed": [
+      "R-1"
+    ]
+  },
+  "hybrid": true,
+  "input": "/Users/ant/projects/open-agent-hackathon/input_examples/example_1.json",
+  "scenario": "example_1",
+  "sponsor_acceptance": true,
+  "variant": {
+    "expected_sha256": "833ee5fac72ae7144e120cf010d785d39da22e75f32a55c4be03ef91d08cae43",
+    "finding_keys": [
+      [
+        "bbb2",
+        "cost_waste",
+        "revised"
+      ],
+      [
+        "ddd4",
+        "unattributed",
+        "accepted"
+      ],
+      [
+        "fff6",
+        "cost_waste",
+        "accepted"
+      ]
+    ],
+    "policy_backend": "live",
+    "policy_degraded": false,
+    "provenance_sha256": "833ee5fac72ae7144e120cf010d785d39da22e75f32a55c4be03ef91d08cae43",
+    "report_status": "success",
+    "rule_ids": [
+      "R-2",
+      "R-3",
+      "R-4",
+      "R-5"
+    ],
+    "rules_selected": 4,
+    "run_id": "run-917421dc00",
+    "snapshot_id": "example1_no_volume_v2",
+    "source_outcomes": [
+      {
+        "backend": "fixture",
+        "degraded": false,
+        "name": "inventory"
+      },
+      {
+        "backend": "fixture",
+        "degraded": false,
+        "name": "iac"
+      },
+      {
+        "backend": "live",
+        "degraded": false,
+        "name": "policy"
+      },
+      {
+        "backend": "fixture",
+        "degraded": false,
+        "name": "telemetry"
+      }
+    ]
+  }
+}
