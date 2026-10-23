@@ -1,5 +1,11 @@
 # Event brief — Open Agent Hackathon 2026
 
+**Superseded historical brief:** the live event page was re-read on **14 October 2026**.
+See `notes/zetaris.md` for the current **22–27 October** window, mandatory Zetaris/Meterless
+and Cursor requirements, changed tracks, and demo/slide-deck requirements. Dates, track names,
+prizes and optional-sponsor implications below are the earlier recorded version, not the
+current binding rules. The always-injected `AGENTS.md` carries the current event gate.
+
 Reference facts for this build. Sources: the participant event calendar supplied by
 the organisers, plus the public GenAI Works pages.
 

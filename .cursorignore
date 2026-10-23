@@ -1,0 +1,46 @@
+# Cursor context exclusions. These do not sandbox Agent terminal/MCP tools.
+# Keep real credentials outside the workspace and require approval for tool access.
+
+# Environment secrets; the committed placeholder template stays available.
+.env
+.env.*
+!.env.example
+
+# Credentials, private keys and infrastructure state.
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+credentials.json
+client_secret*.json
+platform-admin.json
+zetaris-registry-login*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.oci/
+.ssh/
+.docker/
+secrets/
+private/
+zetaris-private/
+
+# Working-run evidence may contain private infrastructure data.
+# Sanitized, generated submission samples remain available.
+logs/*
+!logs/.gitkeep
+!logs/samples/
+!logs/samples/**
+
+# Dependency/cache/editor internals are not useful model context.
+.git/
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+node_modules/
+.DS_Store

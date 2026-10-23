@@ -1,0 +1,435 @@
+{
+  "observed_at_utc": "2026-10-18T07:10:54.448822+00:00",
+  "tenancy_name": "antworld",
+  "identity_verified": true,
+  "inventory_profile": "DRIFTWATCH2",
+  "region": "ap-batam-1",
+  "availability_domain_count": 1,
+  "region_subscriptions": [
+    {
+      "name": "ap-batam-1",
+      "home_region": true,
+      "status": "READY"
+    }
+  ],
+  "accessible_active_compartments": [
+    "tenancy-root",
+    "lab-prod",
+    "lab-test"
+  ],
+  "listed_x86_flex_shapes": [
+    {
+      "shape": "VM.Standard.E5.Flex",
+      "processor_description": "2.3 GHz AMD EPYC\u2122 9J14 (Genoa)",
+      "ocpus": 1.0,
+      "memory_in_gbs": 12.0,
+      "is_flexible": true,
+      "ocpu_options": {
+        "min": 1.0,
+        "max": 126.0,
+        "max_per_numa_node": 94.0
+      },
+      "memory_options": {
+        "min_in_g_bs": 1.0,
+        "max_in_g_bs": 2098.0,
+        "default_per_ocpu_in_g_bs": 12.0,
+        "min_per_ocpu_in_gbs": 1.0,
+        "max_per_ocpu_in_gbs": 64.0,
+        "max_per_numa_node_in_gbs": 1049.0
+      },
+      "networking_bandwidth_in_gbps": 1.0
+    },
+    {
+      "shape": "VM.Standard.E6.Flex",
+      "processor_description": "2.7 GHz AMD EPYC\u2122 9J45 (Turin)",
+      "ocpus": 1.0,
+      "memory_in_gbs": 11.0,
+      "is_flexible": true,
+      "ocpu_options": {
+        "min": 1.0,
+        "max": 126.0,
+        "max_per_numa_node": 126.0
+      },
+      "memory_options": {
+        "min_in_g_bs": 1.0,
+        "max_in_g_bs": 1454.0,
+        "default_per_ocpu_in_g_bs": 11.0,
+        "min_per_ocpu_in_gbs": 1.0,
+        "max_per_ocpu_in_gbs": 64.0,
+        "max_per_numa_node_in_gbs": 1454.0
+      },
+      "networking_bandwidth_in_gbps": 1.0
+    },
+    {
+      "shape": "VM.Standard3.Flex",
+      "processor_description": "2.6 GHz Intel\u00ae Xeon\u00ae Platinum 8358 (Ice Lake)",
+      "ocpus": 1.0,
+      "memory_in_gbs": 16.0,
+      "is_flexible": true,
+      "ocpu_options": {
+        "min": 1.0,
+        "max": 56.0,
+        "max_per_numa_node": 32.0
+      },
+      "memory_options": {
+        "min_in_g_bs": 1.0,
+        "max_in_g_bs": 896.0,
+        "default_per_ocpu_in_g_bs": 16.0,
+        "min_per_ocpu_in_gbs": 1.0,
+        "max_per_ocpu_in_gbs": 64.0,
+        "max_per_numa_node_in_gbs": 512.0
+      },
+      "networking_bandwidth_in_gbps": 1.0
+    }
+  ],
+  "preferred_listed_shape": "VM.Standard.E5.Flex",
+  "image_candidates": [
+    {
+      "display_name": "Canonical-Ubuntu-24.04-2026.09.18-0",
+      "operating_system": "Canonical Ubuntu",
+      "version": "24.04",
+      "time_created": "2026-09-21T20:29:53.857000+00:00",
+      "size_in_mbs": 47694,
+      "state": "AVAILABLE"
+    },
+    {
+      "display_name": "Canonical-Ubuntu-24.04-2026.08.25-0",
+      "operating_system": "Canonical Ubuntu",
+      "version": "24.04",
+      "time_created": "2026-08-27T01:46:35.627000+00:00",
+      "size_in_mbs": 47694,
+      "state": "AVAILABLE"
+    },
+    {
+      "display_name": "Canonical-Ubuntu-24.04-2026.07.17-0",
+      "operating_system": "Canonical Ubuntu",
+      "version": "24.04",
+      "time_created": "2026-07-20T16:15:29.976000+00:00",
+      "size_in_mbs": 47694,
+      "state": "AVAILABLE"
+    }
+  ],
+  "existing_resources": [
+    {
+      "compartment": "tenancy-root",
+      "instances": [],
+      "vcns": [],
+      "subnets": []
+    },
+    {
+      "compartment": "lab-prod",
+      "instances": [
+        {
+          "name": "lab-batch-01",
+          "shape": "VM.Standard.A1.Flex",
+          "state": "RUNNING",
+          "ocpus": 1.0,
+          "memory_gb": 6.0
+        },
+        {
+          "name": "lab-reports-01",
+          "shape": "VM.Standard.A1.Flex",
+          "state": "RUNNING",
+          "ocpus": 1.0,
+          "memory_gb": 6.0
+        },
+        {
+          "name": "lab-web-01",
+          "shape": "VM.Standard.A1.Flex",
+          "state": "RUNNING",
+          "ocpus": 1.0,
+          "memory_gb": 6.0
+        }
+      ],
+      "vcns": [
+        {
+          "name": "lab-vcn",
+          "state": "AVAILABLE"
+        }
+      ],
+      "subnets": [
+        {
+          "name": "lab-public",
+          "state": "AVAILABLE",
+          "public_ip_on_vnic_prohibited": false
+        }
+      ]
+    },
+    {
+      "compartment": "lab-test",
+      "instances": [
+        {
+          "name": "lab-sandbox-tmp",
+          "shape": "VM.Standard.A1.Flex",
+          "state": "RUNNING",
+          "ocpus": 1.0,
+          "memory_gb": 6.0
+        }
+      ],
+      "vcns": [],
+      "subnets": []
+    }
+  ],
+  "compute_limits": [
+    {
+      "name": "standard-e5-core-count",
+      "used": 0,
+      "available": 83
+    },
+    {
+      "name": "standard-e5-memory-count",
+      "used": 0,
+      "available": 1250
+    },
+    {
+      "name": "standard-e6-core-count",
+      "used": 0,
+      "available": 83
+    },
+    {
+      "name": "standard-e6-memory-count",
+      "used": 0,
+      "available": 1250
+    },
+    {
+      "name": "standard3-core-count",
+      "used": 0,
+      "available": 62
+    },
+    {
+      "name": "standard3-memory-count",
+      "used": 0,
+      "available": 1666
+    }
+  ],
+  "limits_profile": "PROVISIONER2",
+  "auditor_limits_failure": [
+    {
+      "profile": "DRIFTWATCH2",
+      "status": "failed",
+      "http_status": 404,
+      "code": "NotAuthorizedOrNotFound"
+    }
+  ],
+  "block_storage_limit_values": [
+    {
+      "name": "backup-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 100000
+    },
+    {
+      "name": "free-backup-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 5
+    },
+    {
+      "name": "total-free-storage-gb",
+      "scope_type": "AD",
+      "availability_domain": "TBRL:AP-BATAM-1-AD-1",
+      "value": 200
+    },
+    {
+      "name": "total-free-storage-gb-regional",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 200
+    },
+    {
+      "name": "total-replica-storage-gb",
+      "scope_type": "AD",
+      "availability_domain": "TBRL:AP-BATAM-1-AD-1",
+      "value": 256000
+    },
+    {
+      "name": "total-storage-gb",
+      "scope_type": "AD",
+      "availability_domain": "TBRL:AP-BATAM-1-AD-1",
+      "value": 61440
+    },
+    {
+      "name": "volume-count",
+      "scope_type": "AD",
+      "availability_domain": "TBRL:AP-BATAM-1-AD-1",
+      "value": 10000
+    },
+    {
+      "name": "volumes-per-group",
+      "scope_type": "AD",
+      "availability_domain": "TBRL:AP-BATAM-1-AD-1",
+      "value": 32
+    }
+  ],
+  "vcn_limit_values": [
+    {
+      "name": "dhcp-option-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 300
+    },
+    {
+      "name": "drg-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 5
+    },
+    {
+      "name": "flow-log-config-count",
+      "scope_type": "GLOBAL",
+      "availability_domain": null,
+      "value": 100
+    },
+    {
+      "name": "internet-gateway-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 1
+    },
+    {
+      "name": "nat-gateway-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 1
+    },
+    {
+      "name": "networksecuritygroups-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 1000
+    },
+    {
+      "name": "reserved-public-ip-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 50
+    },
+    {
+      "name": "route-table-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 300
+    },
+    {
+      "name": "security-list-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 300
+    },
+    {
+      "name": "securityrules-per-networksecuritygroup-count",
+      "scope_type": "GLOBAL",
+      "availability_domain": null,
+      "value": 120
+    },
+    {
+      "name": "subnet-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 300
+    },
+    {
+      "name": "vcn-count",
+      "scope_type": "REGION",
+      "availability_domain": null,
+      "value": 50
+    }
+  ],
+  "bundle": {
+    "sha256": "14c6a811a140378bec1749ceffd7fa123bafb2f178545b26354e8f9433b413d3",
+    "bytes": 27996894,
+    "integrity": "pass",
+    "safe_member_paths": true,
+    "member_file_count": 13,
+    "shell_syntax_checks": [
+      {
+        "file": "zetaris-platform/init/bootstrap-admin.sh",
+        "exit_code": 0
+      },
+      {
+        "file": "zetaris-platform/init/driver-entrypoint.sh",
+        "exit_code": 0
+      },
+      {
+        "file": "zetaris-platform/init/generate-secrets.sh",
+        "exit_code": 0
+      },
+      {
+        "file": "zetaris-platform/verify.sh",
+        "exit_code": 0
+      },
+      {
+        "file": "zetaris-platform/preflight.sh",
+        "exit_code": 0
+      }
+    ],
+    "shell_script_count": 5,
+    "compose_services": [
+      "postgres",
+      "init",
+      "driver",
+      "api",
+      "ui",
+      "bootstrap",
+      "caddy"
+    ],
+    "compose_service_count": 7,
+    "credential_files_read": false,
+    "vendor_scripts_executed": false
+  },
+  "baseline_tests": {
+    "command": ".venv/bin/python -m pytest -q",
+    "exit_code": 0,
+    "stdout": "........................................................................ [ 62%]\n............................................                             [100%]\n=============================== warnings summary ===============================\n.venv/lib/python3.11/site-packages/starlette/testclient.py:40\n  /Users/ant/projects/open-agent-hackathon/.venv/lib/python3.11/site-packages/starlette/testclient.py:40: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.\n    _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n116 passed, 1 warning in 0.60s\n",
+    "stderr": ""
+  },
+  "no_resource_writes": true,
+  "physical_host_capacity_tested": false,
+  "credit_balance_api_verified": false,
+  "network_storage_resource_availability": [
+    {
+      "service": "block-storage",
+      "limit_name": "total-storage-gb",
+      "data": {
+        "used": 250,
+        "available": 61190,
+        "fractional_usage": 250.0,
+        "fractional_availability": 61190.0,
+        "effective_quota_value": null
+      }
+    },
+    {
+      "service": "block-storage",
+      "limit_name": "volume-count",
+      "data": {
+        "used": 1,
+        "available": 9999,
+        "fractional_usage": 1.0,
+        "fractional_availability": 9999.0,
+        "effective_quota_value": null
+      }
+    },
+    {
+      "service": "vcn",
+      "limit_name": "vcn-count",
+      "data": {
+        "used": 1,
+        "available": 49,
+        "fractional_usage": 1.0,
+        "fractional_availability": 49.0,
+        "effective_quota_value": null
+      }
+    },
+    {
+      "service": "vcn",
+      "limit_name": "subnet-count",
+      "data": {
+        "used": null,
+        "available": null,
+        "fractional_usage": null,
+        "fractional_availability": null,
+        "effective_quota_value": null
+      }
+    }
+  ]
+}

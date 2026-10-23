@@ -181,20 +181,24 @@ python -m evals.run_eval                                   # precision / recall 
 
 ## Where the sponsor technologies fit
 
-**No sponsor technology is mounted.** That is a deliberate, recorded decision rather than an
-omission: the sponsor layer was scoped out so the four-agent critique loop and the honesty
-guarantees could be finished properly, and the design reasons are in
-`docs/superpowers/specs/2026-09-24-oci-tenancy-auditor-design.md` §3.2 and §5.11. Stating this
-plainly is better than claiming an integration the code does not contain.
-
-The design does leave the seam for one: the `policy` source adapter is a swappable interface
-(`app/sources/`), so a data-layer sponsor could supply the rule and price reference behind it
-without touching any agent. Without it, the adapter reads `data/scenarios/*/policy.json`.
+**Zetaris is mounted, and it did real work.** The `policy` source adapter (a swappable interface
+in `app/sources/`) has an opt-in Zetaris backend: set `DRIFTWATCH_POLICY_SOURCE=zetaris` and the
+rules are fetched from the live Zetaris AI Data Gateway over its documented REST/SQL surface —
+two pinned SELECTs against a published snapshot of **synthetic** policy data, with row-count,
+content-digest and scope-hash re-validated *after* transport and *before* any agent consumes a
+rule; a failure degrades explicitly to the file source, never silently. The acceptance artifact
+`output_examples/zetaris_acceptance_2026-10-22/` proves causality, not just connectivity:
+republishing the policy without rule R-1 as a new immutable snapshot removed **exactly** the
+finding R-1 produced, computed through the full Scout→Skeptic→Writer loop with `provider:
+zetaris` lineage on every rule hit. Runbook, grants, rollback and the supplier defect we found
+and worked around are in `docs/zetaris-policy-operations.md` and
+`notes/zetaris-engine-defects-2026-10-22.md`. Sample mode is unchanged: `SAMPLE_MODE=true`
+forces the file source before any sponsor variable is read, with no credentials and no network.
 
 | Sponsor | Layer | Status in this submission |
 |---|---|---|
-| Zetaris | Data | Not mounted. The `policy` adapter is the seam it would occupy. |
-| NVIDIA | Token | Not mounted. The model path is one OpenAI-compatible HTTP call, provider-agnostic (`app/generator.py:ModelGenerator`). |
+| Zetaris | Data | **Mounted.** Policy snapshot published to the live engine, fetched through the two-SELECT source with end-to-end digest validation; acceptance = R-1 removal changes exactly one finding. Inventory/telemetry stay on OCI adapters — Zetaris is the governed-data seam. |
+| NVIDIA | Models/workflow | Not mounted. The model path is one OpenAI-compatible HTTP call, provider-agnostic (`app/generator.py:ModelGenerator`). |
 | Meterless | Orchestration | Not mounted. The bounded loop in `app/loop.py` implements the same discipline — capped rounds, explicit termination, no unbounded debate. |
 
 ## Evidence: traces, inputs, outputs
@@ -331,13 +335,17 @@ python scripts/make_scenario.py --score 8                        # generate and 
 - **Known limitations:** the audit covers compute instances, block volumes and reserved public
   IPs only — not databases, load balancers, object storage or networking. Every committed result
   comes from fixtures or from the masked lab capture described above; the live adapters have run
-  against the lab tenancy but not at full telemetry maturity (the tenancy is too young for the
-  168 h CPU rules until ~5 Oct — see `docs/lab-tenancy.md`). Cost figures are list prices
+  against the lab tenancy. The 5 October live audit had 93.3% coverage of its 168-hour window,
+  but no re-check/revision: the batch burst was still inside that window. The 744-hour
+  re-check needs 80% coverage, which this young lab cannot reach before submissions close;
+  do not interpret insufficient-history abstention as a completed live revision. The next
+  read-only observation is 9 October 00:00 SGT — see `docs/lab-tenancy.md`. Cost figures are list prices
   from a bundled catalog,
   not your invoice. A finding with `usd_per_month_upper_bound` impact is an upper bound, never a
   promised saving. Telemetry is CPU only, and a resource whose window is short has no CPU verdict
-  at all rather than a hedged one. The IaC check reads Terraform declarations; a resource managed by
-  hand in the console is reported as unattributed by design, which is the intended behaviour and
+  at all rather than a hedged one. The IaC check reads file-backed declarations; the lab's
+  Terraform-shaped labels are not evidence of a Terraform apply. A resource absent from those
+  declarations is reported as unattributed by design, which is the intended behaviour and
   also a way to be annoying. A run examines at most 25 resources and says so when it truncates.
   The figure guard stops unsupported *numbers*, not unsupported *sentences* that contain none.
   The held-out generator multiplies the shapes that get tested; it does not widen the resource
@@ -363,7 +371,7 @@ python scripts/make_scenario.py --score 8                        # generate and 
 | Path | Purpose |
 |---|---|
 | `run.py` | CLI entry point (`--serve` for HTTP) |
-| `app/sources/` | Four source adapters: fixtures plus live OCI inventory/telemetry (built, offline-tested, tenancy-unverified) |
+| `app/sources/` | Four source adapters: fixtures plus live OCI inventory/telemetry (offline-tested and run against the personal lab) |
 | `app/agents/` | Planner, Scout, Skeptic, Writer — one file, one permission set each |
 | `app/loop.py` | Bounded orchestrator: caps, degradation, termination |
 | `app/analysis.py` | Every number the report contains |

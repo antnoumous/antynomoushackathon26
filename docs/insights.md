@@ -145,3 +145,37 @@ rather than a progress bar.
 > **what we did about it** → counts are keyed by resource and finding class, which is stable across
 > rounds, and the test drives three real rounds. **When a cap is keyed by something the loop
 > recreates every cycle, the cap is decoration; test it by running the loop, not by building state.**
+
+### The data gateway truncated our JSON — silently — and the digest guard caught it
+
+> **What we observed** → the first live registration of the policy snapshot into Zetaris
+> (`FORMAT CSV` over a staged file) returned correct row counts and correct headers, but `SELECT`
+> delivered `when_json` cells **cut off at the first embedded double quote**: RFC-4180 escaped
+> `"{""a"":1}"` came back as `"{"a":1` — gone from there on. Nothing in the response signalled
+> corruption. → **why it happens** → the engine's CSV parser treats a quote as a cell terminator
+> rather than honouring doubled quotes inside quoted fields; every documented example uses
+> quote-free columns, so the defect is invisible unless your payload is JSON-in-CSV. → **what we
+> did about it** → three layers had already been designed for exactly this: the fetch re-computes
+> the content digest over *parsed* rules and refuses the snapshot on any mismatch, the orchestrator
+> degrades to the file source and marks `degraded: true` rather than fabricating, and the
+> acceptance harness fails `sponsor_acceptance` on fallback — so the first live dual-run reported
+> an honest FALSE while still producing a valid audit. The fix preserved content identity
+> (percent-encoding the two dangerous characters in the exported cells, decode-on-parse-failure
+> client-side) and republished as new immutable snapshot ids — digests unchanged, v1 revoked and
+> dropped, and the live acceptance then proved removing one rule removed exactly its finding.
+> **A connector's happy path is not its contract; validate the payload after the wire, not just
+> the status code — and probe an ephemeral object before trusting a permanent one.**
+
+### Sponsor surfaces hide their real rules behind generic 400s; the logs don't
+
+> **What we observed** → creating the least-privilege runtime user failed with a bare `HTTP 400`
+> in the UI. The form says "minimum 6 characters"; the server wants ≥8 plus upper/lower/digit and
+> a special *from a fixed set*; and the direct API's create endpoint answers any malformed body —
+> secret or field — with the same `Invalid value for: body`. → **why it happens** → the UI gate
+> and the engine rule were written apart, and the REST layer validates against a schema before
+> mapping field errors. → **what we did about it** → stop guessing from UI text: replay the *exact*
+> schema (recovered from the UI's own minified bundle) with an input deliberately invalid in one
+> chosen way, and read the error body the UI swallowed — which named the real rule verbatim. The
+> same move found the endpoint when the proxy 404'd. **When a supplier's UI shows you a status
+> code, treat it as a pointer, not an answer — the body has the answer, and one controlled failing
+> request is a cheaper experiment than five informed guesses.**

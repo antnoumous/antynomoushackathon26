@@ -1,5 +1,12 @@
 # Host documents — digest
 
+**14 October live-source update:** [`zetaris.md`](zetaris.md) records direct verification
+of the current published event rules, including expanded rule text. **22–27 October**
+supersedes the calendar below; Zetaris + Meterless integrations and Cursor development
+are required; the track list and deliverables changed. This digest preserves the earlier
+supplied drafts as historical material, not the current binding event specification.
+NVIDIA wording still conflicts between the live event rules and Academy.
+
 Digest of the twelve documents shared by the organisers, read on 2026-09-24.
 Source files live outside the repo (attachments); this file is the reference copy.
 
@@ -217,6 +224,13 @@ authorship or results — is preparation guidance pointing at the Official Rules
 ---
 
 ## 7. The Meterless agent engines
+
+**9 October supplement:** [`meterless.md`](meterless.md) analyses the six newly supplied
+sponsor files against the implemented Driftwatch code. Four reuploads are byte-identical;
+the World Model reupload removes its §17 Neo4j partner reference. The historical conflict
+table below remains unresolved, not silently replaced. The supplement distinguishes
+headless sponsor guides from public implementations and proposes a minimal World Model
+before optional cross-run memory; no sponsor integration is claimed.
 
 **What they are:** three standalone *reference architectures*, not a library you install.
 Headless (no UI, no human at runtime), provider-agnostic, auditable. Meterless is the

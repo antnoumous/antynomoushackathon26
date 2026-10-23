@@ -1,0 +1,172 @@
+{
+  "retrieved_at_utc": "2026-10-18T07:19:29.727219+00:00",
+  "source": "https://apexapps.oracle.com/pls/apex/cetools/api/v1/products",
+  "source_last_updated": "2026-10-08T14:38:16.165Z",
+  "source_sha256": "5517c821db5c9715e21ba0ccd3f738c0e58f9d12907094d9f0a1a1b2e333428a",
+  "sku_count": 8,
+  "rates": [
+    {
+      "sku": "B111129",
+      "name": "OCI - Compute - Standard - E6 - OCPU",
+      "unit": "OCPU Per Hour",
+      "currency": "USD",
+      "model": "PAY_AS_YOU_GO",
+      "rate": "0.03"
+    },
+    {
+      "sku": "B111130",
+      "name": "OCI - Compute - Standard - E6 - Memory",
+      "unit": "Gigabytes Per Hour",
+      "currency": "USD",
+      "model": "PAY_AS_YOU_GO",
+      "rate": "0.002"
+    },
+    {
+      "sku": "B91961",
+      "name": "Storage - Block Volume - Storage",
+      "unit": "Gigabyte Storage Capacity Per Month",
+      "currency": "USD",
+      "model": "PAY_AS_YOU_GO",
+      "rate": "0.0255"
+    },
+    {
+      "sku": "B91962",
+      "name": "Storage - Block Volume - Performance Units",
+      "unit": "Performance Units Per Gigabyte Per Month",
+      "currency": "USD",
+      "model": "PAY_AS_YOU_GO",
+      "rate": "0.0017"
+    },
+    {
+      "sku": "B94176",
+      "name": "Compute - Standard - X9 - OCPU",
+      "unit": "OCPU Per Hour",
+      "currency": "USD",
+      "model": "PAY_AS_YOU_GO",
+      "rate": "0.04"
+    },
+    {
+      "sku": "B94177",
+      "name": "Compute - Standard - X9 - Memory",
+      "unit": "Gigabytes Per Hour",
+      "currency": "USD",
+      "model": "PAY_AS_YOU_GO",
+      "rate": "0.0015"
+    },
+    {
+      "sku": "B97384",
+      "name": "Compute - Standard - E5 - OCPU",
+      "unit": "OCPU Per Hour",
+      "currency": "USD",
+      "model": "PAY_AS_YOU_GO",
+      "rate": "0.03"
+    },
+    {
+      "sku": "B97385",
+      "name": "Compute - Standard - E5 - Memory",
+      "unit": "Gigabytes Per Hour",
+      "currency": "USD",
+      "model": "PAY_AS_YOU_GO",
+      "rate": "0.002"
+    }
+  ],
+  "calculation": "Decimal; compute = 2*OCPU_hour + 16*memory_GB_hour; 50GB balanced boot = 50*(storage_GB_month+10*VPU_GB_month); calendar-month proration",
+  "currency": "USD",
+  "estimates": [
+    {
+      "shape": "VM.Standard.E5.Flex",
+      "ocpus": 2,
+      "vcpus": 4,
+      "memory_gb": 16,
+      "compute_usd_per_hour": "0.092",
+      "boot_gb": 50,
+      "boot_vpus_per_gb": 10,
+      "boot_usd_per_full_calendar_month": "2.1250",
+      "durations": [
+        {
+          "hours": 24,
+          "compute_usd": "2.208",
+          "compute_boot_usd_31day_denominator": "2.276548387096774193548387097",
+          "compute_boot_usd_30day_denominator": "2.278833333333333333333333333"
+        },
+        {
+          "hours": 144,
+          "compute_usd": "13.248",
+          "compute_boot_usd_31day_denominator": "13.65929032258064516129032258",
+          "compute_boot_usd_30day_denominator": "13.6730"
+        },
+        {
+          "hours": 480,
+          "compute_usd": "44.160",
+          "compute_boot_usd_31day_denominator": "45.53096774193548387096774194",
+          "compute_boot_usd_30day_denominator": "45.57666666666666666666666667"
+        }
+      ]
+    },
+    {
+      "shape": "VM.Standard.E6.Flex",
+      "ocpus": 2,
+      "vcpus": 4,
+      "memory_gb": 16,
+      "compute_usd_per_hour": "0.092",
+      "boot_gb": 50,
+      "boot_vpus_per_gb": 10,
+      "boot_usd_per_full_calendar_month": "2.1250",
+      "durations": [
+        {
+          "hours": 24,
+          "compute_usd": "2.208",
+          "compute_boot_usd_31day_denominator": "2.276548387096774193548387097",
+          "compute_boot_usd_30day_denominator": "2.278833333333333333333333333"
+        },
+        {
+          "hours": 144,
+          "compute_usd": "13.248",
+          "compute_boot_usd_31day_denominator": "13.65929032258064516129032258",
+          "compute_boot_usd_30day_denominator": "13.6730"
+        },
+        {
+          "hours": 480,
+          "compute_usd": "44.160",
+          "compute_boot_usd_31day_denominator": "45.53096774193548387096774194",
+          "compute_boot_usd_30day_denominator": "45.57666666666666666666666667"
+        }
+      ]
+    },
+    {
+      "shape": "VM.Standard3.Flex",
+      "ocpus": 2,
+      "vcpus": 4,
+      "memory_gb": 16,
+      "compute_usd_per_hour": "0.1040",
+      "boot_gb": 50,
+      "boot_vpus_per_gb": 10,
+      "boot_usd_per_full_calendar_month": "2.1250",
+      "durations": [
+        {
+          "hours": 24,
+          "compute_usd": "2.4960",
+          "compute_boot_usd_31day_denominator": "2.564548387096774193548387097",
+          "compute_boot_usd_30day_denominator": "2.566833333333333333333333333"
+        },
+        {
+          "hours": 144,
+          "compute_usd": "14.9760",
+          "compute_boot_usd_31day_denominator": "15.38729032258064516129032258",
+          "compute_boot_usd_30day_denominator": "15.4010"
+        },
+        {
+          "hours": 480,
+          "compute_usd": "49.9200",
+          "compute_boot_usd_31day_denominator": "51.29096774193548387096774194",
+          "compute_boot_usd_30day_denominator": "51.33666666666666666666666667"
+        }
+      ]
+    }
+  ],
+  "public_ipv4_rate_verified": false,
+  "tax_and_fx_included": false,
+  "trial_credit_deductions_applied": false,
+  "zetaris_license_included": false,
+  "other_network_backup_storage_costs_included": false
+}
