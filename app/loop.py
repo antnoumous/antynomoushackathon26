@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
 
@@ -45,25 +46,56 @@ class Orchestrator:
         ctx.generator.set_deadline(self.deadline)
 
     # --- source access with retry, then fixture fallback, then honest failure ---------------
+    def _clock(self) -> float:
+        """The orchestrator's own clock, swappable in tests via ctx.extras["clock"]."""
+        return self.ctx.extras.get("clock", time.monotonic)()
+
+    def _usable(self, reserve: float = 0.0) -> float:
+        return self.deadline - self._clock() - reserve
+
     def _fetch(self, name: str, scope: Scope):
         source = self.ctx.sources[name]
+        # Every attempt carries the run's absolute deadline; a deadline-aware source bounds
+        # itself by it, a naive source simply ignores the field.
+        fetch_scope = scope.model_copy(update={"deadline_monotonic": self.deadline})
         last_error: Exception | None = None
         for attempt in (1, 2):
+            # The remote policy path is deadline-aware from its first call; generic sources
+            # keep their pre-existing behaviour and only lose the retry once time is out.
+            # Short-circuit first so ordinary attempts do not perturb the shared clock.
+            if (attempt == 2 or name == "policy") and self._usable() <= 0:
+                break
             try:
-                result = source.fetch(scope)
+                result = source.fetch(fetch_scope)
                 self.ctx.trace.emit(agent_name="Planner", action="source_ok",
                                     input_summary=f"{name} attempt {attempt}",
                                     output_summary=f"{len(result.records)} records",
-                                    retry_count=attempt - 1, status="success")
-                return result, SourceStatus(name=name, backend=result.backend)
+                                    retry_count=attempt - 1,
+                                    status="success" if not result.degraded else "degraded")
+                if result.provenance is not None:
+                    self.ctx.extras.setdefault("source_provenance", {})[name] = result.provenance
+                    self.ctx.trace.emit(agent_name="Planner", action="source_snapshot",
+                                        input_summary=f"{name} {result.backend}",
+                                        output_summary=json.dumps(
+                                            result.provenance.model_dump(), sort_keys=True),
+                                        retry_count=attempt - 1, status="success")
+                return result, SourceStatus(name=name, backend=result.backend,
+                                            degraded=result.degraded, reason=result.reason,
+                                            provenance=result.provenance)
             except Exception as exc:                      # noqa: BLE001 - degraded, not swallowed
                 last_error = exc
+                # A retry or fallback must never inherit lineage from an attempt that failed.
+                self.ctx.extras.setdefault("source_provenance", {}).pop(name, None)
                 self.ctx.trace.emit(agent_name="Planner", action="source_call_failed",
                                     input_summary=f"{name} attempt {attempt}",
                                     output_summary=f"{type(exc).__name__}: {exc}",
                                     retry_count=attempt - 1, status="retrying")
+                if getattr(exc, "retryable", True) is False:
+                    break                                 # a second auth/schema call fails alike
 
-        if self.scenario_dir is not None:
+        # A fixture fallback is local work: it may run while finalisation budget remains, but
+        # past the deadline nothing new — remote or file-backed — is started at all.
+        if self.scenario_dir is not None and self._usable() > 0:
             try:
                 fallback = get_source(name, self.ctx.config.model_copy(update={"sample_mode": True}),
                                       scenario_dir=self.scenario_dir)
@@ -89,9 +121,13 @@ class Orchestrator:
     def _load(self, name: str, result) -> None:
         if name == "inventory":
             from app.models import Resource
+            # Build the whole mapping first: a malformed later row must not leave earlier rows
+            # applied — a half-loaded inventory is a different tenancy than the one audited.
+            staged: dict = {}
             for record in result.records:
                 resource = Resource(**record)
-                self.ctx.state.facts["resources"][resource.resource_id] = resource
+                staged[resource.resource_id] = resource
+            self.ctx.state.facts["resources"].update(staged)
         elif name == "iac":
             from app.models import IaCDeclaration
             self.ctx.state.facts["declarations"] = [IaCDeclaration(**d) for d in result.records]
@@ -149,6 +185,16 @@ class Orchestrator:
         """No policy rules means nothing can be justified. Say so; never invent a finding."""
         if self.ctx.state.facts["rules"]:
             return True
+        prov = self.ctx.extras.get("source_provenance", {}).get("policy")
+        if prov is not None and prov.complete and prov.row_count == 0:
+            # A complete-but-empty snapshot is a fact about the policy, not an outage. The
+            # report still abstains; the reason must not misattribute the abstention.
+            self.ctx.trace.emit(agent_name="Planner", action="cannot_audit",
+                                input_summary="policy rules",
+                                output_summary="the policy source returned a complete empty "
+                                               "snapshot (0 rules); there is nothing to flag",
+                                status="partial")
+            return False
         self.ctx.trace.emit(agent_name="Planner", action="cannot_audit",
                             input_summary="policy rules",
                             output_summary="no rules loaded; no finding can be justified",

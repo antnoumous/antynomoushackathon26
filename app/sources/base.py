@@ -4,6 +4,8 @@ from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel
 
+from app.source_metadata import SourceProvenance
+
 
 class SourceError(Exception):
     """Raised by a live backend when it cannot answer. Callers degrade; they never fabricate."""
@@ -19,6 +21,7 @@ class Scope(BaseModel):
     resource_types: list[str]
     lookback_hours: int
     resolution_minutes: int
+    deadline_monotonic: float | None = None
 
 
 class SourceResult(BaseModel):
@@ -27,6 +30,7 @@ class SourceResult(BaseModel):
     degraded: bool = False
     reason: str | None = None
     records: list[dict[str, Any]]
+    provenance: SourceProvenance | None = None
 
 
 class Source(Protocol):

@@ -28,6 +28,14 @@ def get_live_source(name: str, config: RunConfig, scenario_dir: Path | None = No
         return OCIInventorySource(config)
     if name == "telemetry":
         return OCITelemetrySource(config)
+    if name == "policy" and config.policy_source == "zetaris":
+        # Opt-in sponsor path only. Construction reads environment settings; it performs
+        # no network I/O. Invalid sponsor configuration fails explicitly here — the
+        # registry never silently falls back to the file source.
+        from app.sources.zetaris_http import ZetarisSettings
+        from app.sources.zetaris_policy import ZetarisPolicySource
+
+        return ZetarisPolicySource(ZetarisSettings.from_env())
     if name in FILE_BACKED:
         if scenario_dir is None:
             raise SourceError(

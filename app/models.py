@@ -5,6 +5,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.source_metadata import SourceProvenance
+
 ResourceClass = Literal["compute_instance", "block_volume", "reserved_public_ip"]
 FindingClass = Literal["cost_waste", "unattributed"]
 RunStatus = Literal["success", "partial", "capped"]
@@ -146,6 +148,7 @@ class SourceStatus(BaseModel):
     backend: Literal["live", "fixture", "none"]
     degraded: bool = False
     reason: str | None = None
+    provenance: SourceProvenance | None = None
 
 
 class RunReport(BaseModel):

@@ -318,3 +318,98 @@ def test_a_re_check_that_changes_nothing_is_a_duplicate_not_a_revision(tmp_path)
     assert "drop_duplicate_finding" in actions(ctx)
     assert all(f.status != "revised" for f in report.findings
                if f.finding_class == "unattributed")
+
+
+# --- Task 4: truthful degradation, transactional load, deadline-aware fetch ---------------
+def test_source_returned_degradation_is_preserved(tmp_path):
+    _, ctx = build(tmp_path)
+    original = ctx.sources["policy"]
+
+    class Degraded:
+        name = "policy"
+
+        def fetch(self, scope):
+            result = original.fetch(scope)
+            return result.model_copy(update={"degraded": True, "reason": "test-degraded"})
+
+    ctx.sources["policy"] = Degraded()
+    report = Orchestrator(ctx).run()
+    status = next(s for s in report.sources if s.name == "policy")
+    assert status.degraded is True
+    assert status.reason == "test-degraded"
+
+
+def test_telemetry_degraded_result_is_preserved(tmp_path):
+    _, ctx = build(tmp_path)
+    original = ctx.sources["telemetry"]
+
+    class OkButDegraded:
+        name = "telemetry"
+
+        def fetch(self, scope):
+            result = original.fetch(scope)
+            return result.model_copy(update={"degraded": True, "reason": "partial window"})
+
+    ctx.sources["telemetry"] = OkButDegraded()
+    report = Orchestrator(ctx).run()
+    tel = [s for s in report.sources if s.name == "telemetry"]
+    assert tel and all(s.degraded and s.reason == "partial window" for s in tel)
+    assert report.status == "partial"
+
+
+def test_inventory_load_is_transactional(tmp_path):
+    from app.loop import Orchestrator as Orc
+    from app.sources.base import SourceResult
+
+    _, ctx = build(tmp_path)
+    good = ctx.sources["inventory"].fetch(ctx.scope).records
+    bad_second = dict(good[0])
+    bad_second.pop("resource_id")
+    orch = Orc(ctx)
+    with pytest.raises(Exception):
+        orch._load("inventory", SourceResult(source="inventory", backend="live",
+                                             records=[good[0], bad_second]))
+    assert ctx.state.facts["resources"] == {}  # no first-row mutation
+
+
+def test_policy_load_leaves_previous_rules_unchanged(tmp_path):
+    from app.loop import Orchestrator as Orc
+    from app.sources.base import SourceResult
+
+    _, ctx = build(tmp_path)
+    good = ctx.sources["policy"].fetch(ctx.scope).records
+    orch = Orc(ctx)
+    orch._load("policy", SourceResult(source="policy", backend="fixture", records=good))
+    before = ctx.state.facts["rules"]
+    bad = [dict(good[0]), {"rule_id": "R-X", "class": "nonsense", "when": {}, "note": "x"}]
+    with pytest.raises(Exception):
+        orch._load("policy", SourceResult(source="policy", backend="live", records=bad))
+    assert ctx.state.facts["rules"] == before
+
+
+def test_deadline_is_passed_to_sources_and_retry_respects_clock(tmp_path):
+    import time as _time
+    from app.sources.base import SourceError, SourceResult
+
+    _, ctx = build(tmp_path)
+    seen: list = []
+    starts: list[int] = []
+
+    class Flaky:
+        name = "policy"
+
+        def fetch(self, scope):
+            starts.append(1)
+            seen.append(scope.deadline_monotonic)
+            raise SourceError("boom")
+
+    ctx.sources["policy"] = Flaky()
+    orch = Orchestrator(ctx)
+    # Install the exploding fake clock AFTER construction (init binds the real clock).
+    ticks = iter([0.0, 1e9])  # usable before first call, expired before the retry
+    ctx.extras["clock"] = lambda: next(ticks)
+    report = orch.run()
+    status = next(s for s in report.sources if s.name == "policy")
+    assert len(starts) == 1          # retry was NOT started after expiry
+    assert seen and seen[0] is not None and seen[0] > 0
+    assert status.degraded is True

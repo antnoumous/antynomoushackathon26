@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 from app.agents.base import Agent
@@ -25,9 +26,12 @@ class Scout(Agent):
     # --- hydrating the shared state once per run -------------------------------------------
     def hydrate(self) -> None:
         inventory = self.ctx.sources["inventory"].fetch(self.ctx.scope)
+        # Transactional like the Planner's hydrate: stage every record, then apply once.
+        staged: dict = {}
         for record in inventory.records:
             resource = Resource(**record)
-            self.ctx.state.facts["resources"][resource.resource_id] = resource
+            staged[resource.resource_id] = resource
+        self.ctx.state.facts["resources"].update(staged)
 
         iac = self.ctx.sources["iac"].fetch(self.ctx.scope)
         self.ctx.state.facts["declarations"] = [IaCDeclaration(**d) for d in iac.records]
@@ -49,7 +53,8 @@ class Scout(Agent):
         scope = Scope(compartment_ids=self.ctx.scope.compartment_ids,
                       resource_types=self.ctx.scope.resource_types,
                       lookback_hours=lookback_hours,
-                      resolution_minutes=self.ctx.scope.resolution_minutes)
+                      resolution_minutes=self.ctx.scope.resolution_minutes,
+                      deadline_monotonic=self.ctx.extras.get("deadline"))
         result = self._fetch_with_recovery("telemetry", scope)
         if result is None:
             return None
@@ -67,20 +72,35 @@ class Scout(Agent):
         """One retry, then the fixture backend, then None. Never invents records."""
         source = self.ctx.sources[name]
         last_error: Exception | None = None
+
+        def usable() -> float:
+            deadline = self.ctx.extras.get("deadline")
+            if deadline is None:
+                return float("inf")
+            return deadline - self.ctx.extras.get("clock", time.monotonic)()
+
         for attempt in (1, 2):
+            if attempt == 2 and usable() <= 0:
+                break                                   # no external retry past the deadline
             try:
                 result = source.fetch(scope)
-                self._source_status[name] = SourceStatus(name=name, backend=result.backend)
+                self._source_status[name] = SourceStatus(name=name, backend=result.backend,
+                                                         degraded=result.degraded,
+                                                         reason=result.reason,
+                                                         provenance=result.provenance)
                 return result
             except Exception as exc:                      # noqa: BLE001 - logged, then degraded
                 last_error = exc
                 self._emit("source_call_failed", input_summary=f"{name} attempt {attempt}",
                            output_summary=f"{type(exc).__name__}: {exc}", status="retrying",
                            retry_count=attempt - 1)
+                if getattr(exc, "retryable", True) is False:
+                    break                                 # a second call would fail identically
         # The docstring promised the fixture backend; the Planner's hydrate path has it, and a
         # per-resource telemetry fetch must degrade the same way or a mid-run API failure would
         # silently downgrade every cost rule to abstain (found on the lab's first degraded run).
-        if self.ctx.scenario_dir is not None:
+        # A fixture fallback is local work: allowed only while finalisation budget remains.
+        if self.ctx.scenario_dir is not None and usable() > 0:
             try:
                 from app.sources import get_source
                 fallback = get_source(name, self.ctx.config.model_copy(
@@ -200,9 +220,22 @@ class Scout(Agent):
                         source="iac", kind="absent", resource_id=resource_id,
                         summary="no matching declaration (tag, name, or normalised name)",
                         payload={"match_rule": None}))
+                prov = self.ctx.extras.get("source_provenance", {}).get("policy")
+                payload = {"rule_id": rule.rule_id}
+                if prov is not None:
+                    # Content-based lineage for an actually-consumed remote rule. It is a
+                    # reference into the pinned snapshot, NOT a persisted World Model
+                    # observation — the vocabulary matters for what M3 can later claim.
+                    payload.update({
+                        "snapshot_id": prov.snapshot_id,
+                        "content_sha256": prov.content_sha256,
+                        "object_name": prov.object_name,
+                        "provider": prov.provider,
+                        "ref": f"policy:{prov.content_sha256}:{rule.rule_id}",
+                    })
                 evidence.append(self.ctx.evidence(
                     source="policy", kind="rule_hit", resource_id=resource_id,
-                    summary=f"{rule.rule_id}: {rule.note}", payload={"rule_id": rule.rule_id}))
+                    summary=f"{rule.rule_id}: {rule.note}", payload=payload))
 
                 generated = self.ctx.generator.complete(
                     prompt=f"State the finding for {resource.display_name} under {rule.rule_id}.",
