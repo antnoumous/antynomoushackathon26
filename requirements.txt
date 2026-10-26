@@ -1,4 +1,5 @@
-# Python 3.11 or newer is required (see the check in app/__init__.py).
+# Python 3.11-3.13 is required (see the check in app/__init__.py). 3.14 has no
+# pydantic-core wheel for the pinned pydantic and would need a Rust build.
 pydantic==2.9.2
 fastapi==0.115.0
 uvicorn==0.31.0

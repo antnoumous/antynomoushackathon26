@@ -24,12 +24,14 @@ report shows both the finding and the reason the agent changed its mind.
 ## Run it
 
 Nothing installs after the app starts, no model or dataset is downloaded, and no GPU is used.
-**Python 3.11 or newer.**
+**Python 3.11, 3.12 or 3.13.** 3.14 is refused up front: the pinned `pydantic` has no
+`pydantic-core` wheel for it, so `pip install` would fall back to a Rust source build and fail
+with a compiler traceback instead of a useful message.
 
 ```bash
 git clone https://github.com/antnoumous/antynomoushackathon26.git
 cd antynomoushackathon26
-python3.11 -m venv .venv && . .venv/bin/activate    # 3.11+; the app says so plainly if not
+python3.11 -m venv .venv && . .venv/bin/activate    # 3.11-3.13; the app refuses others plainly
 pip install -r requirements.txt
 
 # Audits the bundled sample scenario on cached data. No credentials, no network.
