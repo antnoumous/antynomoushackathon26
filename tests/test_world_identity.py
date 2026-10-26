@@ -91,3 +91,12 @@ def test_observation_rejects_non_object_payload_or_invalid_window():
         with pytest.raises(WorldError) as caught:
             Observation.from_payload(**(args | override))
         assert caught.value.category == "schema"
+
+
+def test_unicode_payloads_and_identifier_case_are_preserved():
+    from app.world_model.contracts import Observation
+    from app.world_model.identity import canonical_json, entity_id
+    assert canonical_json({"name": "é🧠"}) == '{"name":"é🧠"}'
+    args = dict(entity_type="resource", source="inventory", backend="fixture", payload={})
+    assert entity_id("n", Observation.from_payload(external_key="Resource-A", **args)) != entity_id(
+        "n", Observation.from_payload(external_key="resource-a", **args))
