@@ -35,3 +35,57 @@ def test_publication_rejects_catalog_credentials_before_any_copy(tmp_path,encode
         export_proof(raw,target,runtime_env=ENV)
     assert caught.value.category == "schema" and token not in str(caught.value)
     assert not target.exists() and path.read_bytes() == original
+
+
+@pytest.mark.parametrize("name,context,field",[
+    ("finding_claim",{"rule_id":"R-2","resource_name":"ip-x","stats":{}},"claim"),
+    ("verdict_reason",{"reason_key":"frequency_mismatch"},"reason"),
+    ("run_summary",{"resources":6,"sources":4,"accepted":3,"rejected":0,"undetermined":4},"summary")])
+@pytest.mark.parametrize("codepoint",[0xD800,0xDFFF])
+def test_non_scalar_model_text_is_schema_fallback_not_success(name,context,field,codepoint):
+    from app.providers.meterless import MeterlessGenerator
+    from app.providers.meterless_settings import MeterlessSettings
+    invalid={field:"bad "+chr(codepoint),"confidence":0.8}
+    gen=MeterlessGenerator(MeterlessSettings(token="unicode-test-sentinel"),transport=lambda *a,**k:{
+        "choices":[{"message":{"content":json.dumps(invalid)}}]})
+    out=gen.complete(prompt="",schema={"name":name},context=context)
+    out[field].encode("utf-8")
+    assert gen.diagnostics()["successes"] == 0 and gen.diagnostics()["fallbacks"] == 1
+    assert gen.recorder.outcomes()[0].category == "schema"
+
+
+def test_http_escaped_surrogate_summary_finishes_with_partial_report(tmp_path):
+    import threading
+    from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
+    from tests.test_loop import build
+    from app.generator import RulesGenerator
+    from app.loop import Orchestrator
+    from app.providers.meterless import MeterlessGenerator
+    from app.providers.meterless_settings import MeterlessSettings
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self,*args):pass
+        def do_POST(self):
+            payload=json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            system=payload["messages"][0]["content"]
+            name="run_summary" if '"summary"' in system else "finding_claim" if '"claim"' in system else "verdict_reason"
+            user=payload["messages"][1]["content"]
+            context=json.loads(user[user.index("{"):])
+            result=RulesGenerator().complete(prompt="",schema={"name":name},context=context)
+            if name == "run_summary":result["summary"]="invalid "+chr(0xD800)
+            body=json.dumps({"choices":[{"message":{"content":json.dumps(result)}}]}).encode()
+            self.send_response(200);self.send_header("Content-Length",str(len(body)));self.end_headers()
+            try:self.wfile.write(body)
+            except OSError:pass
+    server=ThreadingHTTPServer(("127.0.0.1",0),Handler);server.daemon_threads=True
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    _,ctx=build(tmp_path)
+    ctx.generator=MeterlessGenerator(MeterlessSettings(base_url="http://127.0.0.1:"+str(server.server_port),token="unicode-http-sentinel"))
+    try:
+        report=Orchestrator(ctx).run()
+        assert report.status == "partial"
+        assert report.summary["integrations"]["meterless_nightshift"]["fallbacks"] == 1
+        assert ctx.state.records()[-1]["kind"] == "report"
+        assert json.loads(ctx.trace.path.read_text().splitlines()[-1])["action"] == "synthesise"
+    finally:
+        ctx.trace.close();ctx.state.close()
+        server.shutdown();server.server_close();thread.join(timeout=2)

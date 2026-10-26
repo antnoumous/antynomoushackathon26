@@ -57,6 +57,7 @@ class MeterlessGenerator:
                     if definition["type"] == "string":
                         if not isinstance(out[key], str) or self.settings.token.get_secret_value() in out[key]:
                             raise ValueError()
+                        out[key].encode("utf-8", errors="strict")
             except (ValueError, TypeError, KeyError, IndexError, RecursionError):
                 raise MeterlessError("schema") from None
         except Exception as exc:
