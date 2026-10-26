@@ -45,9 +45,10 @@ or the existing dirty worktree.
 
 ## Baseline, deadlines and records
 
-**User approval:** the written split-deployment specification was approved after the topology
-recommendation. Implementation-plan review and execution-method selection remain pending; no
-implementation or installation has started.
+**User approval:** the written specification and these plans were approved on 26 October 2026;
+the user selected Native execution with “go ahead”. The two code milestones and the independent
+review fix pass are locally verified. Installation has not occurred: SSH and installer-security
+gates remain blocked, and deployment/real acceptance/final delivery are incomplete.
 
 **Planning baseline actually rerun:** `.venv/bin/python -m pytest -q` returned **259 passed, one
 existing Starlette/AnyIO deprecation warning**. Curated evaluation returned **3 scenarios, 0 failing**;

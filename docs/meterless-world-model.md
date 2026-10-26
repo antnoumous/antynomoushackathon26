@@ -51,7 +51,7 @@ changed policy observations and actual Scout/Skeptic trace consumption. Failed g
 exit nonzero. Published JSON/JSONL copies are masked separately and carry raw/exported checksums;
 original databases and captures remain private.
 
-`output_examples/world_model/` contains the generated review proof for this milestone. This is
+`output_examples/world_model_review_2026-10-26/` contains the regenerated post-review proof; the earlier `world_model/` milestone is retained. This is
 **offline engine evidence only**: it proves neither Nightshift inference, combined live sponsor
 acceptance, a live OCI tenancy audit, public deployment nor a submitted hackathon entry. H-MEM,
 Markovian, operator UI, enrichment workers and full upstream conformance are outside this subset.

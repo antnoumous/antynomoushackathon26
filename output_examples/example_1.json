@@ -1,5 +1,5 @@
 {
-  "run_id": "run-d9628825a7",
+  "run_id": "run-ade4bbe3ef",
   "status": "success",
   "mode": "sample",
   "sources": [
@@ -64,7 +64,7 @@
           "snapshots": 8,
           "relationships": 19
         },
-        "store": "world-run-d9628825a7/world.sqlite3",
+        "store": "world-run-ade4bbe3ef/world.sqlite3",
         "sources": {
           "inventory": {
             "backends": [
@@ -113,6 +113,24 @@
         },
         "contexts": 17,
         "failures": []
+      },
+      "generation": {
+        "configured_provider": "rules",
+        "attempts": 0,
+        "successes": 0,
+        "fallbacks": 0,
+        "status": "not_used",
+        "models": [],
+        "schemas": {}
+      },
+      "meterless_nightshift": {
+        "configured_provider": "rules",
+        "status": "not_used",
+        "attempts": 0,
+        "successes": 0,
+        "fallbacks": 0,
+        "models": [],
+        "schemas": {}
       }
     }
   },
@@ -260,7 +278,7 @@
       "reason": "coverage 41h of 168h requested"
     }
   ],
-  "report_markdown_path": "logs/report-run-d9628825a7.md",
-  "trace_path": "logs/trace-run-d9628825a7.jsonl",
+  "report_markdown_path": "logs/report-run-ade4bbe3ef.md",
+  "trace_path": "logs/trace-run-ade4bbe3ef.jsonl",
   "caps_hit": []
 }

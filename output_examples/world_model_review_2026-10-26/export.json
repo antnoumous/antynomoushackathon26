@@ -1,0 +1,26 @@
+{
+  "files": {
+    "acceptance.json": {
+      "export_sha256": "54a91cc9cc8e02b26c76cb0dd79a00d0a8a9ac4145724a84826e28ac667b9fbc",
+      "raw_sha256": "54a91cc9cc8e02b26c76cb0dd79a00d0a8a9ac4145724a84826e28ac667b9fbc"
+    },
+    "base-report.json": {
+      "export_sha256": "830973e44ee1a5439bdfc8328a9a91123da99752d395f131ec5f7b29e35f05f9",
+      "raw_sha256": "7b9e9428e57dffda7f7a5eb02ba87aa7dbf3cc8fd2cf8fe500f33196199ffdf3"
+    },
+    "base-trace.jsonl": {
+      "export_sha256": "f47f0a6524d891e4811e1cba0eae6a9b6f67248e7614c3ea4e5caf5efd9e0f07",
+      "raw_sha256": "f47f0a6524d891e4811e1cba0eae6a9b6f67248e7614c3ea4e5caf5efd9e0f07"
+    },
+    "variant-report.json": {
+      "export_sha256": "068f416bec1f099ad4d4c4bb96b6adc18f77d6b3585d3c8d253ba49eb9a4d2bc",
+      "raw_sha256": "06501d933a4f5a5bdc5fb99900980bb374f519758960fb09c2181971498c3500"
+    },
+    "variant-trace.jsonl": {
+      "export_sha256": "3d72de56be294bb405d86ec05b52cbeac17742ec8e1d9612a390b32c59d0639d",
+      "raw_sha256": "3d72de56be294bb405d86ec05b52cbeac17742ec8e1d9612a390b32c59d0639d"
+    }
+  },
+  "kind": "masked publication copies",
+  "raw_directory_name": "world-acceptance-postreview-20261026"
+}

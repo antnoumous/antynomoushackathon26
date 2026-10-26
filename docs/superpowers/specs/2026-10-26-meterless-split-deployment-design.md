@@ -2,7 +2,7 @@
 
 Date: 26 October 2026 (Singapore time)
 
-Status: **Written specification approved by the user on 26 October 2026. Implementation-plan review and execution-method selection remain the next gate.**
+Status: **Specification and implementation plans approved on 26 October 2026; Native execution selected. World Model/provider code milestones are implemented and review fixes locally verified. Installation, deployment and real combined acceptance remain blocked; see `docs/meterless-operations.md`. No publication is authorised.**
 
 The user approved the recommended topology: Driftwatch, a minimal Meterless World Model,
 and Zetaris on existing personal OCI infrastructure; Nightshift inference on the personal Mac,
