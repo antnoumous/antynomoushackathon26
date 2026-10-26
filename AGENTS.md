@@ -103,8 +103,21 @@ Recommended pre-submission layout lives in the digest §4. Present: `run.py`, `D
   least-privilege runtime user + key (builder-held); acceptance `sponsor_acceptance: true` with
   the R-1-removal causal proof in `output_examples/zetaris_acceptance_2026-10-22/`. A supplier CSV
   defect (embedded-quote truncation) was found by our own digest guard and worked around as v2 —
-  see `notes/zetaris-engine-defects-2026-10-22.md`. Meterless/NVIDIA remain unmounted (honest
-  status in README). Cursor free-tier quota died after Tasks 1–2; Tasks 3–6 are Hermes-executed,
+  see `notes/zetaris-engine-defects-2026-10-22.md`.
+
+- **Sponsor integration (Meterless): Engine mounted, provider implemented, provider not live.**
+  The World Model engine is a minimal Python adaptation in `app/world_model/` (immutable
+  observation store, validated ingestion, context builder pinning an exact run/source revision),
+  consumed by both Scout and Skeptic; acceptance is generated offline by
+  `scripts/verify_world_model.py` into `output_examples/world_model_review_2026-10-26/`. The
+  Nightshift adapter implements the documented provider contract and is contract-tested, but
+  **no request has been served**: the official Mac installer is ad-hoc signed with no
+  TeamIdentifier and Gatekeeper rejects it (`docs/meterless-operations.md`). It reports
+  `not_used` rather than claiming model output. NVIDIA: route present through Nightshift's own
+  Providers tab, not exercised. Status detail lives in README and `docs/meterless-nightshift.md`;
+  do not describe Meterless as "unmounted" or as live.
+
+- Cursor free-tier quota died after Tasks 1–2; Tasks 3–6 are Hermes-executed,
   attribution in `notes/m1-build-log-2026-10-22.md`.
 - **Build window:** 22 Oct 2026 00:00 UTC → 27 Oct 2026 23:45 UTC (live event rules, verified 14 Oct).
 
@@ -135,16 +148,17 @@ submission-form mapping. Declared pre-existing components are allowed by Rules �
 Published Rules §6 requires a **1–4 minute demo, slide deck, GitHub repo/README**, and an
 explanation of Zetaris/Meterless integration, Cursor development and NVIDIA contribution.
 The quality safeguards below remain the project's bar; earlier draft guidance is not the
-current binding deliverable list. Sponsor integration scope is still pending approval.
+current binding deliverable list. Sponsor integration scope was approved on 26 Oct 2026; the
+status column below is the only place that says what actually runs.
 
-## Sponsor tech — runtime roles, not mounted yet
+## Sponsor tech — runtime roles and verified status
 
 | Sponsor | Layer | Use it to |
 |---|---|---|
-| Zetaris | Data | Required integration; documented SQL access over REST/JDBC, proposed policy/IaC adapter |
-| Meterless | Cognition/context | Required integration; proposed minimal World Model (`notes/meterless.md`) |
-| Cursor | Development | Required development tool (rules §5, unchanged as of 22 Oct). **No event credits — free tier only** (announced 22 Oct 08:53 UTC); the $2,000 Cursor money is a prize pool, per the onboarding call. Guide update pending. Actual free-tier Cursor sessions retained as evidence. |
-| NVIDIA | Models/workflow | Event rules require contribution where useful; Academy specifies Nemotron — confirm |
+| Zetaris | Data | **Mounted, live-accepted 22 Oct.** Two pinned SELECTs over the documented REST surface against published immutable snapshots, with digest/scope re-validation after transport. |
+| Meterless | Cognition/context + models | **Engine mounted; provider implemented, not live.** World Model engine consumed by Scout/Skeptic with generated offline acceptance; Nightshift adapter contract-tested, zero live requests (vendor Mac build fails Gatekeeper). |
+| Cursor | Development | **Optional** — rules §5: "Using Cursor for development is optional." Free tier only (no event credits, announced 22 Oct 08:53 UTC). Actual free-tier Cursor sessions retained as evidence. |
+| NVIDIA | Models/workflow | Contribution expected where it helps ("wherever it contributes"); the route is Nightshift's own Providers tab, not the app. Not exercised. |
 
 ## Non-negotiables (these are scored, and are expensive to retrofit)
 
