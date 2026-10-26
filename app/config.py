@@ -38,6 +38,7 @@ class RunConfig(BaseModel):
     sample_mode: bool = False
     policy_source: Literal["file", "zetaris"] = "file"
     model: str | None = None
+    llm_provider: Literal["rules", "openai-compatible", "meterless"] | None = None
     logs_dir: Path = Path("logs")
 
     @classmethod

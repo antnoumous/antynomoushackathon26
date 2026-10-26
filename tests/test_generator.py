@@ -126,3 +126,43 @@ def test_model_generator_falls_back_on_off_schema_answers(monkeypatch):
                        context={"rule_id": "R-2", "resource_name": "ip-x",
                                 "stats": {}, "iac_match_rule": None})
     assert set(out) == {"claim", "confidence"}              # rule engine's shape, model's failure
+
+
+@pytest.mark.parametrize("mode,want",[("rules","rules"),("meterless","meterless"),("openai-compatible","openai-compatible")])
+def test_explicit_provider_selection_is_not_silently_replaced(monkeypatch,mode,want):
+    from app.generator import generator_diagnostics
+    monkeypatch.setenv("LLM_PROVIDER",mode)
+    monkeypatch.setenv("METERLESS_TOKEN","unit-registry-only")
+    monkeypatch.setenv("LLM_API_KEY",FAKE_KEY)
+    gen=get_generator(RunConfig(sample_mode=False))
+    assert generator_diagnostics(gen)["configured_provider"] == want
+
+
+def test_missing_meterless_config_never_selects_another_provider(monkeypatch):
+    from app.generator import generator_diagnostics
+    from app.providers.meterless import MeterlessGenerator
+    monkeypatch.setenv("LLM_PROVIDER","meterless")
+    monkeypatch.delenv("METERLESS_TOKEN",raising=False)
+    gen=get_generator(RunConfig(sample_mode=False))
+    assert isinstance(gen,MeterlessGenerator)
+    gen.complete(prompt="",schema={"name":"verdict_reason"},context={"reason_key":"frequency_mismatch"})
+    assert generator_diagnostics(gen)["fallbacks"] == 1
+    assert generator_diagnostics(gen)["attempts"] == 0
+
+
+def test_sample_overrides_hostile_provider_and_unknown_live_mode_is_rejected(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER","not-a-provider")
+    monkeypatch.setenv("METERLESS_BASE_URL","file:///wrong")
+    monkeypatch.setenv("METERLESS_TOKEN","rt-local")
+    assert isinstance(get_generator(RunConfig(sample_mode=True)),RulesGenerator)
+    with pytest.raises(ValueError):get_generator(RunConfig(sample_mode=False))
+
+
+def test_model_fallback_accounting_and_unknown_double_are_not_success(monkeypatch):
+    from app.generator import generator_diagnostics
+    monkeypatch.setattr("app.generator.requests.post",_ok_post('{"claim":"missing confidence"}'))
+    gen=ModelGenerator("https://example.invalid/v1",FAKE_KEY,"m")
+    gen.complete(prompt="",schema={"name":"finding_claim"},context={"rule_id":"R-2","resource_name":"ip-x","stats":{}})
+    diag=generator_diagnostics(gen)
+    assert (diag["attempts"],diag["successes"],diag["fallbacks"],diag["status"]) == (1,0,1,"partial")
+    assert generator_diagnostics(object())["status"] == "unverified"

@@ -8,6 +8,7 @@ from typing import Any, Protocol
 import requests
 
 from app.config import RunConfig
+from app.generation_status import GenerationOutcome, GenerationRecorder
 
 TEMPLATES: dict[str, str] = {
     "R-1": "{resource_name} is a detached {size_gb} GB block volume. It is billed continuously "
@@ -45,6 +46,9 @@ class Generator(Protocol):
 
 class RulesGenerator:
     """Deterministic, offline. The same structured outputs a model would produce, from rules."""
+
+    def diagnostics(self) -> dict:
+        return GenerationRecorder("rules").summary()
 
     def set_deadline(self, deadline: float | None) -> None:
         """Nothing to bound: this generator does no I/O. Present so every backend honours the
@@ -102,6 +106,7 @@ class ModelGenerator:
         # rule engine per call — the run finishes on prose the loop already proves, instead of
         # crashing mid-audit because a hosted endpoint had a bad minute.
         self._fallback = RulesGenerator()
+        self.recorder = GenerationRecorder("openai-compatible")
 
     def set_deadline(self, deadline: float | None) -> None:
         """The run's wall-clock deadline, so no single call can outlive the run's budget."""
@@ -121,10 +126,23 @@ class ModelGenerator:
                    api_key=api_key, model=os.environ.get("LLM_MODEL", "gpt-4o-mini"))
 
     def complete(self, *, prompt: str, schema: dict, context: dict) -> dict:
+        name = schema["name"]
+        if name not in self.SCHEMAS:
+            raise KeyError(name)
+        started = time.monotonic()
         try:
-            return self._complete_model(prompt=prompt, schema=schema, context=context)
-        except Exception:                              # noqa: BLE001 - documented per-call fallback
+            result = self._complete_model(prompt=prompt, schema=schema, context=context)
+        except Exception as exc:  # A fallback is visible rather than reported as model success.
+            category = "schema" if isinstance(exc, (ValueError, KeyError, TypeError)) else "transport"
+            self.recorder.record(GenerationOutcome(name, "openai-compatible", "rules", self.model,
+                True, True, category, max(0, time.monotonic()-started)))
             return self._fallback.complete(prompt=prompt, schema=schema, context=context)
+        self.recorder.record(GenerationOutcome(name, "openai-compatible", "openai-compatible", self.model,
+            True, False, None, max(0, time.monotonic()-started)))
+        return result
+
+    def diagnostics(self) -> dict:
+        return self.recorder.summary()
 
     def _complete_model(self, *, prompt: str, schema: dict, context: dict) -> dict:
         # Call sites pass {"name": ...} and sometimes an empty prompt (the rule engine needs
@@ -158,7 +176,27 @@ class ModelGenerator:
         return out
 
 
+def generator_diagnostics(generator: object) -> dict:
+    method = getattr(generator, "diagnostics", None)
+    if callable(method):
+        return method()
+    return {"configured_provider": "unknown", "attempts": 0, "successes": 0, "fallbacks": 0,
+            "status": "unverified", "models": [], "schemas": {}}
+
+
 def get_generator(config: RunConfig) -> Generator:
-    if config.sample_mode or not os.environ.get("LLM_API_KEY"):
+    if config.sample_mode:
+        return RulesGenerator()
+    selected = config.llm_provider or os.environ.get("LLM_PROVIDER", "openai-compatible")
+    if selected not in {"rules", "openai-compatible", "meterless"}:
+        raise ValueError("LLM_PROVIDER must be rules, openai-compatible or meterless")
+    if selected == "meterless":
+        from app.providers.meterless import MeterlessGenerator
+        from app.providers.meterless_settings import MeterlessSettings, MeterlessError
+        try:
+            return MeterlessGenerator(MeterlessSettings.from_env(os.environ))
+        except MeterlessError as exc:
+            return MeterlessGenerator(None, configuration_error=exc.category)
+    if selected == "rules" or not os.environ.get("LLM_API_KEY"):
         return RulesGenerator()
     return ModelGenerator.from_env()
