@@ -1,0 +1,240 @@
+{
+  "run_id": "run-f7b22975b2",
+  "status": "success",
+  "mode": "sample",
+  "sources": [
+    {
+      "name": "inventory",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null,
+      "provenance": null
+    },
+    {
+      "name": "iac",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null,
+      "provenance": null
+    },
+    {
+      "name": "policy",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null,
+      "provenance": null
+    },
+    {
+      "name": "telemetry",
+      "backend": "fixture",
+      "degraded": false,
+      "reason": null,
+      "provenance": null
+    }
+  ],
+  "summary": {
+    "resources_examined": 6,
+    "resources_in_scope": 6,
+    "findings_accepted": 3,
+    "findings_rejected": 1,
+    "spend_audited_usd_per_month": 194.91,
+    "waste_found_usd_per_month": 104.39,
+    "unattributed_ratio": 0.167,
+    "backends": [
+      "fixture"
+    ],
+    "sources_degraded": 0,
+    "narrative": "Audited 6 resources across 4 sources; 3 findings accepted, 1 rejected, 1 left undetermined.",
+    "integrations": {
+      "meterless_world_model": {
+        "status": "used",
+        "services": [
+          "WorldStoreService",
+          "IngestPipelineService",
+          "ContextBuilderService"
+        ],
+        "namespace": "scenario:variant-scenario:89643ba27ad6d961622bbc799b57e08c4cdce6281301a1ab78504d8ffef4f99c",
+        "consumers": [
+          "Scout",
+          "Skeptic"
+        ],
+        "counts": {
+          "entities": 17,
+          "observations": 18,
+          "snapshots": 8,
+          "relationships": 18
+        },
+        "store": "world-run-f7b22975b2/world.sqlite3",
+        "sources": {
+          "inventory": {
+            "backends": [
+              "fixture"
+            ],
+            "complete": true,
+            "degraded": false,
+            "snapshots": [
+              "ed7764f5abc1cf343bef731358a67bae3c9db02eabe92cbc47d442c5d2d105fc"
+            ]
+          },
+          "iac": {
+            "backends": [
+              "fixture"
+            ],
+            "complete": true,
+            "degraded": false,
+            "snapshots": [
+              "f4e3b0148083a0f1cb8b2175d6e5ef39a23ed157ab116b94f32967fbca428bcd"
+            ]
+          },
+          "policy": {
+            "backends": [
+              "fixture"
+            ],
+            "complete": true,
+            "degraded": false,
+            "snapshots": [
+              "37acdf7bdea81906ede6bf33636639bae1a35df1cfea92d053d0a4da9459044d"
+            ]
+          },
+          "telemetry": {
+            "backends": [
+              "fixture"
+            ],
+            "complete": true,
+            "degraded": false,
+            "snapshots": [
+              "34e78a0da49f9169e1402309c52dd8dfb4aea756f9af799fc9a81ff6b74311d1",
+              "404dd25d123ad60dc4fab572698a8269637ce23d7437c16d20ce9787133f392c",
+              "5633e5171382ab3dc30e1a78413844133abf4cce09d6b821f953600972de6d08",
+              "7b84cf5922938ee368bb5a319d1b579b5beb94b1f736c246e8828bc1f554a526",
+              "aaf1c5abb21d4bd9d1fc505fe261550b7ef22fed4fbf69ffc00faaeec43bf1d9"
+            ]
+          }
+        },
+        "contexts": 16,
+        "failures": []
+      }
+    }
+  },
+  "findings": [
+    {
+      "finding_id": "C-001",
+      "resource_id": "ocid1.instance.oc1..••••bbb2",
+      "resource_class": "compute_instance",
+      "class": "cost_waste",
+      "claim": "batch-01 averages 0.766% CPU with a peak of 0.888% across the requested window, and is declared in Terraform. Nothing in the evidence attributes a purpose to it.",
+      "evidence_refs": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004"
+      ],
+      "impact": {
+        "kind": "usd_per_month",
+        "value": 90.52
+      },
+      "confidence": 0.75,
+      "status": "rejected",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 1,
+          "verdict": "recheck",
+          "reason": "a schedule signal (month-end) is present, so the requested window may exclude the most recent run"
+        }
+      ],
+      "superseded_by": "C-004"
+    },
+    {
+      "finding_id": "C-002",
+      "resource_id": "ocid1.instance.oc1..••••ddd4",
+      "resource_class": "compute_instance",
+      "class": "unattributed",
+      "claim": "sandbox-tmp is running and appears in no Terraform declaration. No owner tag attributes it to a team.",
+      "evidence_refs": [
+        "E-005",
+        "E-006",
+        "E-007",
+        "E-008"
+      ],
+      "impact": {
+        "kind": "usd_per_month",
+        "value": 6.57
+      },
+      "confidence": 0.55,
+      "status": "accepted",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 1,
+          "verdict": "accept",
+          "reason": "no contradicting evidence found in the consulted sources"
+        }
+      ],
+      "superseded_by": null
+    },
+    {
+      "finding_id": "C-003",
+      "resource_id": "ocid1.publicip.oc1..••••fff6",
+      "resource_class": "reserved_public_ip",
+      "class": "cost_waste",
+      "claim": "ip-orphan is a reserved public IP with no assigned entity. It is billed whether or not it is attached.",
+      "evidence_refs": [
+        "E-009",
+        "E-010"
+      ],
+      "impact": {
+        "kind": "usd_per_month",
+        "value": 7.3
+      },
+      "confidence": 0.55,
+      "status": "accepted",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 1,
+          "verdict": "accept",
+          "reason": "no contradicting evidence found in the consulted sources"
+        }
+      ],
+      "superseded_by": null
+    },
+    {
+      "finding_id": "C-004",
+      "resource_id": "ocid1.instance.oc1..••••bbb2",
+      "resource_class": "compute_instance",
+      "class": "cost_waste",
+      "claim": "batch-01 averages 1.002% CPU but peaks at 58.0%. The cost is the idle shape it holds around the clock, not the work it does.",
+      "evidence_refs": [
+        "E-011",
+        "E-012",
+        "E-013",
+        "E-014"
+      ],
+      "impact": {
+        "kind": "usd_per_month_upper_bound",
+        "value": 90.52
+      },
+      "confidence": 0.75,
+      "status": "revised",
+      "falsifier": "a current, declared, owned purpose for this resource would withdraw this finding",
+      "history": [
+        {
+          "round": 2,
+          "verdict": "accept",
+          "reason": "a low mean with a peak this high is a duty-cycle problem, not an idle resource"
+        }
+      ],
+      "superseded_by": null
+    }
+  ],
+  "undetermined": [
+    {
+      "resource_id": "ocid1.instance.oc1..••••ddd4",
+      "reason": "coverage 41h of 168h requested"
+    }
+  ],
+  "report_markdown_path": null,
+  "trace_path": "output_examples/world_model/variant-trace.jsonl",
+  "caps_hit": []
+}

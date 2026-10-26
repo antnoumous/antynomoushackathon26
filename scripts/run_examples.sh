@@ -35,13 +35,33 @@ PYEOF
   echo "trace:  logs/samples/trace-example_$n.jsonl ($(wc -l < "$trace" | tr -d ' ') lines)"
 done
 
+# Use an explicit caller scratch directory; a clean setup defaults inside ignored logs.
+export TMPDIR="${TMPDIR:-$PWD/logs/scratch}"
+mkdir -p "$TMPDIR"
+work="$(mktemp -d "${TMPDIR%/}/driftwatch-examples.XXXXXX")"
+trap 'rm -rf "$work"' EXIT
+
 echo
 echo "=== evaluation ==="
-"$PY" -m evals.run_eval 2>/dev/null | grep -E "^(example_|  must-not-flag|.*scenarios,)" > output_examples/eval.txt || true
-cat output_examples/eval.txt
+# The evaluator's own nonzero status exits under set -e BEFORE filtering or publication.
+"$PY" -m evals.run_eval > "$work/eval.stdout"
+"$PY" - "$work/eval.stdout" output_examples/eval.txt <<'PYEOF'
+from pathlib import Path
+import sys
+lines=Path(sys.argv[1]).read_text().splitlines(keepends=True)
+selected="".join(line for line in lines if line.startswith(("example_", "  must-not-flag")) or "scenarios," in line)
+Path(sys.argv[2]).write_text(selected)
+print(selected,end="")
+PYEOF
 
 echo
 echo "=== held-out scoring: tenancies generated from a seed, not written by hand ==="
-"$PY" scripts/make_scenario.py --score 6 --out /tmp/driftwatch-held-out \
-  2>/dev/null | grep -E "^(held_out|[0-9]+ held)" > output_examples/held_out.txt || true
-cat output_examples/held_out.txt
+"$PY" scripts/make_scenario.py --score 10 --out "$work/held-out" > "$work/held-out.stdout"
+"$PY" - "$work/held-out.stdout" output_examples/held_out.txt <<'PYEOF'
+from pathlib import Path
+import sys
+lines=Path(sys.argv[1]).read_text().splitlines(keepends=True)
+selected="".join(line for line in lines if line.startswith("held_out") or "held-out tenancies," in line)
+Path(sys.argv[2]).write_text(selected)
+print(selected,end="")
+PYEOF

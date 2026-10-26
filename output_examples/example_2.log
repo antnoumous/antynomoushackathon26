@@ -1,11 +1,25 @@
-{"timestamp": "2026-09-26T10:03:24Z", "run_id": "run-d9d23a1348", "agent_name": "Planner", "action": "source_ok", "input_summary": "inventory attempt 1", "output_summary": "5 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
-{"timestamp": "2026-09-26T10:03:24Z", "run_id": "run-d9d23a1348", "agent_name": "Planner", "action": "source_ok", "input_summary": "iac attempt 1", "output_summary": "5 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
-{"timestamp": "2026-09-26T10:03:24Z", "run_id": "run-d9d23a1348", "agent_name": "Planner", "action": "source_ok", "input_summary": "policy attempt 1", "output_summary": "5 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
-{"timestamp": "2026-09-26T10:03:24Z", "run_id": "run-d9d23a1348", "agent_name": "Scout", "action": "hydrate", "input_summary": "inventory, iac, policy", "output_summary": "5 resources", "target_agent": null, "confidence": 1.0, "retry_count": 0, "status": "success"}
-{"timestamp": "2026-09-26T10:03:24Z", "run_id": "run-d9d23a1348", "agent_name": "Planner", "action": "delegate_task", "input_summary": "round 1, 5 target(s), lookback 168h", "output_summary": "assignment A-1 (initial)", "target_agent": "Scout", "confidence": 0.8, "retry_count": 0, "status": "success", "round": 1}
-{"timestamp": "2026-09-26T10:03:24Z", "run_id": "run-d9d23a1348", "agent_name": "Writer", "action": "synthesise", "input_summary": "0 accepted, 0 rejected", "output_summary": "Audited 5 resources across 4 sources; 0 findings accepted, 0 rejected, 0 left undetermined.", "target_agent": null, "confidence": 1.0, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Planner", "action": "source_ok", "input_summary": "inventory attempt 1", "output_summary": "5 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Planner", "action": "source_ok", "input_summary": "iac attempt 1", "output_summary": "5 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Planner", "action": "source_ok", "input_summary": "policy attempt 1", "output_summary": "5 records", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Planner", "action": "world_ingest", "input_summary": "inventory", "output_summary": "{\"complete\": true, \"degraded\": false, \"observation_ids\": [\"44f201b7b1046c1369cf46dce926d1e00ea4f7ac02550865972a7699272c01e3\", \"4fed41418c0378fabbe7803d464595461327e3190a0f2db26d822b2ae5819802\", \"99be46aba516a1e3a0c8f72a25da76d83c7828275c7d86dc1155fe6c3f6584fa\", \"ccd1dc7828dcbe7ecd63d211c34659688d05243aab09ff5a1607d6009084ef1b\", \"ecb91ea8814be34665e963270ea0ef0a2d25a325fa73186ccef2dff46c28fc06\"], \"snapshot_id\": \"ed6402932fef59d0c0a1cc2dbaadb6f109915734abbc3d1684b8a1405a6dceae\", \"source\": \"inventory\"}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Planner", "action": "world_ingest", "input_summary": "iac", "output_summary": "{\"complete\": true, \"degraded\": false, \"observation_ids\": [\"6297433c70935e582ae6442cdc77987a5f581b9402e5c7d590300e9304cad589\", \"884107f22d3a367d9cdd1d7ffe529b7a845baca66a93c4e22de32c20edebfb61\", \"a78aa2736893a867013b942e131c637efa48ae1b7809ff0cc9afd73a995dfeb1\", \"c2784bfba68aa7c0e7aa0844a9298082ebef88014256156055a633446476fbc3\", \"eef57bdfc93bdda3a96e5b50aaf9c30fe1ac1f23c4c5058b99ac4725cfed582b\"], \"snapshot_id\": \"7e6ab33533ecef2fc18b92db39e7f1b8d0a34479afb6c715db9db2d338db1253\", \"source\": \"iac\"}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Planner", "action": "world_ingest", "input_summary": "policy", "output_summary": "{\"complete\": true, \"degraded\": false, \"observation_ids\": [\"046993ad751bcdf5fb49ab2496a6bc47caf2673446e1328af6f4b5354d4c1f9c\", \"12f30e2d57802c59170414115e9b3feaeafa4f66146225ef9630d6648ff6341d\", \"81595e553f206d43d21b1692129c0d15fccbbd09bd354b8d934e2fc13a8fbd76\", \"b7ab417225f9737da1d727b0999925836e20d2c7d0113d1314d6f52cee7a3acf\", \"e7cd92e35290f8f4cd412730f38ee04c496e6a7b5193211db9b8ce3828560773\"], \"snapshot_id\": \"79773534d87ae5b4825e38ff41db9c4fd3151bd7012ad470eada1a4d88e0956c\", \"source\": \"policy\"}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "hydrate", "input_summary": "inventory, iac, policy", "output_summary": "5 resources", "target_agent": null, "confidence": 1.0, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Planner", "action": "delegate_task", "input_summary": "round 1, 5 target(s), lookback 168h", "output_summary": "assignment A-1 (initial)", "target_agent": "Scout", "confidence": 0.8, "retry_count": 0, "status": "success", "round": 1}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "world_context", "input_summary": "Scout", "output_summary": "{\"complete\": true, \"reasons\": [\"resource:exact\", \"iac:tag\", \"policy:pinned\"], \"selection\": {\"iac_snapshot\": \"7e6ab33533ecef2fc18b92db39e7f1b8d0a34479afb6c715db9db2d338db1253\", \"inventory_snapshot\": \"ed6402932fef59d0c0a1cc2dbaadb6f109915734abbc3d1684b8a1405a6dceae\", \"lookback_hours\": 168, \"observation_ids\": [\"046993ad751bcdf5fb49ab2496a6bc47caf2673446e1328af6f4b5354d4c1f9c\", \"12f30e2d57802c59170414115e9b3feaeafa4f66146225ef9630d6648ff6341d\", \"81595e553f206d43d21b1692129c0d15fccbbd09bd354b8d934e2fc13a8fbd76\", \"b7ab417225f9737da1d727b0999925836e20d2c7d0113d1314d6f52cee7a3acf\", \"ccd1dc7828dcbe7ecd63d211c34659688d05243aab09ff5a1607d6009084ef1b\", \"e7cd92e35290f8f4cd412730f38ee04c496e6a7b5193211db9b8ce3828560773\", \"eef57bdfc93bdda3a96e5b50aaf9c30fe1ac1f23c4c5058b99ac4725cfed582b\"], \"policy_snapshot\": \"79773534d87ae5b4825e38ff41db9c4fd3151bd7012ad470eada1a4d88e0956c\", \"resolution_minutes\": 5, \"resource_id\": \"ocid1.instance.oc1..\\u2022\\u2022\\u2022\\u2022aa01\", \"telemetry_snapshot\": null}}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "world_ingest", "input_summary": "telemetry", "output_summary": "{\"complete\": true, \"degraded\": false, \"observation_ids\": [\"5f6008afaaf87776c92341ac5fc3471c58a52069125292ed42453381f2380b6e\"], \"snapshot_id\": \"e8960397f9f20a6d07cf4d33705ccd1498ef0a192b15ed57f5f0fdc1f85be4e6\", \"source\": \"telemetry\"}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "world_context", "input_summary": "Scout", "output_summary": "{\"complete\": true, \"reasons\": [\"resource:exact\", \"iac:tag\", \"policy:pinned\"], \"selection\": {\"iac_snapshot\": \"7e6ab33533ecef2fc18b92db39e7f1b8d0a34479afb6c715db9db2d338db1253\", \"inventory_snapshot\": \"ed6402932fef59d0c0a1cc2dbaadb6f109915734abbc3d1684b8a1405a6dceae\", \"lookback_hours\": 168, \"observation_ids\": [\"046993ad751bcdf5fb49ab2496a6bc47caf2673446e1328af6f4b5354d4c1f9c\", \"12f30e2d57802c59170414115e9b3feaeafa4f66146225ef9630d6648ff6341d\", \"5f6008afaaf87776c92341ac5fc3471c58a52069125292ed42453381f2380b6e\", \"81595e553f206d43d21b1692129c0d15fccbbd09bd354b8d934e2fc13a8fbd76\", \"b7ab417225f9737da1d727b0999925836e20d2c7d0113d1314d6f52cee7a3acf\", \"ccd1dc7828dcbe7ecd63d211c34659688d05243aab09ff5a1607d6009084ef1b\", \"e7cd92e35290f8f4cd412730f38ee04c496e6a7b5193211db9b8ce3828560773\", \"eef57bdfc93bdda3a96e5b50aaf9c30fe1ac1f23c4c5058b99ac4725cfed582b\"], \"policy_snapshot\": \"79773534d87ae5b4825e38ff41db9c4fd3151bd7012ad470eada1a4d88e0956c\", \"resolution_minutes\": 60, \"resource_id\": \"ocid1.instance.oc1..\\u2022\\u2022\\u2022\\u2022aa01\", \"telemetry_snapshot\": \"e8960397f9f20a6d07cf4d33705ccd1498ef0a192b15ed57f5f0fdc1f85be4e6\"}}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "world_context", "input_summary": "Scout", "output_summary": "{\"complete\": true, \"reasons\": [\"resource:exact\", \"iac:tag\", \"policy:pinned\"], \"selection\": {\"iac_snapshot\": \"7e6ab33533ecef2fc18b92db39e7f1b8d0a34479afb6c715db9db2d338db1253\", \"inventory_snapshot\": \"ed6402932fef59d0c0a1cc2dbaadb6f109915734abbc3d1684b8a1405a6dceae\", \"lookback_hours\": 168, \"observation_ids\": [\"046993ad751bcdf5fb49ab2496a6bc47caf2673446e1328af6f4b5354d4c1f9c\", \"12f30e2d57802c59170414115e9b3feaeafa4f66146225ef9630d6648ff6341d\", \"81595e553f206d43d21b1692129c0d15fccbbd09bd354b8d934e2fc13a8fbd76\", \"99be46aba516a1e3a0c8f72a25da76d83c7828275c7d86dc1155fe6c3f6584fa\", \"a78aa2736893a867013b942e131c637efa48ae1b7809ff0cc9afd73a995dfeb1\", \"b7ab417225f9737da1d727b0999925836e20d2c7d0113d1314d6f52cee7a3acf\", \"e7cd92e35290f8f4cd412730f38ee04c496e6a7b5193211db9b8ce3828560773\"], \"policy_snapshot\": \"79773534d87ae5b4825e38ff41db9c4fd3151bd7012ad470eada1a4d88e0956c\", \"resolution_minutes\": 5, \"resource_id\": \"ocid1.instance.oc1..\\u2022\\u2022\\u2022\\u2022bb01\", \"telemetry_snapshot\": null}}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "world_ingest", "input_summary": "telemetry", "output_summary": "{\"complete\": true, \"degraded\": false, \"observation_ids\": [\"0346dd795b463212b271a7a07527c5b2e0a86f8c983265ff36a0b69ff9305742\"], \"snapshot_id\": \"d2c2b5f57a04cf2a81cbc11b6e9ce358ef80134e782bebd7fcef3030780620a6\", \"source\": \"telemetry\"}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "world_context", "input_summary": "Scout", "output_summary": "{\"complete\": true, \"reasons\": [\"resource:exact\", \"iac:tag\", \"policy:pinned\"], \"selection\": {\"iac_snapshot\": \"7e6ab33533ecef2fc18b92db39e7f1b8d0a34479afb6c715db9db2d338db1253\", \"inventory_snapshot\": \"ed6402932fef59d0c0a1cc2dbaadb6f109915734abbc3d1684b8a1405a6dceae\", \"lookback_hours\": 168, \"observation_ids\": [\"0346dd795b463212b271a7a07527c5b2e0a86f8c983265ff36a0b69ff9305742\", \"046993ad751bcdf5fb49ab2496a6bc47caf2673446e1328af6f4b5354d4c1f9c\", \"12f30e2d57802c59170414115e9b3feaeafa4f66146225ef9630d6648ff6341d\", \"81595e553f206d43d21b1692129c0d15fccbbd09bd354b8d934e2fc13a8fbd76\", \"99be46aba516a1e3a0c8f72a25da76d83c7828275c7d86dc1155fe6c3f6584fa\", \"a78aa2736893a867013b942e131c637efa48ae1b7809ff0cc9afd73a995dfeb1\", \"b7ab417225f9737da1d727b0999925836e20d2c7d0113d1314d6f52cee7a3acf\", \"e7cd92e35290f8f4cd412730f38ee04c496e6a7b5193211db9b8ce3828560773\"], \"policy_snapshot\": \"79773534d87ae5b4825e38ff41db9c4fd3151bd7012ad470eada1a4d88e0956c\", \"resolution_minutes\": 60, \"resource_id\": \"ocid1.instance.oc1..\\u2022\\u2022\\u2022\\u2022bb01\", \"telemetry_snapshot\": \"d2c2b5f57a04cf2a81cbc11b6e9ce358ef80134e782bebd7fcef3030780620a6\"}}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "world_context", "input_summary": "Scout", "output_summary": "{\"complete\": true, \"reasons\": [\"resource:exact\", \"iac:tag\", \"policy:pinned\"], \"selection\": {\"iac_snapshot\": \"7e6ab33533ecef2fc18b92db39e7f1b8d0a34479afb6c715db9db2d338db1253\", \"inventory_snapshot\": \"ed6402932fef59d0c0a1cc2dbaadb6f109915734abbc3d1684b8a1405a6dceae\", \"lookback_hours\": 168, \"observation_ids\": [\"046993ad751bcdf5fb49ab2496a6bc47caf2673446e1328af6f4b5354d4c1f9c\", \"12f30e2d57802c59170414115e9b3feaeafa4f66146225ef9630d6648ff6341d\", \"44f201b7b1046c1369cf46dce926d1e00ea4f7ac02550865972a7699272c01e3\", \"81595e553f206d43d21b1692129c0d15fccbbd09bd354b8d934e2fc13a8fbd76\", \"b7ab417225f9737da1d727b0999925836e20d2c7d0113d1314d6f52cee7a3acf\", \"c2784bfba68aa7c0e7aa0844a9298082ebef88014256156055a633446476fbc3\", \"e7cd92e35290f8f4cd412730f38ee04c496e6a7b5193211db9b8ce3828560773\"], \"policy_snapshot\": \"79773534d87ae5b4825e38ff41db9c4fd3151bd7012ad470eada1a4d88e0956c\", \"resolution_minutes\": 5, \"resource_id\": \"ocid1.instance.oc1..\\u2022\\u2022\\u2022\\u2022cc01\", \"telemetry_snapshot\": null}}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "world_ingest", "input_summary": "telemetry", "output_summary": "{\"complete\": true, \"degraded\": false, \"observation_ids\": [\"4cddf22386354dd29e37b8959e93db6cae7cd00ca91544c37a1135d8440fa99e\"], \"snapshot_id\": \"663a8fa5209fb2a0ee6459ad61e8259e868a695245d1af304168ab025dafd4cd\", \"source\": \"telemetry\"}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "world_context", "input_summary": "Scout", "output_summary": "{\"complete\": true, \"reasons\": [\"resource:exact\", \"iac:tag\", \"policy:pinned\"], \"selection\": {\"iac_snapshot\": \"7e6ab33533ecef2fc18b92db39e7f1b8d0a34479afb6c715db9db2d338db1253\", \"inventory_snapshot\": \"ed6402932fef59d0c0a1cc2dbaadb6f109915734abbc3d1684b8a1405a6dceae\", \"lookback_hours\": 168, \"observation_ids\": [\"046993ad751bcdf5fb49ab2496a6bc47caf2673446e1328af6f4b5354d4c1f9c\", \"12f30e2d57802c59170414115e9b3feaeafa4f66146225ef9630d6648ff6341d\", \"44f201b7b1046c1369cf46dce926d1e00ea4f7ac02550865972a7699272c01e3\", \"4cddf22386354dd29e37b8959e93db6cae7cd00ca91544c37a1135d8440fa99e\", \"81595e553f206d43d21b1692129c0d15fccbbd09bd354b8d934e2fc13a8fbd76\", \"b7ab417225f9737da1d727b0999925836e20d2c7d0113d1314d6f52cee7a3acf\", \"c2784bfba68aa7c0e7aa0844a9298082ebef88014256156055a633446476fbc3\", \"e7cd92e35290f8f4cd412730f38ee04c496e6a7b5193211db9b8ce3828560773\"], \"policy_snapshot\": \"79773534d87ae5b4825e38ff41db9c4fd3151bd7012ad470eada1a4d88e0956c\", \"resolution_minutes\": 60, \"resource_id\": \"ocid1.instance.oc1..\\u2022\\u2022\\u2022\\u2022cc01\", \"telemetry_snapshot\": \"663a8fa5209fb2a0ee6459ad61e8259e868a695245d1af304168ab025dafd4cd\"}}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "world_context", "input_summary": "Scout", "output_summary": "{\"complete\": true, \"reasons\": [\"resource:exact\", \"iac:name\", \"policy:pinned\"], \"selection\": {\"iac_snapshot\": \"7e6ab33533ecef2fc18b92db39e7f1b8d0a34479afb6c715db9db2d338db1253\", \"inventory_snapshot\": \"ed6402932fef59d0c0a1cc2dbaadb6f109915734abbc3d1684b8a1405a6dceae\", \"lookback_hours\": 168, \"observation_ids\": [\"046993ad751bcdf5fb49ab2496a6bc47caf2673446e1328af6f4b5354d4c1f9c\", \"12f30e2d57802c59170414115e9b3feaeafa4f66146225ef9630d6648ff6341d\", \"6297433c70935e582ae6442cdc77987a5f581b9402e5c7d590300e9304cad589\", \"81595e553f206d43d21b1692129c0d15fccbbd09bd354b8d934e2fc13a8fbd76\", \"b7ab417225f9737da1d727b0999925836e20d2c7d0113d1314d6f52cee7a3acf\", \"e7cd92e35290f8f4cd412730f38ee04c496e6a7b5193211db9b8ce3828560773\", \"ecb91ea8814be34665e963270ea0ef0a2d25a325fa73186ccef2dff46c28fc06\"], \"policy_snapshot\": \"79773534d87ae5b4825e38ff41db9c4fd3151bd7012ad470eada1a4d88e0956c\", \"resolution_minutes\": 5, \"resource_id\": \"ocid1.volume.oc1..\\u2022\\u2022\\u2022\\u2022dd01\", \"telemetry_snapshot\": null}}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Scout", "action": "world_context", "input_summary": "Scout", "output_summary": "{\"complete\": true, \"reasons\": [\"resource:exact\", \"iac:name\", \"policy:pinned\"], \"selection\": {\"iac_snapshot\": \"7e6ab33533ecef2fc18b92db39e7f1b8d0a34479afb6c715db9db2d338db1253\", \"inventory_snapshot\": \"ed6402932fef59d0c0a1cc2dbaadb6f109915734abbc3d1684b8a1405a6dceae\", \"lookback_hours\": 168, \"observation_ids\": [\"046993ad751bcdf5fb49ab2496a6bc47caf2673446e1328af6f4b5354d4c1f9c\", \"12f30e2d57802c59170414115e9b3feaeafa4f66146225ef9630d6648ff6341d\", \"4fed41418c0378fabbe7803d464595461327e3190a0f2db26d822b2ae5819802\", \"81595e553f206d43d21b1692129c0d15fccbbd09bd354b8d934e2fc13a8fbd76\", \"884107f22d3a367d9cdd1d7ffe529b7a845baca66a93c4e22de32c20edebfb61\", \"b7ab417225f9737da1d727b0999925836e20d2c7d0113d1314d6f52cee7a3acf\", \"e7cd92e35290f8f4cd412730f38ee04c496e6a7b5193211db9b8ce3828560773\"], \"policy_snapshot\": \"79773534d87ae5b4825e38ff41db9c4fd3151bd7012ad470eada1a4d88e0956c\", \"resolution_minutes\": 5, \"resource_id\": \"ocid1.publicip.oc1..\\u2022\\u2022\\u2022\\u2022ee01\", \"telemetry_snapshot\": null}}", "target_agent": null, "confidence": null, "retry_count": 0, "status": "success"}
+{"timestamp": "2026-10-26T06:46:00Z", "run_id": "run-e5322ff27c", "agent_name": "Writer", "action": "synthesise", "input_summary": "0 accepted, 0 rejected", "output_summary": "Audited 5 resources across 4 sources; 0 findings accepted, 0 rejected, 0 left undetermined.", "target_agent": null, "confidence": 1.0, "retry_count": 0, "status": "success"}
 {
-  "run_id": "run-d9d23a1348",
+  "run_id": "run-e5322ff27c",
   "status": "success",
   "mode": "sample",
   "sources": [
@@ -13,25 +27,29 @@
       "name": "inventory",
       "backend": "fixture",
       "degraded": false,
-      "reason": null
+      "reason": null,
+      "provenance": null
     },
     {
       "name": "iac",
       "backend": "fixture",
       "degraded": false,
-      "reason": null
+      "reason": null,
+      "provenance": null
     },
     {
       "name": "policy",
       "backend": "fixture",
       "degraded": false,
-      "reason": null
+      "reason": null,
+      "provenance": null
     },
     {
       "name": "telemetry",
       "backend": "fixture",
       "degraded": false,
-      "reason": null
+      "reason": null,
+      "provenance": null
     }
   ],
   "summary": {
@@ -46,17 +64,84 @@
       "fixture"
     ],
     "sources_degraded": 0,
-    "narrative": "Audited 5 resources across 4 sources; 0 findings accepted, 0 rejected, 0 left undetermined."
+    "narrative": "Audited 5 resources across 4 sources; 0 findings accepted, 0 rejected, 0 left undetermined.",
+    "integrations": {
+      "meterless_world_model": {
+        "status": "used",
+        "services": [
+          "WorldStoreService",
+          "IngestPipelineService",
+          "ContextBuilderService"
+        ],
+        "namespace": "scenario:example_2:3feef20d75ce6a95f23ad9bb44382bf6c287fbab96ddb9da7f5bee8435751e32",
+        "consumers": [
+          "Scout"
+        ],
+        "counts": {
+          "entities": 18,
+          "observations": 18,
+          "snapshots": 6,
+          "relationships": 18
+        },
+        "store": "world-run-e5322ff27c/world.sqlite3",
+        "sources": {
+          "inventory": {
+            "backends": [
+              "fixture"
+            ],
+            "complete": true,
+            "degraded": false,
+            "snapshots": [
+              "ed6402932fef59d0c0a1cc2dbaadb6f109915734abbc3d1684b8a1405a6dceae"
+            ]
+          },
+          "iac": {
+            "backends": [
+              "fixture"
+            ],
+            "complete": true,
+            "degraded": false,
+            "snapshots": [
+              "7e6ab33533ecef2fc18b92db39e7f1b8d0a34479afb6c715db9db2d338db1253"
+            ]
+          },
+          "policy": {
+            "backends": [
+              "fixture"
+            ],
+            "complete": true,
+            "degraded": false,
+            "snapshots": [
+              "79773534d87ae5b4825e38ff41db9c4fd3151bd7012ad470eada1a4d88e0956c"
+            ]
+          },
+          "telemetry": {
+            "backends": [
+              "fixture"
+            ],
+            "complete": true,
+            "degraded": false,
+            "snapshots": [
+              "663a8fa5209fb2a0ee6459ad61e8259e868a695245d1af304168ab025dafd4cd",
+              "d2c2b5f57a04cf2a81cbc11b6e9ce358ef80134e782bebd7fcef3030780620a6",
+              "e8960397f9f20a6d07cf4d33705ccd1498ef0a192b15ed57f5f0fdc1f85be4e6"
+            ]
+          }
+        },
+        "contexts": 8,
+        "failures": []
+      }
+    }
   },
   "findings": [],
   "undetermined": [],
-  "report_markdown_path": "logs/report-run-d9d23a1348.md",
-  "trace_path": "logs/trace-run-d9d23a1348.jsonl",
+  "report_markdown_path": "logs/report-run-e5322ff27c.md",
+  "trace_path": "logs/trace-run-e5322ff27c.jsonl",
   "caps_hit": []
 }
 
 --- report ---
-# Tenancy audit — run `run-d9d23a1348`
+# Tenancy audit — run `run-e5322ff27c`
 
 - **Status:** success
 - **Mode:** sample
@@ -75,6 +160,7 @@
 - **backends:** ['fixture']
 - **sources degraded:** 0
 - **narrative:** Audited 5 resources across 4 sources; 0 findings accepted, 0 rejected, 0 left undetermined.
+- **integrations:** {'meterless_world_model': {'status': 'used', 'services': ['WorldStoreService', 'IngestPipelineService', 'ContextBuilderService'], 'namespace': 'scenario:example_2:3feef20d75ce6a95f23ad9bb44382bf6c287fbab96ddb9da7f5bee8435751e32', 'consumers': ['Scout'], 'counts': {'entities': 18, 'observations': 18, 'snapshots': 6, 'relationships': 18}, 'store': 'world-run-e5322ff27c/world.sqlite3', 'sources': {'inventory': {'backends': ['fixture'], 'complete': True, 'degraded': False, 'snapshots': ['ed6402932fef59d0c0a1cc2dbaadb6f109915734abbc3d1684b8a1405a6dceae']}, 'iac': {'backends': ['fixture'], 'complete': True, 'degraded': False, 'snapshots': ['7e6ab33533ecef2fc18b92db39e7f1b8d0a34479afb6c715db9db2d338db1253']}, 'policy': {'backends': ['fixture'], 'complete': True, 'degraded': False, 'snapshots': ['79773534d87ae5b4825e38ff41db9c4fd3151bd7012ad470eada1a4d88e0956c']}, 'telemetry': {'backends': ['fixture'], 'complete': True, 'degraded': False, 'snapshots': ['663a8fa5209fb2a0ee6459ad61e8259e868a695245d1af304168ab025dafd4cd', 'd2c2b5f57a04cf2a81cbc11b6e9ce358ef80134e782bebd7fcef3030780620a6', 'e8960397f9f20a6d07cf4d33705ccd1498ef0a192b15ed57f5f0fdc1f85be4e6']}}, 'contexts': 8, 'failures': []}}
 
 ## Findings
 

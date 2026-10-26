@@ -1,4 +1,4 @@
-# Tenancy audit — run `run-8fc5ec080f`
+# Tenancy audit — run `run-39df980884`
 
 - **Status:** success
 - **Mode:** sample
@@ -17,6 +17,7 @@
 - **backends:** ['fixture']
 - **sources degraded:** 0
 - **narrative:** Audited 5 resources across 4 sources; 3 findings accepted, 1 rejected, 1 left undetermined.
+- **integrations:** {'meterless_world_model': {'status': 'used', 'services': ['WorldStoreService', 'IngestPipelineService', 'ContextBuilderService'], 'namespace': 'scenario:example_3:ac8a9ffb3ccf1429ad784cd681e26ae91cf7d60ece5157d0ec3aa9debb72a98d', 'consumers': ['Scout', 'Skeptic'], 'counts': {'entities': 15, 'observations': 15, 'snapshots': 6, 'relationships': 15}, 'store': 'world-run-39df980884/world.sqlite3', 'sources': {'inventory': {'backends': ['fixture'], 'complete': True, 'degraded': False, 'snapshots': ['0c0a0520990cfbd53c4332b57b46c489e56ed450bb0cdddae2272b8d0add7f6b']}, 'iac': {'backends': ['fixture'], 'complete': True, 'degraded': False, 'snapshots': ['c69dd0efd78ce137b9e2d7c05fa01e5567340f9fd9c9a10dfdc99f9739e9e32f']}, 'policy': {'backends': ['fixture'], 'complete': True, 'degraded': False, 'snapshots': ['14dafc6ec3bc09c8afa044a63b990b4d7880504ab64f95f347ad6d247bff8c40']}, 'telemetry': {'backends': ['fixture'], 'complete': True, 'degraded': False, 'snapshots': ['2d3fb042350fce458588d58e36af6b17ea798d6467f91806dadac055f877b494', '39b2f27f1d39c878e3d7fbf52ed916e1aaba75f1a0f75e21823855b6e8b5bb0f', '4f4e8c66a63876d195702c097c0389b6a18806055955d0c651bc3b2d3ace920d']}}, 'contexts': 12, 'failures': []}}
 
 ## Findings
 

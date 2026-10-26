@@ -1,0 +1,282 @@
+{
+  "causal": {
+    "added": [],
+    "only_r1_finding_removed": true,
+    "policy_observations_changed": true,
+    "removed": [
+      {
+        "claim": "vol-orphan-50g is a detached 50.0 GB block volume. It is billed continuously and is attached to nothing.",
+        "class": "cost_waste",
+        "confidence": 0.55,
+        "history": [
+          {
+            "reason": "no contradicting evidence found in the consulted sources",
+            "round": 1,
+            "verdict": "accept"
+          }
+        ],
+        "impact": {
+          "kind": "usd_per_month",
+          "value": 1.27
+        },
+        "resource_class": "block_volume",
+        "resource_id": "ocid1.volume.oc1..\u2022\u2022\u2022\u2022eee5",
+        "status": "accepted"
+      }
+    ]
+  },
+  "consumers": [
+    "Scout",
+    "Skeptic"
+  ],
+  "dedup": {
+    "after": {
+      "entities": 18,
+      "observations": 19,
+      "relationships": 19,
+      "snapshots": 8
+    },
+    "before": {
+      "entities": 18,
+      "observations": 19,
+      "relationships": 19,
+      "snapshots": 8
+    }
+  },
+  "engine_acceptance": true,
+  "guards": {
+    "actual_consumers": true,
+    "both_windows": true,
+    "causal_policy": true,
+    "dedup": true,
+    "exact_windows": true,
+    "run_success": true,
+    "world_used": true
+  },
+  "live_tenancy_audit": false,
+  "manifest": {
+    "consumers": [
+      "Scout",
+      "Skeptic"
+    ],
+    "contexts": 17,
+    "counts": {
+      "entities": 18,
+      "observations": 19,
+      "relationships": 19,
+      "snapshots": 8
+    },
+    "failures": [],
+    "namespace": "scenario:example_1:65674f222c7ab9948c58a6b6a029608ceb850f7eeb8b3a8232a9a199e5ab47f9",
+    "services": [
+      "WorldStoreService",
+      "IngestPipelineService",
+      "ContextBuilderService"
+    ],
+    "sources": {
+      "iac": {
+        "backends": [
+          "fixture"
+        ],
+        "complete": true,
+        "degraded": false,
+        "snapshots": [
+          "e687c0fcca8327d0a4d0b61c188eac49eee20a175390f25c8e2feb65e4443998"
+        ]
+      },
+      "inventory": {
+        "backends": [
+          "fixture"
+        ],
+        "complete": true,
+        "degraded": false,
+        "snapshots": [
+          "f6c069a97252a7a521952c5b262688cf24b8ad11e44a1c1e1fd7f9eb3c614a05"
+        ]
+      },
+      "policy": {
+        "backends": [
+          "fixture"
+        ],
+        "complete": true,
+        "degraded": false,
+        "snapshots": [
+          "042af430914224e1687a11f5a49bcd328b60c5b80da40e88c6f1ab0cb431fcab"
+        ]
+      },
+      "telemetry": {
+        "backends": [
+          "fixture"
+        ],
+        "complete": true,
+        "degraded": false,
+        "snapshots": [
+          "1d5210b7c9be9acb620f4ba7eb48b0911919d4ae9a38834c1a8f3ad78eafc5f4",
+          "7399fd7128371f957c962e8c835e0c66c7fdae0078dc8737ab3ba3ec8358667f",
+          "d44fe079dcfa76342d2d5adaa496019c9510f97120ab93abbb6a6f79b1cef479",
+          "dbd3e8839f695f25d86c8913b15a1715854292280bb33782660a1dde6cda1f0f",
+          "f8e94164466b84400f64041ee5af8696907455821b0d35d53a5afa7697af4376"
+        ]
+      }
+    },
+    "status": "used",
+    "store": "world-run-686d50418d/world.sqlite3"
+  },
+  "nightshift_verified": false,
+  "selections": [
+    {
+      "iac_snapshot": "e687c0fcca8327d0a4d0b61c188eac49eee20a175390f25c8e2feb65e4443998",
+      "inventory_snapshot": "f6c069a97252a7a521952c5b262688cf24b8ad11e44a1c1e1fd7f9eb3c614a05",
+      "lookback_hours": 168,
+      "observation_ids": [
+        "16baba5929801a8fcbb40e8d705780ea74a414a29561363e55ba4950eb8987e5",
+        "2efed7b791451a1a4c392c341d1ba645357026b8ce4cf77bd6b5962c354025c9",
+        "367671a5b97bb517daf2360c6fd8eab4cb5b483943dbc284b1ba9213f9a38848",
+        "37db7b5c1b582d1c0dd025bc236ea006de40f3d630f3d7abab872162b35c9194",
+        "4252ded2a2dd10b54f51ad1785f658e0c2e120fe4ad1614adaa4180f70c343d2",
+        "7ad762392740ce00c03d8cb7aa39ae1165c39dda050aba29097f76b72b71b57e",
+        "f53d527a76695cade4bc8b542ee7b4a21986bd189abd6039f3eb60025a4e4df5",
+        "fabd7934dc0598b5775aa1f22f79c4774413168104690cf461fa831c27aa8b61"
+      ],
+      "policy_snapshot": "042af430914224e1687a11f5a49bcd328b60c5b80da40e88c6f1ab0cb431fcab",
+      "resolution_minutes": 60,
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022aaa1",
+      "telemetry_snapshot": "d44fe079dcfa76342d2d5adaa496019c9510f97120ab93abbb6a6f79b1cef479"
+    },
+    {
+      "iac_snapshot": "e687c0fcca8327d0a4d0b61c188eac49eee20a175390f25c8e2feb65e4443998",
+      "inventory_snapshot": "f6c069a97252a7a521952c5b262688cf24b8ad11e44a1c1e1fd7f9eb3c614a05",
+      "lookback_hours": 168,
+      "observation_ids": [
+        "16baba5929801a8fcbb40e8d705780ea74a414a29561363e55ba4950eb8987e5",
+        "230104fc26ef3e963f414f75fdfa52bb3cec70a4e9e67bf23228f389bd596ff6",
+        "2efed7b791451a1a4c392c341d1ba645357026b8ce4cf77bd6b5962c354025c9",
+        "3057a26f624c452fb3f3ff65c77d9e985022674cff85da9ef69e8dd0d56474b4",
+        "4252ded2a2dd10b54f51ad1785f658e0c2e120fe4ad1614adaa4180f70c343d2",
+        "903ec74fe56af482b27e4aadefb8c2bdab9a9df5ef73e9da18eb1cb870507c59",
+        "f53d527a76695cade4bc8b542ee7b4a21986bd189abd6039f3eb60025a4e4df5",
+        "fabd7934dc0598b5775aa1f22f79c4774413168104690cf461fa831c27aa8b61"
+      ],
+      "policy_snapshot": "042af430914224e1687a11f5a49bcd328b60c5b80da40e88c6f1ab0cb431fcab",
+      "resolution_minutes": 60,
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022bbb2",
+      "telemetry_snapshot": "f8e94164466b84400f64041ee5af8696907455821b0d35d53a5afa7697af4376"
+    },
+    {
+      "iac_snapshot": "e687c0fcca8327d0a4d0b61c188eac49eee20a175390f25c8e2feb65e4443998",
+      "inventory_snapshot": "f6c069a97252a7a521952c5b262688cf24b8ad11e44a1c1e1fd7f9eb3c614a05",
+      "lookback_hours": 168,
+      "observation_ids": [
+        "16baba5929801a8fcbb40e8d705780ea74a414a29561363e55ba4950eb8987e5",
+        "2efed7b791451a1a4c392c341d1ba645357026b8ce4cf77bd6b5962c354025c9",
+        "4252ded2a2dd10b54f51ad1785f658e0c2e120fe4ad1614adaa4180f70c343d2",
+        "4ab8fe1874e976eb0575de9788b7e685f29b7ea9e5f5977fa35d5a61581e39b9",
+        "9c2312dec30c416ba62975961d5050db889c8d4590bb436c653ef1ecce48d62b",
+        "c4a585a610a1b665f619571aadd69a6781471d4eaa3df719986a285b32b4c909",
+        "f53d527a76695cade4bc8b542ee7b4a21986bd189abd6039f3eb60025a4e4df5",
+        "fabd7934dc0598b5775aa1f22f79c4774413168104690cf461fa831c27aa8b61"
+      ],
+      "policy_snapshot": "042af430914224e1687a11f5a49bcd328b60c5b80da40e88c6f1ab0cb431fcab",
+      "resolution_minutes": 60,
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022ccc3",
+      "telemetry_snapshot": "7399fd7128371f957c962e8c835e0c66c7fdae0078dc8737ab3ba3ec8358667f"
+    },
+    {
+      "iac_snapshot": "e687c0fcca8327d0a4d0b61c188eac49eee20a175390f25c8e2feb65e4443998",
+      "inventory_snapshot": "f6c069a97252a7a521952c5b262688cf24b8ad11e44a1c1e1fd7f9eb3c614a05",
+      "lookback_hours": 168,
+      "observation_ids": [
+        "16baba5929801a8fcbb40e8d705780ea74a414a29561363e55ba4950eb8987e5",
+        "2efed7b791451a1a4c392c341d1ba645357026b8ce4cf77bd6b5962c354025c9",
+        "4252ded2a2dd10b54f51ad1785f658e0c2e120fe4ad1614adaa4180f70c343d2",
+        "67167676b74b8e648ea196a29d6e925649d87f28533a897f43ac5326de214821",
+        "d9a1aba94e47cd433a15d929e1605c9a266e09981362854d8ee8ba6f2340cafe",
+        "f53d527a76695cade4bc8b542ee7b4a21986bd189abd6039f3eb60025a4e4df5",
+        "fabd7934dc0598b5775aa1f22f79c4774413168104690cf461fa831c27aa8b61"
+      ],
+      "policy_snapshot": "042af430914224e1687a11f5a49bcd328b60c5b80da40e88c6f1ab0cb431fcab",
+      "resolution_minutes": 60,
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022ddd4",
+      "telemetry_snapshot": "1d5210b7c9be9acb620f4ba7eb48b0911919d4ae9a38834c1a8f3ad78eafc5f4"
+    },
+    {
+      "iac_snapshot": "e687c0fcca8327d0a4d0b61c188eac49eee20a175390f25c8e2feb65e4443998",
+      "inventory_snapshot": "f6c069a97252a7a521952c5b262688cf24b8ad11e44a1c1e1fd7f9eb3c614a05",
+      "lookback_hours": 168,
+      "observation_ids": [
+        "16baba5929801a8fcbb40e8d705780ea74a414a29561363e55ba4950eb8987e5",
+        "230104fc26ef3e963f414f75fdfa52bb3cec70a4e9e67bf23228f389bd596ff6",
+        "2efed7b791451a1a4c392c341d1ba645357026b8ce4cf77bd6b5962c354025c9",
+        "3057a26f624c452fb3f3ff65c77d9e985022674cff85da9ef69e8dd0d56474b4",
+        "4252ded2a2dd10b54f51ad1785f658e0c2e120fe4ad1614adaa4180f70c343d2",
+        "903ec74fe56af482b27e4aadefb8c2bdab9a9df5ef73e9da18eb1cb870507c59",
+        "f53d527a76695cade4bc8b542ee7b4a21986bd189abd6039f3eb60025a4e4df5",
+        "fabd7934dc0598b5775aa1f22f79c4774413168104690cf461fa831c27aa8b61"
+      ],
+      "policy_snapshot": "042af430914224e1687a11f5a49bcd328b60c5b80da40e88c6f1ab0cb431fcab",
+      "resolution_minutes": 60,
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022bbb2",
+      "telemetry_snapshot": "f8e94164466b84400f64041ee5af8696907455821b0d35d53a5afa7697af4376"
+    },
+    {
+      "iac_snapshot": "e687c0fcca8327d0a4d0b61c188eac49eee20a175390f25c8e2feb65e4443998",
+      "inventory_snapshot": "f6c069a97252a7a521952c5b262688cf24b8ad11e44a1c1e1fd7f9eb3c614a05",
+      "lookback_hours": 168,
+      "observation_ids": [
+        "16baba5929801a8fcbb40e8d705780ea74a414a29561363e55ba4950eb8987e5",
+        "2efed7b791451a1a4c392c341d1ba645357026b8ce4cf77bd6b5962c354025c9",
+        "4252ded2a2dd10b54f51ad1785f658e0c2e120fe4ad1614adaa4180f70c343d2",
+        "67167676b74b8e648ea196a29d6e925649d87f28533a897f43ac5326de214821",
+        "d9a1aba94e47cd433a15d929e1605c9a266e09981362854d8ee8ba6f2340cafe",
+        "f53d527a76695cade4bc8b542ee7b4a21986bd189abd6039f3eb60025a4e4df5",
+        "fabd7934dc0598b5775aa1f22f79c4774413168104690cf461fa831c27aa8b61"
+      ],
+      "policy_snapshot": "042af430914224e1687a11f5a49bcd328b60c5b80da40e88c6f1ab0cb431fcab",
+      "resolution_minutes": 60,
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022ddd4",
+      "telemetry_snapshot": "1d5210b7c9be9acb620f4ba7eb48b0911919d4ae9a38834c1a8f3ad78eafc5f4"
+    },
+    {
+      "iac_snapshot": "e687c0fcca8327d0a4d0b61c188eac49eee20a175390f25c8e2feb65e4443998",
+      "inventory_snapshot": "f6c069a97252a7a521952c5b262688cf24b8ad11e44a1c1e1fd7f9eb3c614a05",
+      "lookback_hours": 744,
+      "observation_ids": [
+        "16baba5929801a8fcbb40e8d705780ea74a414a29561363e55ba4950eb8987e5",
+        "230104fc26ef3e963f414f75fdfa52bb3cec70a4e9e67bf23228f389bd596ff6",
+        "2efed7b791451a1a4c392c341d1ba645357026b8ce4cf77bd6b5962c354025c9",
+        "4252ded2a2dd10b54f51ad1785f658e0c2e120fe4ad1614adaa4180f70c343d2",
+        "5bf96688c4664b4b9463a2bf2dcd5d54514e38aea8df62201bbb48ad21a5961f",
+        "903ec74fe56af482b27e4aadefb8c2bdab9a9df5ef73e9da18eb1cb870507c59",
+        "f53d527a76695cade4bc8b542ee7b4a21986bd189abd6039f3eb60025a4e4df5",
+        "fabd7934dc0598b5775aa1f22f79c4774413168104690cf461fa831c27aa8b61"
+      ],
+      "policy_snapshot": "042af430914224e1687a11f5a49bcd328b60c5b80da40e88c6f1ab0cb431fcab",
+      "resolution_minutes": 60,
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022bbb2",
+      "telemetry_snapshot": "dbd3e8839f695f25d86c8913b15a1715854292280bb33782660a1dde6cda1f0f"
+    },
+    {
+      "iac_snapshot": "e687c0fcca8327d0a4d0b61c188eac49eee20a175390f25c8e2feb65e4443998",
+      "inventory_snapshot": "f6c069a97252a7a521952c5b262688cf24b8ad11e44a1c1e1fd7f9eb3c614a05",
+      "lookback_hours": 744,
+      "observation_ids": [
+        "16baba5929801a8fcbb40e8d705780ea74a414a29561363e55ba4950eb8987e5",
+        "230104fc26ef3e963f414f75fdfa52bb3cec70a4e9e67bf23228f389bd596ff6",
+        "2efed7b791451a1a4c392c341d1ba645357026b8ce4cf77bd6b5962c354025c9",
+        "4252ded2a2dd10b54f51ad1785f658e0c2e120fe4ad1614adaa4180f70c343d2",
+        "5bf96688c4664b4b9463a2bf2dcd5d54514e38aea8df62201bbb48ad21a5961f",
+        "903ec74fe56af482b27e4aadefb8c2bdab9a9df5ef73e9da18eb1cb870507c59",
+        "f53d527a76695cade4bc8b542ee7b4a21986bd189abd6039f3eb60025a4e4df5",
+        "fabd7934dc0598b5775aa1f22f79c4774413168104690cf461fa831c27aa8b61"
+      ],
+      "policy_snapshot": "042af430914224e1687a11f5a49bcd328b60c5b80da40e88c6f1ab0cb431fcab",
+      "resolution_minutes": 60,
+      "resource_id": "ocid1.instance.oc1..\u2022\u2022\u2022\u2022bbb2",
+      "telemetry_snapshot": "dbd3e8839f695f25d86c8913b15a1715854292280bb33782660a1dde6cda1f0f"
+    }
+  ],
+  "telemetry_windows": [
+    168,
+    744
+  ]
+}

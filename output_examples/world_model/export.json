@@ -1,0 +1,26 @@
+{
+  "files": {
+    "acceptance.json": {
+      "export_sha256": "789ee663377b441c2bc1b17eafb809368baeae38edd9af64e304ed7fc4e17edd",
+      "raw_sha256": "789ee663377b441c2bc1b17eafb809368baeae38edd9af64e304ed7fc4e17edd"
+    },
+    "base-report.json": {
+      "export_sha256": "47bc57903b2fb839770b00aaeb8ba483623a440e64bfd68b8f0d5f4b5e3378b2",
+      "raw_sha256": "f5ff92f1b34e28d099c3c1975f7c2fede09538b9fef1f05d87acc584d87568c8"
+    },
+    "base-trace.jsonl": {
+      "export_sha256": "522821fda47aec179c4665e9fb87e89f69c492d956cdddbb79b590fb99dd48d6",
+      "raw_sha256": "522821fda47aec179c4665e9fb87e89f69c492d956cdddbb79b590fb99dd48d6"
+    },
+    "variant-report.json": {
+      "export_sha256": "bc1ef4af8a2e545b25f39ad0a3ee97eb51a7bcc88b21f859a914c626a05912cc",
+      "raw_sha256": "b2d4ed4a7bebd267b34aa9a39bbd7598e9f98c3e27a0c49eebe324088795378d"
+    },
+    "variant-trace.jsonl": {
+      "export_sha256": "6d85955cbe3954a51ee27e36a715de5122caf1b11425e122d4668afb717c85bd",
+      "raw_sha256": "6d85955cbe3954a51ee27e36a715de5122caf1b11425e122d4668afb717c85bd"
+    }
+  },
+  "kind": "masked publication copies",
+  "raw_directory_name": "world-acceptance-2026-10-26"
+}
