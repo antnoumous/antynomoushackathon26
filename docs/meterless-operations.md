@@ -47,6 +47,16 @@ OS permission, model download, paid action or security bypass was accepted. The 
 DMG mount was detached. Download and verification captures remain in private scratch.
 A vendor-trusted/notarized build is required before this approved installation path can continue.
 
+Rechecked on 26 October at 10:16 UTC: a fresh download from the current official M5+ link
+had the same byte count and SHA-256 as above. Read-only reassessment again found the same
+ad-hoc publisher identity and Gatekeeper exit 3. It was not installed or executed and the
+mount was detached. `ns` was absent from PATH and no TCP/8088 listener existed at the check.
+The official CLI documentation says Web/M1 editions have no local endpoint; they are not
+an API substitute. The checked public GitHub release offered a Windows MSI, not a Mac fix.
+No supported trusted Mac replacement was identified in those checked sources. A vendor
+support request was drafted but not sent. Diagnostic metadata and captured official guidance
+were copied to protected durable local storage; the duplicate DMG remains scratch-only.
+
 ## Prepared code is not deployment
 
 The World Model is consumed by Scout/Skeptic; the Nightshift adapter and combined acceptance
