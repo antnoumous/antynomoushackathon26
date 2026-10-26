@@ -89,3 +89,52 @@ def test_http_escaped_surrogate_summary_finishes_with_partial_report(tmp_path):
     finally:
         ctx.trace.close();ctx.state.close()
         server.shutdown();server.server_close();thread.join(timeout=2)
+
+
+def _stalled_ipc_frame(connection,method,url,*args):
+    import struct,time
+    body=json.dumps(["ok",{"value":"done"}]).encode()
+    header=struct.pack("!i",len(body))
+    connection._send(header[:2] if url.endswith("/header") else header+body[:1])
+    time.sleep(30)
+    connection._send(body)
+    connection.close()
+
+
+def _ipc_deadline_probe(phase):
+    import time,multiprocessing
+    import app.providers.meterless_transport as transport
+    from app.providers.meterless_settings import MeterlessError
+    transport._worker=_stalled_ipc_frame
+    started=time.monotonic()
+    try:
+        transport.request_json("GET","http://127.0.0.1/"+phase,headers={},payload=None,timeout_s=0.5)
+        category="unexpected_success"
+    except MeterlessError as error:category=error.category
+    print(json.dumps({"category":category,"elapsed":time.monotonic()-started,
+                      "children":[child.pid for child in multiprocessing.active_children()]}),flush=True)
+
+
+@pytest.mark.parametrize("phase",["header","body"])
+def test_stalled_ipc_frame_cannot_block_deadline_or_leak_child(phase):
+    import os,signal,subprocess,sys
+    if os.name != "posix":pytest.skip("Approved Nightshift hosts are macOS/POSIX Linux")
+    process=subprocess.Popen([sys.executable,"-m","tests.test_meterless_review_regressions","--ipc-probe",phase],
+        stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,start_new_session=True)
+    try:
+        try:out,err=process.communicate(timeout=3.0)
+        except subprocess.TimeoutExpired:pytest.fail("supervising thread blocked in partial IPC beyond outer deadline")
+        assert process.returncode == 0,err
+        result=json.loads(out)
+        assert result["category"] == "timeout"
+        assert result["elapsed"] < 1.5
+        assert result["children"] == []
+    finally:
+        if process.poll() is None:
+            os.killpg(process.pid,signal.SIGKILL)
+            process.communicate(timeout=2)
+
+
+if __name__ == "__main__":
+    import sys
+    if sys.argv[1:2] == ["--ipc-probe"]:_ipc_deadline_probe(sys.argv[2])
