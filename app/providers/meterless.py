@@ -54,8 +54,9 @@ class MeterlessGenerator:
                 if type(confidence) not in (int, float) or not math.isfinite(confidence) or not 0 <= confidence <= 1:
                     raise ValueError()
                 for key, definition in full_schema["properties"].items():
-                    if definition["type"] == "string" and not isinstance(out[key], str):
-                        raise ValueError()
+                    if definition["type"] == "string":
+                        if not isinstance(out[key], str) or self.settings.token.get_secret_value() in out[key]:
+                            raise ValueError()
             except (ValueError, TypeError, KeyError, IndexError, RecursionError):
                 raise MeterlessError("schema") from None
         except Exception as exc:

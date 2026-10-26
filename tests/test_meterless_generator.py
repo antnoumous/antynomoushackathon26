@@ -91,3 +91,13 @@ def test_configuration_failure_is_visible_without_a_remote_attempt():
     out=gen.complete(prompt="",schema={"name":"verdict_reason"},context={"reason_key":"frequency_mismatch"})
     assert "duty-cycle problem" in out["reason"]
     assert (gen.diagnostics()["attempts"],gen.diagnostics()["fallbacks"],gen.diagnostics()["status"]) == (0,1,"not_used")
+
+
+def test_response_echoing_bearer_is_not_published_as_prose():
+    from app.providers.meterless import MeterlessGenerator
+    from app.providers.meterless_settings import MeterlessSettings
+    gen=MeterlessGenerator(MeterlessSettings(token="unit-response-secret"),transport=lambda *a,**k:{
+        "choices":[{"message":{"content":'{"reason":"unit-response-secret","confidence":0.8}'}}]})
+    out=gen.complete(prompt="",schema={"name":"verdict_reason"},context={"reason_key":"frequency_mismatch"})
+    assert "unit-response-secret" not in str(out)
+    assert gen.recorder.outcomes()[0].category == "schema"
