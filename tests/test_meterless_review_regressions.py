@@ -135,6 +135,36 @@ def test_stalled_ipc_frame_cannot_block_deadline_or_leak_child(phase):
             process.communicate(timeout=2)
 
 
+def test_name_only_schedule_signal_uses_pinned_resource_and_forces_wider_recheck(tmp_path,monkeypatch):
+    import shutil
+    from tests.test_loop import build
+    from app.loop import Orchestrator
+    from app.agents.skeptic import Skeptic
+    scenario=tmp_path / "nightly-scenario"
+    shutil.copytree("data/scenarios/example_1",scenario)
+    inventory=json.loads((scenario / "inventory.json").read_text())
+    row=next(r for r in inventory["resources"] if r["resource_id"].endswith("bbb2"))
+    row.update(display_name="nightly-worker",tags={})
+    inventory["resources"]=[row]
+    (scenario / "inventory.json").write_text(json.dumps(inventory))
+    (scenario / "iac.json").write_text(json.dumps({"declarations":[]}))
+    _,ctx=build(tmp_path / "run",scenario=scenario)
+    judge=Skeptic.judge
+    def mutable_projection_changed(self,candidate,round):
+        self.ctx.state.facts["resources"][candidate.resource_id].display_name="plain-worker"
+        return judge(self,candidate,round)
+    monkeypatch.setattr(Skeptic,"judge",mutable_projection_changed)
+    try:
+        report=Orchestrator(ctx,scenario_dir=scenario).run()
+        events=[json.loads(line) for line in ctx.trace.path.read_text().splitlines()]
+        assert any(event["action"] == "request_recheck" and "744h" in event["output_summary"] for event in events)
+        cost=[f for f in report.findings if f.finding_class == "cost_waste"]
+        assert [f.status for f in cost] == ["rejected","revised"]
+        assert "58.0%" in cost[-1].claim and "peaks at" in cost[-1].claim
+        assert report.status == "success"
+    finally:ctx.trace.close();ctx.state.close()
+
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:2] == ["--ipc-probe"]:_ipc_deadline_probe(sys.argv[2])

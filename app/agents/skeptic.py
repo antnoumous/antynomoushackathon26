@@ -30,7 +30,7 @@ class Skeptic(Agent):
 
     def _signal(self, candidate: Candidate, needles: tuple[str, ...]) -> str | None:
         context = self._pinned_context
-        texts = [str(context.resource.tags)]
+        texts = [str(context.resource.model_dump())]
         if context.declaration:
             texts.append(str(context.declaration.model_dump()))
         haystack = " ".join(texts).lower()
