@@ -42,6 +42,9 @@ models/
 *.mp4
 *.mov
 
+# Isolated feature workspaces
+.worktrees/
+
 # OS / editor
 .DS_Store
 .idea/
