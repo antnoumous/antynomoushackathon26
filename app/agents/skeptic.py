@@ -29,15 +29,19 @@ class Skeptic(Agent):
         return counts.get(self._recheck_key(candidate), 0)
 
     def _signal(self, candidate: Candidate, needles: tuple[str, ...]) -> str | None:
-        for item in self.ctx.ledger.resolve(candidate.evidence_refs):
-            haystack = " ".join(str(v) for v in list(item.payload.values()) + [item.summary]).lower()
-            for needle in needles:
-                if needle in haystack:
-                    return needle
+        context = self._pinned_context
+        texts = [str(context.resource.tags)]
+        if context.declaration:
+            texts.append(str(context.declaration.model_dump()))
+        haystack = " ".join(texts).lower()
+        for needle in needles:
+            if needle in haystack:
+                return needle
         return None
 
     def judge(self, candidate: Candidate, round: int) -> Ruling:
         """The only entry point. Every ruling leaves here carrying the round that produced it."""
+        self._pinned_context = self.ctx.world.for_candidate(candidate.candidate_id)
         ruling = self._judge(candidate, round)
         return ruling.model_copy(update={"round": round})
 

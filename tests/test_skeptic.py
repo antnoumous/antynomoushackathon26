@@ -31,7 +31,13 @@ def ctx(tmp_path):
     scout = Scout(c)
     scout.hydrate()
     c.extras["scout"] = scout
-    return c
+    try:
+        yield c
+    finally:
+        if c.world:
+            c.world.close()
+        c.state.close()
+        c.trace.close()
 
 
 def candidates(ctx, lookback=168):
@@ -79,6 +85,15 @@ def test_skeptic_refuses_a_third_recheck_on_the_same_finding(ctx):
 
 def test_a_declared_purpose_withdraws_a_cost_finding(ctx):
     """The falsifier every candidate publishes has to be executable, or it is decoration."""
+    from app.analysis import match_iac
+    from app.models import IaCDeclaration
+    resource = next(r for r in ctx.state.facts["resources"].values() if r.resource_id.endswith("bbb2"))
+    result = ctx.sources["iac"].fetch(ctx.scope)
+    _, original = match_iac(resource,[IaCDeclaration(**r) for r in result.records])
+    result.records = [dict(r,commit_message="DR standby replica, idle by design")
+                      if r["address"] == original.address else r for r in result.records]
+    ref = ctx.world.ingest.ingest("iac",result)
+    ctx.world.refs["iac_snapshot"] = ref.snapshot_id
     batch = next(c for c in candidates(ctx) if c.resource_id.endswith("bbb2"))
     extra = ctx.ledger.add(source="iac", kind="declaration", resource_id=batch.resource_id,
                            summary="DR standby replica, idle by design", payload={})

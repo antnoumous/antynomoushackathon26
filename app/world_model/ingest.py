@@ -41,11 +41,15 @@ class IngestPipelineService:
             degraded=result.degraded)
 
     def ingest_series(self, resource_id: str, series: MetricSeries, *, backend: str,
-                      degraded: bool, source_version: str | None = None) -> SnapshotRef:
+                      degraded: bool, source_version: str | None = None,
+                      source_resource_id: str | None = None) -> SnapshotRef:
         if series.resource_id != resource_id:
             raise WorldError("provenance")
+        payload = series.model_dump()
+        if source_resource_id is not None:
+            payload["_source_resource_id"] = source_resource_id
         item = Observation.from_payload(entity_type="telemetry", external_key=resource_id,
-            source="telemetry", backend=backend, payload=series.model_dump(),
+            source="telemetry", backend=backend, payload=payload,
             source_version=source_version, lookback_hours=series.lookback_hours,
             resolution_minutes=series.resolution_minutes)
         return self.store.put_batch(run_id=self.run_id, namespace=self.namespace, source="telemetry",

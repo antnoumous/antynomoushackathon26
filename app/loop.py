@@ -12,6 +12,8 @@ from app.agents.writer import Writer
 from app.models import Candidate, Ruling, SourceStatus, Undetermined
 from app.sources.base import Scope
 from app.sources import get_source
+from app.world_model.contracts import WorldError
+from app.world_model.runtime import record_failure
 
 
 def _same_conclusion(previous: Candidate, current: Candidate) -> bool:
@@ -44,6 +46,12 @@ class Orchestrator:
         ctx.extras["deadline"] = self.deadline
         ctx.extras["clock"] = time.monotonic
         ctx.generator.set_deadline(self.deadline)
+        from app.world_model.runtime import WorldRuntime
+        if ctx.world is None:
+            try:
+                ctx.world = WorldRuntime.from_context(ctx, scenario_dir=scenario_dir)
+            except WorldError as error:
+                record_failure(ctx,error)
 
     # --- source access with retry, then fixture fallback, then honest failure ---------------
     def _clock(self) -> float:
@@ -137,6 +145,7 @@ class Orchestrator:
 
     def _hydrate(self) -> None:
         scope = self.ctx.scope
+        results = {}
         for name in ("inventory", "iac", "policy"):
             result, status = self._fetch(name, scope)
             if result is not None:
@@ -150,6 +159,12 @@ class Orchestrator:
                                         output_summary=status.reason,
                                         status="degraded", retry_count=1)
             self.sources_status.append(status)
+            results[name] = result.model_copy(update={"degraded":status.degraded}) if result is not None else None
+        if self.ctx.world is not None:
+            try:
+                self.ctx.world.ingest_hydration(results)
+            except WorldError as error:
+                record_failure(self.ctx,error)
         self.ctx.state.append("hydrate", {
             "resources": len(self.ctx.state.facts["resources"]),
             "declarations": len(self.ctx.state.facts["declarations"]),
@@ -202,15 +217,25 @@ class Orchestrator:
         return False
 
     def run(self):
+        try:
+            return self._run()
+        finally:
+            if self.ctx.world:
+                self.ctx.world.close()
+
+    def _run(self):
+        self.ctx.state.facts["examined"] = set()
         self._hydrate()
-        if not self._rules_available():
+        if self.ctx.world is None or not self._rules_available():
             report = self.writer.synthesise(
                 candidates=[], rulings={}, sources=self.sources_status, status="partial",
                 caps_hit=self._state_caps(),
                 undetermined=[Undetermined(
                     resource_id="scope",
-                    reason="no policy rules were loaded, so no finding could be justified")])
+                    reason=("World Model unavailable: " + ",".join(self.ctx.extras.get("world_failures",[]))
+                        if self.ctx.world is None else "no policy rules were loaded, so no finding could be justified"))])
             report.trace_path = str(self.ctx.trace.path)
+            self.ctx.state.append("report", {"status":report.status,"findings":len(report.findings)})
             return report
         all_candidates: list[Candidate] = []
         recheck_requests: list[dict] = []
@@ -273,7 +298,17 @@ class Orchestrator:
 
             recheck_requests = []
             for candidate in candidates:
-                ruling = self.skeptic.judge(candidate, round=round_number)
+                try:
+                    ruling = self.skeptic.judge(candidate, round=round_number)
+                except WorldError as error:
+                    record_failure(self.ctx,error)
+                    all_candidates = [c for c in all_candidates if c.candidate_id != candidate.candidate_id]
+                    for previous in all_candidates:
+                        if previous.superseded_by == candidate.candidate_id:
+                            previous.superseded_by = None
+                    self.ctx.extras.setdefault("world_undetermined",[]).append(Undetermined(
+                        resource_id=candidate.resource_id,reason="World Model: " + str(error)))
+                    continue
                 self.rulings[candidate.candidate_id] = ruling
                 self.ctx.state.facts["rulings"][candidate.candidate_id] = ruling.model_dump()
                 if ruling.verdict == "recheck":
@@ -316,7 +351,7 @@ class Orchestrator:
                                 output_summary="re-check requested but never honoured",
                                 evidence_refs=candidate.evidence_refs, status="capped")
         unresolved_ids = {c.candidate_id for c in unresolved}
-        undetermined = self.scout.undetermined() + [
+        undetermined = self.scout.undetermined() + self.ctx.extras.get("world_undetermined",[]) + [
             Undetermined(resource_id=c.resource_id,
                          reason=f"{c.candidate_id} was not concluded: the re-check the Skeptic "
                                 f"asked for did not run")
@@ -326,7 +361,7 @@ class Orchestrator:
             rulings=self.rulings, undetermined=undetermined, sources=self.sources_status,
             status=status, caps_hit=caps_hit)
         report.trace_path = str(self.ctx.trace.path)
-        self.ctx.state.append("report", {"status": status, "findings": len(report.findings)})
+        self.ctx.state.append("report", {"status": report.status, "findings": len(report.findings)})
         return report
 
     def _state_caps(self) -> list[str]:

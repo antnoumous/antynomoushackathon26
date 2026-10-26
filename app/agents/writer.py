@@ -71,7 +71,7 @@ class Writer(Agent):
         """
         computed: set[str] = set()
         for item in self.ctx.ledger.all():
-            computed |= figures_in(str(item.payload))
+            computed |= figures_in(str({k:v for k,v in item.payload.items() if k != "_world"}))
         for candidate in candidates:
             computed |= figures_in(str(candidate.impact))
         return structural_literals(self.ctx.config) | computed, computed
@@ -166,7 +166,7 @@ class Writer(Agent):
         # read as full coverage.
         in_scope = len(self.ctx.state.facts["resources"])
         examined = self.ctx.state.facts.get("examined")
-        examined_count = len(examined) if examined else in_scope
+        examined_count = len(examined) if examined is not None else in_scope
 
         summary = {
             "resources_examined": examined_count,
@@ -194,6 +194,12 @@ class Writer(Agent):
         assert_figures_traceable(narrative, allowed | figures_in(str(summary)),
                                  computed | figures_in(str(summary)))
         summary["narrative"] = narrative
+        if self.ctx.world is not None or self.ctx.extras.get("world_failures"):
+            from app.world_model.runtime import world_manifest
+            world = world_manifest(self.ctx)
+            summary["integrations"] = {"meterless_world_model":world}
+            if world["status"] == "failed" and status != "capped":
+                status = "partial"
 
         self._emit("synthesise", input_summary=f"{len(accepted)} accepted, {len(rejected)} rejected",
                    output_summary=summary["narrative"], confidence=1.0,

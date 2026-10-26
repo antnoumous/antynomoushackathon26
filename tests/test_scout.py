@@ -25,10 +25,17 @@ def ctx(tmp_path):
                   lookback_hours=cfg.lookback_hours, resolution_minutes=60)
     sources = {name: get_source(name, cfg, scenario_dir=SCEN)
                for name in ("inventory", "telemetry", "iac", "policy")}
-    return AgentContext(config=cfg, sources=sources, generator=RulesGenerator(),
+    c = AgentContext(config=cfg, sources=sources, generator=RulesGenerator(),
                         state=RunState(cfg.run_id, tmp_path),
                         trace=Tracer(cfg.run_id, tmp_path, stream=io.StringIO()),
                         ledger=EvidenceLedger(), scope=scope)
+    try:
+        yield c
+    finally:
+        if c.world:
+            c.world.close()
+        c.state.close()
+        c.trace.close()
 
 
 def hydrate_and_assign(ctx, round=1, lookback_hours=None):
@@ -124,7 +131,21 @@ def test_telemetry_fixture_fallback_joins_real_ids_to_masked_records(tmp_path, m
     # the same suffix — the join has to survive exactly this. Assembled at runtime because a
     # real-shaped OCID may not sit in a source file unmasked (the repo guard would say so).
     live_id = "ocid1.instance.oc1.ap-batam-1." + "a" * 8 + "wg7a"
+    from app.world_model.runtime import WorldRuntime
+    from scripts.mask_ocids import mask_text
+    ctx.world = WorldRuntime.from_context(ctx,scenario_dir=lab)
+    hydration = {name:get_source(name,cfg,scenario_dir=lab).fetch(scope) for name in ("inventory","iac","policy")}
+    for record in hydration["inventory"].records:
+        if mask_text(record["resource_id"])[0] == mask_text(live_id)[0]:
+            record["resource_id"] = live_id
+    ctx.world.ingest_hydration(hydration)
     series = scout._series_for(live_id, 168)
     assert series is not None
     assert scout._source_status["telemetry"].degraded is True
     assert scout._source_status["telemetry"].backend == "fixture"
+    ref = scout._telemetry_snapshot
+    captured = ctx.world.store.read(run_id=cfg.run_id,namespace=ctx.world.namespace,snapshot_id=ref)
+    assert captured[0].backend == "fixture"
+    assert captured[0].payload["_source_resource_id"] != live_id
+    assert ctx.world.store.snapshot(run_id=cfg.run_id,namespace=ctx.world.namespace,snapshot_id=ref).degraded
+    ctx.world.close();ctx.trace.close();ctx.state.close()

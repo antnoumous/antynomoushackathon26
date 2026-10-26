@@ -194,7 +194,8 @@ def test_auth_failure_is_not_retried_and_fallback_keeps_fixture_identity(tmp_pat
     assert status.degraded is True and status.backend == "fixture"
     assert status.provenance is None                         # fixture never inherits Zetaris metadata
     for hit in rule_hits(ctx):
-        assert set(hit.payload) == {"rule_id"}
+        assert set(hit.payload) == {"rule_id", "_world"}
+        assert hit.payload["_world"]["observation_ids"]
 
 
 def test_no_fallback_policy_failure_yields_no_fabricated_finding(tmp_path):

@@ -24,6 +24,7 @@ def run_pipeline(request: dict, scenario_dir: Path | None = None) -> tuple[RunRe
                for name in ("inventory", "telemetry", "iac", "policy")}
     state = RunState(config.run_id, config.logs_dir)
     trace = Tracer(config.run_id, config.logs_dir)
+    ctx = None
     try:
         ctx = AgentContext(config=config, sources=sources, generator=get_generator(config),
                            state=state, trace=trace, ledger=EvidenceLedger(), scope=scope,
@@ -32,6 +33,8 @@ def run_pipeline(request: dict, scenario_dir: Path | None = None) -> tuple[RunRe
     finally:
         # Both writers hold an open handle for the whole run; closing them here keeps a long-lived
         # process (the API, a batch of scenarios) from leaking a descriptor per run.
+        if ctx is not None and ctx.world is not None:
+            ctx.world.close()
         trace.close()
         state.close()
 

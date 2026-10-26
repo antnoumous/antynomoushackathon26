@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.world_model.runtime import WorldRuntime
 import time
 
 from app.config import RunConfig
@@ -24,6 +27,7 @@ class AgentContext:
     scope: Scope | None = None
     scenario_dir: Path | None = None      # fixture fallback for per-resource fetches
     extras: dict[str, Any] = field(default_factory=dict)
+    world: WorldRuntime | None = None
 
     def evidence(self, *, source: str, kind: str, resource_id: str, summary: str, payload: dict):
         return self.ledger.add(source=source, kind=kind, resource_id=resource_id,

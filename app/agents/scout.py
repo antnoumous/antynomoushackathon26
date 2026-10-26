@@ -10,6 +10,8 @@ from app.analysis import (NO_TELEMETRY_STATS, match_iac, monthly_cost, qualifyin
 from app.models import (Assignment, Candidate, IaCDeclaration, MetricSeries, PolicyRule, Resource,
                         SourceStatus, Undetermined)
 from app.sources.base import Scope
+from app.world_model.contracts import WorldError
+from app.world_model.runtime import record_failure
 
 
 class Scout(Agent):
@@ -39,6 +41,10 @@ class Scout(Agent):
         policy = self.ctx.sources["policy"].fetch(self.ctx.scope)
         self.ctx.state.facts["rules"] = [PolicyRule(**r) for r in policy.records]
 
+        from app.world_model.runtime import WorldRuntime
+        if self.ctx.world is None:
+            self.ctx.world = WorldRuntime.from_context(self.ctx,scenario_dir=self.ctx.scenario_dir)
+        self.ctx.world.ingest_hydration({"inventory":inventory,"iac":iac,"policy":policy})
         self.ctx.state.append("hydrate", {
             "resources": len(self.ctx.state.facts["resources"]),
             "declarations": len(self.ctx.state.facts["declarations"]),
@@ -63,9 +69,16 @@ class Scout(Agent):
         # mixed degraded run would abstain on every resource while holding usable series.
         from scripts.mask_ocids import mask_text
         wanted = mask_text(resource_id)[0]
-        for record in result.records:
-            if mask_text(record["resource_id"])[0] == wanted:
-                return MetricSeries(**record)
+        matches = [record for record in result.records if mask_text(record["resource_id"])[0] == wanted]
+        if len(matches) > 1:
+            raise WorldError("context")
+        if matches:
+            series = MetricSeries(**matches[0])
+            if self.ctx.world is not None:
+                status = self._source_status["telemetry"]
+                ref = self.ctx.world.ingest_series(resource_id,series,backend=result.backend,degraded=status.degraded)
+                self._telemetry_snapshot = ref.snapshot_id
+            return series
         return None
 
     def _fetch_with_recovery(self, name: str, scope: Scope):
@@ -149,17 +162,32 @@ class Scout(Agent):
                            status="capped", confidence=1.0)
                 break
             examined.add(resource_id)
-            resource = resources[resource_id]
-            attached = getattr(resource, "attached", None)
-
-            is_compute = resource.resource_class == "compute_instance"
-            series = (self._series_for(resource_id, assignment.lookback_hours)
-                      if is_compute else None)
+            try:
+                if self.ctx.world is None:
+                    raise WorldError("context")
+                context = self.ctx.world.context(resource_id,assignment.lookback_hours,
+                    self.ctx.scope.resolution_minutes)
+                if not context.complete:
+                    raise WorldError("limit" if "context_limit" in context.reasons else "context")
+                is_compute = context.resource.resource_class == "compute_instance"
+                self._telemetry_snapshot = None
+                fetched = self._series_for(resource_id, assignment.lookback_hours) if is_compute else None
+                if fetched is not None:
+                    context = self.ctx.world.context(resource_id,assignment.lookback_hours,
+                        fetched.resolution_minutes,self._telemetry_snapshot)
+                if not context.complete:
+                    raise WorldError("limit" if "context_limit" in context.reasons else "context")
+            except WorldError as error:
+                record_failure(self.ctx,error)
+                self._undetermined.append(Undetermined(resource_id=resource_id,reason="World Model: " + str(error)))
+                continue
+            resource, declaration, match_rule = context.resource, context.declaration, context.iac_match_rule
+            rules, series = list(context.rules), context.series
+            attached = resource.attached
             # No telemetry means no CPU figure may be published at all. `sufficient: False`
             # suppresses every cost rule below and routes this resource to `undetermined`.
             stats = stats_from_series(series) if series is not None else dict(NO_TELEMETRY_STATS)
 
-            match_rule, declaration = match_iac(resource, declarations)
             absent = declaration is None
             if resource.resource_class == "compute_instance" and absent:
                 self._emit("flag_unattributed", round=assignment.round, target_agent="Skeptic",
@@ -237,6 +265,9 @@ class Scout(Agent):
                     source="policy", kind="rule_hit", resource_id=resource_id,
                     summary=f"{rule.rule_id}: {rule.note}", payload=payload))
 
+                from dataclasses import asdict
+                for item in evidence:
+                    item.payload["_world"] = asdict(context.selection)
                 generated = self.ctx.generator.complete(
                     prompt=f"State the finding for {resource.display_name} under {rule.rule_id}.",
                     schema={"name": "finding_claim"},
@@ -259,6 +290,7 @@ class Scout(Agent):
                     matched_rule_ids=[rule.rule_id], iac_match_rule=match_rule,
                     absent_from_iac=absent, stats=stats)
 
+                self.ctx.world.pin(candidate.candidate_id,context)
                 self.ctx.state.facts["candidates"][candidate.candidate_id] = candidate
                 self.ctx.state.append("candidate", {"candidate_id": candidate.candidate_id,
                                                     "resource_id": resource_id,
