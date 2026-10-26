@@ -52,6 +52,11 @@ def test_mid_batch_sql_failure_rolls_back_every_row_then_retry_succeeds(tmp_path
     ref = store.put_batch(run_id="run-a", namespace="n", source="inventory",
                           observations=items, complete=True)
     assert len(store.read(run_id="run-a", namespace="n", snapshot_id=ref.snapshot_id)) == 2
+    clean = WorldStoreService(tmp_path / "clean.sqlite3")
+    clean_ref = clean.put_batch(run_id="run-a", namespace="n", source="inventory", observations=items, complete=True)
+    assert ref == clean_ref
+    assert store.counts(run_id="run-a", namespace="n") == clean.counts(run_id="run-a", namespace="n")
+    clean.close()
     store.close()
 
 
@@ -71,6 +76,12 @@ def test_namespace_run_and_empty_snapshot_cannot_reuse_old_facts(tmp_path):
     missing = store.put_batch(run_id="b", namespace="n", source="policy", observations=[], complete=False)
     assert store.read(run_id="b", namespace="n", snapshot_id=empty.snapshot_id) == ()
     assert store.snapshot(run_id="b", namespace="n", snapshot_id=empty.snapshot_id).complete
+    assert not store.snapshot(run_id="b", namespace="n", snapshot_id=missing.snapshot_id).complete
+    other = store.put_batch(run_id="a", namespace="other", source="policy", observations=[item], complete=True)
+    assert other.observation_ids != old.observation_ids
+    store.close()
+    store = WorldStoreService(tmp_path / "world.sqlite3")
+    assert store.read(run_id="b", namespace="n", snapshot_id=empty.snapshot_id) == ()
     assert not store.snapshot(run_id="b", namespace="n", snapshot_id=missing.snapshot_id).complete
     store.close()
 
