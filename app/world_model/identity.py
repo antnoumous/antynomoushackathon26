@@ -42,5 +42,9 @@ def entity_id(namespace: str, observation: Observation) -> str:
 
 
 def observation_id(namespace: str, observation: Observation) -> str:
-    value = {"schema": 1, "namespace": namespace, **asdict(observation)}
+    value = {"schema": 1, "namespace": namespace, "entity_id": entity_id(namespace, observation),
+        "source": observation.source, "backend": observation.backend,
+        "source_version": observation.source_version, "lookback_hours": observation.lookback_hours,
+        "resolution_minutes": observation.resolution_minutes, "measured_at": observation.measured_at,
+        "payload": observation.payload}
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()

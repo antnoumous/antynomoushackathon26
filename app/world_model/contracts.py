@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+from app.models import Resource, IaCDeclaration, PolicyRule, MetricSeries
 
 
 class WorldError(Exception):
@@ -24,6 +25,7 @@ class Observation:
     lookback_hours: int | None = None
     resolution_minutes: int | None = None
     measured_at: str | None = None
+    fetched_at: str | None = None
 
     def __post_init__(self) -> None:
         if (self.source not in {"inventory", "iac", "policy", "telemetry"}
@@ -62,3 +64,27 @@ class SnapshotRef:
     observation_ids: tuple[str, ...]
     complete: bool
     degraded: bool
+
+
+@dataclass(frozen=True)
+class ContextSelection:
+    resource_id: str
+    inventory_snapshot: str
+    iac_snapshot: str
+    policy_snapshot: str
+    telemetry_snapshot: str | None
+    observation_ids: tuple[str, ...]
+    lookback_hours: int
+    resolution_minutes: int
+
+
+@dataclass(frozen=True)
+class ResourceContext:
+    selection: ContextSelection
+    resource: Resource
+    declaration: IaCDeclaration | None
+    iac_match_rule: str | None
+    rules: tuple[PolicyRule, ...]
+    series: MetricSeries | None
+    complete: bool
+    reasons: tuple[str, ...]
