@@ -137,29 +137,49 @@ def run_acceptance(*, scenario: Path, base_settings: dict, variant_settings: dic
     return result
 
 
-def export_proof(output: Path, target: Path) -> None:
-    """Keep raw originals untouched; publish only explicit masked artifact copies."""
+def export_proof(output: Path, target: Path, *, runtime_env: dict) -> None:
+    """Fail closed on known credentials before creating any masked publication copy."""
     import hashlib
     from scripts.mask_ocids import mask_text
+    from app.providers.meterless_settings import MeterlessError
     output, target = Path(output), Path(target)
-    target.mkdir(parents=True, exist_ok=False)
+    secrets = tuple(runtime_env.get(key) for key in ("METERLESS_TOKEN", "ZETARIS_API_KEY"))
+    if any(not isinstance(value, str) or not value.strip() for value in secrets):
+        raise MeterlessError("configuration")
+
+    def contains_secret(value):
+        if isinstance(value, str):
+            return any(secret in value for secret in secrets)
+        if isinstance(value, dict):
+            return any(contains_secret(key) or contains_secret(item) for key, item in value.items())
+        if isinstance(value, list):
+            return any(contains_secret(item) for item in value)
+        return False
+
     names = ["acceptance.json", *[side+suffix for side in ("base", "variant")
              for suffix in ("-report.json", "-trace.jsonl", "-outcomes.json")]]
+    originals = {name: (output / name).read_bytes() for name in names}
+    for name, original in originals.items():
+        text = original.decode("utf-8")
+        decoded = ([json.loads(line) for line in text.splitlines() if line.strip()]
+                   if name.endswith(".jsonl") else json.loads(text))
+        if contains_secret(text) or contains_secret(decoded):
+            raise MeterlessError("schema")
+    target.mkdir(parents=True, exist_ok=False)
     records = {}
-    for name in names:
-        original = (output / name).read_bytes()
+    for name, original in originals.items():
         rendered = mask_text(original.decode("utf-8"))[0]
         if name.endswith("-report.json"):
             report = json.loads(rendered)
             report["trace_path"] = str(target / name.replace("-report.json", "-trace.jsonl"))
             report["report_markdown_path"] = None
-            rendered = json.dumps(report, indent=2, ensure_ascii=False)+"\n"
+            rendered = json.dumps(report, indent=2, ensure_ascii=False)+chr(10)
         path = target / name
         path.write_text(rendered, encoding="utf-8")
         records[name] = {"raw_sha256": hashlib.sha256(original).hexdigest(),
                          "export_sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
     (target / "export.json").write_text(json.dumps({"kind":"masked publication copies", "files":records},
-                                                   indent=2, sort_keys=True)+"\n")
+                                                   indent=2, sort_keys=True)+chr(10))
 
 
 def main(argv=None) -> int:

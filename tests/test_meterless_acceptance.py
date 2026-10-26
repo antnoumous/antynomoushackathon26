@@ -151,7 +151,7 @@ def test_export_masks_copies_and_rebinds_report_linked_traces(tmp_path):
     from scripts.verify_meterless_sponsors import export_proof
     run(tmp_path)
     raw=tmp_path / "proof";public=tmp_path / "public"
-    export_proof(raw,public)
+    export_proof(raw,public,runtime_env=ENV)
     manifest=json.loads((public / "export.json").read_text())
     assert len(manifest["files"]) == 7
     for name,hashes in manifest["files"].items():
@@ -163,4 +163,4 @@ def test_export_masks_copies_and_rebinds_report_linked_traces(tmp_path):
     assert Path(report["trace_path"]) == public / "base-trace.jsonl"
     events=[json.loads(line) for line in Path(report["trace_path"]).read_text().splitlines()]
     assert {e["run_id"] for e in events} == {report["run_id"]}
-    with pytest.raises(FileExistsError):export_proof(raw,public)
+    with pytest.raises(FileExistsError):export_proof(raw,public,runtime_env=ENV)

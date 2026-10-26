@@ -1,5 +1,6 @@
 from urllib.parse import urlsplit, urlunsplit
 from dataclasses import dataclass
+import re
 from typing import Mapping
 from pydantic import BaseModel, ConfigDict, SecretStr, Field, ValidationError, field_validator
 
@@ -58,7 +59,14 @@ def discover(settings: MeterlessSettings, *, transport, timeout_s: float) -> Met
     if (not isinstance(data, dict) or not isinstance(data.get("data"), list)
             or any(not isinstance(item, dict) or not isinstance(item.get("id"), str) for item in data["data"])):
         return MeterlessReadiness("offline", ())
-    ids = tuple(dict.fromkeys(item["id"] for item in data["data"] if item["id"].startswith("meterless/")))
+    token = settings.token.get_secret_value()
+    if len(data["data"]) > 256 or any(token in item["id"] for item in data["data"]):
+        return MeterlessReadiness("offline", ())
+    selected = [item["id"] for item in data["data"] if item["id"].startswith("meterless/")]
+    if any(len(value) > 256 or re.fullmatch(r"meterless/[A-Za-z0-9][A-Za-z0-9._:/+-]*", value) is None
+           for value in selected):
+        return MeterlessReadiness("offline", ())
+    ids = tuple(dict.fromkeys(selected))
     state = "offline" if not ids else "online" if settings.model in ids else "unsupported_mode"
     return MeterlessReadiness(state, ids)
 

@@ -58,7 +58,7 @@ semantics unchanged. Different model wording and allocated candidate IDs are not
 A failed guard produces a nonzero CLI exit. A figure-guard refusal aborts rather than passing.
 
 Artifacts include actual reports, report-linked traces, source outcomes, schema outcomes and world
-manifests. `export_proof(raw_directory, publication_directory)` creates separate masked copies,
+manifests. `export_proof(raw_directory, publication_directory, runtime_env=protected_env)` checks raw and decoded JSON for both runtime credentials before creating separate masked copies,
 rebinds copied report trace paths and records raw/export SHA-256 checksums; it refuses existing targets.
 Injected factories are for hermetic contract tests only: they can pass logical checks but always
 report `execution=injected_contract_test`, `nightshift_verified=false` and `sponsor_acceptance=false`.
