@@ -5,6 +5,9 @@ from typing import Mapping
 from pydantic import BaseModel, ConfigDict, SecretStr, Field, ValidationError, field_validator
 
 
+SUPPORTED_MODES = ("meterless/local", "meterless/auto")
+
+
 @dataclass(frozen=True)
 class MeterlessReadiness:
     state: str
@@ -34,16 +37,25 @@ class MeterlessSettings(BaseModel):
 
     @field_validator("model")
     @classmethod
-    def require_local_route(cls, value: str) -> str:
-        if value != "meterless/local":
+    def require_supported_route(cls, value: str) -> str:
+        # meterless/local is this deployment's local-only route; meterless/auto is the mode the
+        # hackathon guide documents, which lets Nightshift choose among its configured providers.
+        if value not in SUPPORTED_MODES:
             raise MeterlessError("unsupported_mode")
         return value
 
     @classmethod
     def from_env(cls, env: Mapping[str, str]) -> "MeterlessSettings":
+        # METERLESS_RUNTIME_TOKEN is the name the hackathon guide and Nightshift's own console use;
+        # METERLESS_TOKEN is the earlier name this repository shipped. Accept both, never guess
+        # between two different secrets.
+        runtime = env.get("METERLESS_RUNTIME_TOKEN", "")
+        legacy = env.get("METERLESS_TOKEN", "")
+        if runtime.strip() and legacy.strip() and runtime != legacy:
+            raise MeterlessError("configuration")
         try:
             return cls(base_url=env.get("METERLESS_BASE_URL", "http://127.0.0.1:8088/v1"),
-                       token=env.get("METERLESS_TOKEN", ""),
+                       token=runtime if runtime.strip() else legacy,
                        model=env.get("METERLESS_MODEL", "meterless/local"))
         except (ValidationError, TypeError):
             raise MeterlessError("configuration") from None

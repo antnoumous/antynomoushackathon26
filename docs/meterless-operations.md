@@ -60,6 +60,22 @@ runtime here. A vendor support request asking for a Developer-ID-signed/notarize
 was sent to the vendor on 26 October 2026; no reply had been received at the last check. Diagnostic metadata and captured official guidance
 were copied to protected durable local storage; the duplicate DMG remains scratch-only.
 
+## Portal requirements cross-check
+
+On 26 October the signed-in Resources Hub document `Technical Execution Requirements` was read
+directly. It defines the Meterless obligation as "at least one Meterless Engine (H-MEM,
+Markovian, World Model or Scout Intent) working in a feature, and Meterless Nightshift as your
+primary AI provider", and notes a judge may not have Zetaris or Nightshift running, so sample
+mode matters. That guide is explicitly "recommended practice, not a rule, unless the Rules say
+otherwise"; the binding sentence remains Official Rules §5, "Every submission must integrate
+Zetaris and Meterless."
+
+That reading exposed two compatibility defects, fixed here with regression tests: the guide
+documents `METERLESS_RUNTIME_TOKEN` and `METERLESS_MODEL=meterless/auto`, while this repository
+read only `METERLESS_TOKEN` and refused `auto`. Both names are now accepted (a conflicting pair
+is rejected rather than guessed) and both routing modes are selectable. A judge following the
+official guide would previously have received a silent rules fallback.
+
 ## Prepared code is not deployment
 
 The World Model is consumed by Scout/Skeptic; the Nightshift adapter and combined acceptance

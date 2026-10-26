@@ -143,9 +143,14 @@ def export_proof(output: Path, target: Path, *, runtime_env: dict) -> None:
     from scripts.mask_ocids import mask_text
     from app.providers.meterless_settings import MeterlessError
     output, target = Path(output), Path(target)
-    secrets = tuple(runtime_env.get(key) for key in ("METERLESS_TOKEN", "ZETARIS_API_KEY"))
-    if any(not isinstance(value, str) or not value.strip() for value in secrets):
+    # The hackathon guide documents METERLESS_RUNTIME_TOKEN; this repository also shipped
+    # METERLESS_TOKEN. Scan whichever runtime token(s) the caller actually holds.
+    tokens = [runtime_env.get(key) for key in ("METERLESS_RUNTIME_TOKEN", "METERLESS_TOKEN")]
+    known = [value for value in tokens if isinstance(value, str) and value.strip()]
+    zetaris = runtime_env.get("ZETARIS_API_KEY")
+    if not known or not isinstance(zetaris, str) or not zetaris.strip():
         raise MeterlessError("configuration")
+    secrets: tuple[str, ...] = tuple(known) + (zetaris,)
 
     def contains_secret(value):
         if isinstance(value, str):

@@ -78,12 +78,60 @@ def test_placeholder_or_header_unsafe_tokens_never_reach_transport(token):
     assert caught.value.category == "configuration"
 
 
-def test_local_only_settings_reject_cloud_modes_and_invalid_budget():
+def test_documented_runtime_token_name_is_accepted():
+    """The official hackathon guide documents METERLESS_RUNTIME_TOKEN."""
+    from app.providers.meterless_settings import MeterlessSettings
+    settings=MeterlessSettings.from_env({"METERLESS_RUNTIME_TOKEN":"unit-runtime-sentinel"})
+    assert settings.token.get_secret_value() == "unit-runtime-sentinel"
+    assert "unit-runtime-sentinel" not in repr(settings)
+
+
+def test_legacy_token_name_remains_supported():
+    from app.providers.meterless_settings import MeterlessSettings
+    assert (MeterlessSettings.from_env({"METERLESS_TOKEN":"unit-legacy-sentinel"})
+            .token.get_secret_value()) == "unit-legacy-sentinel"
+
+
+def test_empty_runtime_token_falls_back_to_legacy_name():
+    from app.providers.meterless_settings import MeterlessSettings
+    settings=MeterlessSettings.from_env({"METERLESS_RUNTIME_TOKEN":"","METERLESS_TOKEN":"unit-legacy-sentinel"})
+    assert settings.token.get_secret_value() == "unit-legacy-sentinel"
+
+
+def test_conflicting_token_names_fail_closed():
+    from app.providers.meterless_settings import MeterlessSettings,MeterlessError
+    with pytest.raises(MeterlessError) as caught:
+        MeterlessSettings.from_env({"METERLESS_RUNTIME_TOKEN":"unit-one","METERLESS_TOKEN":"unit-two"})
+    assert caught.value.category == "configuration"
+    assert "unit-one" not in str(caught.value) and "unit-two" not in str(caught.value)
+
+
+@pytest.mark.parametrize("model",["meterless/local","meterless/auto"])
+def test_documented_routing_modes_are_supported(model):
+    """Both the local-only route and the vendor's documented default are selectable."""
+    from app.providers.meterless_settings import MeterlessSettings
+    settings=MeterlessSettings.from_env({"METERLESS_RUNTIME_TOKEN":"unit-only","METERLESS_MODEL":model})
+    assert settings.model == model
+
+
+def test_undocumented_routing_mode_is_rejected():
+    from app.providers.meterless_settings import MeterlessSettings,MeterlessError
+    with pytest.raises(MeterlessError) as caught:
+        MeterlessSettings.from_env({"METERLESS_RUNTIME_TOKEN":"unit-only","METERLESS_MODEL":"meterless/cloud"})
+    assert caught.value.category == "unsupported_mode"
+
+
+def test_discovery_reports_documented_auto_mode_online():
+    from app.providers.meterless_settings import MeterlessSettings,discover
+    settings=MeterlessSettings.from_env({"METERLESS_RUNTIME_TOKEN":"unit-only","METERLESS_MODEL":"meterless/auto"})
+    result=discover(settings,transport=lambda *a,**k:{"data":[{"id":"meterless/auto"}]},timeout_s=1)
+    assert result.state == "online"
+    assert result.model_ids == ("meterless/auto",)
+
+
+def test_settings_still_reject_invalid_budget():
     from app.providers.meterless_settings import MeterlessSettings,MeterlessError
     from pydantic import ValidationError
-    with pytest.raises(MeterlessError) as caught:
-        MeterlessSettings.from_env({"METERLESS_TOKEN":"unit-only","METERLESS_MODEL":"meterless/auto"})
-    assert caught.value.category == "unsupported_mode"
     for budget in [float("nan"),float("inf"),0,-1,61,True]:
         with pytest.raises((ValidationError,MeterlessError)):
             MeterlessSettings(token="unit-only",timeout_s=budget)

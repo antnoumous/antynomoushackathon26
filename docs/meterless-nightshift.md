@@ -15,14 +15,21 @@ See [the engine guide](meterless-world-model.md).
 ## Configuration and readiness
 
 Select `LLM_PROVIDER=meterless` only after separately installing and prewarming the approved
-local runtime. The code reads `METERLESS_BASE_URL` (default `http://127.0.0.1:8088/v1`),
-`METERLESS_TOKEN` and `METERLESS_MODEL` (only `meterless/local` is allowed). For the approved
-OCI reverse tunnel the endpoint is `http://127.0.0.1:18088/v1`.
+runtime. The code reads `METERLESS_BASE_URL` (default `http://127.0.0.1:8088/v1`),
+`METERLESS_RUNTIME_TOKEN` and `METERLESS_MODEL`. For the approved OCI reverse tunnel the
+endpoint is `http://127.0.0.1:18088/v1`.
+
+`METERLESS_RUNTIME_TOKEN` is the name Nightshift's console and the hackathon technical guide
+document; `METERLESS_TOKEN` is the earlier name this repository shipped and remains accepted.
+If both are set to different values the configuration is rejected rather than guessed. Two
+routing modes are accepted: `meterless/local` (this deployment's local-only route) and
+`meterless/auto` (the guide's default, which lets Nightshift choose among its configured
+providers). Any other value is refused as `unsupported_mode`.
 
 Use the real protected runtime token; blank values and `rt-local` are rejected. Do not paste
 tokens into command arguments, a settings JSON, logs or chat. Every request carries bearer auth
 and `meterless-app: driftwatch`; chat also carries `meterless-scope: user`. Authenticated
-`/v1/models` must advertise `meterless/local`. A working `/healthz` alone is not readiness.
+`/v1/models` must advertise the selected routing mode. A working `/healthz` alone is not readiness.
 Unknown `meterless/*` catalog IDs remain visible but do not enable cloud routing.
 
 Each Meterless request has a maximum 60-second budget, reduced to the remaining audit deadline.

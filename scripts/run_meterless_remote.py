@@ -6,18 +6,22 @@ from urllib.parse import urlsplit
 from pathlib import Path
 import shlex
 import subprocess
+from app.providers.meterless_settings import SUPPORTED_MODES
 from scripts.verify_zetaris_policy import validate_settings
 
-ALLOWED_ENV = {"LLM_PROVIDER", "METERLESS_BASE_URL", "METERLESS_TOKEN", "METERLESS_MODEL",
-               "ZETARIS_REST_URL", "ZETARIS_API_KEY", "ZETARIS_ORG_ID"}
+TOKEN_KEYS = ("METERLESS_RUNTIME_TOKEN", "METERLESS_TOKEN")
+REQUIRED_ENV = {"LLM_PROVIDER", "METERLESS_BASE_URL", "METERLESS_MODEL",
+                "ZETARIS_REST_URL", "ZETARIS_API_KEY", "ZETARIS_ORG_ID"}
+ALLOWED_ENV = REQUIRED_ENV | set(TOKEN_KEYS)
 
 
 def validate_runtime_env(payload: dict) -> dict[str, str]:
-    if (not isinstance(payload, dict) or set(payload) != ALLOWED_ENV
+    token_keys = set(payload) & set(TOKEN_KEYS) if isinstance(payload, dict) else set()
+    if (not isinstance(payload, dict) or len(token_keys) != 1 or set(payload) - token_keys != REQUIRED_ENV
             or any(not isinstance(value, str) or not value.strip() or len(value) > 8192
                    or any(ord(char) < 32 or ord(char) == 127 for char in value) for value in payload.values())
-            or payload["LLM_PROVIDER"] != "meterless" or payload["METERLESS_MODEL"] != "meterless/local"
-            or payload["METERLESS_TOKEN"] == "rt-local"):
+            or payload["LLM_PROVIDER"] != "meterless" or payload["METERLESS_MODEL"] not in SUPPORTED_MODES
+            or payload[token_keys.pop()] == "rt-local"):
         raise ValueError("invalid runtime environment")
     for key in ("METERLESS_BASE_URL", "ZETARIS_REST_URL"):
         try:

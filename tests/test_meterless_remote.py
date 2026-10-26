@@ -24,10 +24,20 @@ def test_remote_runner_keeps_credentials_in_stdin_only(tmp_path,capsys):
 
 @pytest.mark.parametrize("change",[{"OCI_CONFIG_FILE":"private"},{"METERLESS_TOKEN":17},
     {"METERLESS_TOKEN":""},{"ZETARIS_API_KEY":""},{"LLM_PROVIDER":"openai-compatible"},
-    {"METERLESS_BASE_URL":"http://remote.example:18088/v1"},{"METERLESS_MODEL":"meterless/auto"}])
+    {"METERLESS_BASE_URL":"http://remote.example:18088/v1"},{"METERLESS_MODEL":"meterless/cloud"},
+    {"METERLESS_RUNTIME_TOKEN":"a","METERLESS_TOKEN":"b"}])
 def test_runtime_env_rejects_forbidden_or_malformed_values(change):
     from scripts.run_meterless_remote import validate_runtime_env
     with pytest.raises(ValueError):validate_runtime_env(ENV | change)
+
+
+def test_runtime_env_accepts_the_documented_token_name_and_auto_mode():
+    from scripts.run_meterless_remote import validate_runtime_env
+    payload=validate_runtime_env({key:value for key,value in ENV.items() if key != "METERLESS_TOKEN"}
+        | {"METERLESS_RUNTIME_TOKEN":"unit-secret","METERLESS_MODEL":"meterless/auto"})
+    assert payload["METERLESS_RUNTIME_TOKEN"] == "unit-secret"
+    assert "METERLESS_TOKEN" not in payload
+    assert payload["METERLESS_MODEL"] == "meterless/auto"
 
 
 @pytest.mark.parametrize("release,output",[("../escape","logs/ok"),("driftwatch-meterless/a;id","logs/ok"),
