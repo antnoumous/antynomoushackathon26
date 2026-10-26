@@ -53,3 +53,12 @@ class Observation:
     @property
     def payload(self) -> dict:
         return json.loads(self.payload_json)
+
+
+@dataclass(frozen=True)
+class SnapshotRef:
+    snapshot_id: str
+    source: str
+    observation_ids: tuple[str, ...]
+    complete: bool
+    degraded: bool
