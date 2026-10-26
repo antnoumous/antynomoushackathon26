@@ -58,6 +58,11 @@ def test_builder_keeps_short_and_long_windows_and_pinned_replay(seeded_world):
                           lookback_hours=744,resolution_minutes=long.resolution_minutes)
     assert before.series.lookback_hours == 168
     assert after.series.lookback_hours == 744
+    from app.analysis import qualifying_rules, stats_from_series
+    assert [r.rule_id for r in qualifying_rules(before.resource, stats_from_series(before.series),
+        before.resource.attached, before.declaration is None, list(before.rules))] == ["R-3"]
+    assert [r.rule_id for r in qualifying_rules(after.resource, stats_from_series(after.series),
+        after.resource.attached, after.declaration is None, list(after.rules))] == ["R-4"]
     assert before.selection.observation_ids != after.selection.observation_ids
     before.resource.tags["schedule"] = "not original"
     before.series.points.clear()
@@ -68,7 +73,7 @@ def test_builder_keeps_short_and_long_windows_and_pinned_replay(seeded_world):
     assert builder.replay(before.selection).selection == replay.selection
 
 
-@pytest.mark.parametrize("missing", ["iac", "policy", "inventory", "budget", "window"])
+@pytest.mark.parametrize("missing", ["iac", "policy", "inventory", "budget", "window", "resolution"])
 def test_incomplete_essential_context_or_budget_cannot_claim_success(seeded_world, missing):
     store, ingest, builder, refs, rid, short, long = seeded_world
     refs = dict(refs)
@@ -78,9 +83,12 @@ def test_incomplete_essential_context_or_budget_cannot_claim_success(seeded_worl
     if missing == "budget":
         builder = ContextBuilderService(store,run_id="run-test",namespace="fixture:test",max_records=1)
     ctx = builder.build(resource_id=rid,**refs,telemetry_snapshot=a.snapshot_id,
-        lookback_hours=744 if missing == "window" else 168,resolution_minutes=short.resolution_minutes)
+        lookback_hours=744 if missing == "window" else 168,
+        resolution_minutes=5 if missing == "resolution" else short.resolution_minutes)
     assert not ctx.complete
     assert ctx.reasons
+    if missing == "iac":
+        assert ctx.declaration is None
     if missing in {"policy", "budget"}:
         assert ctx.rules == ()
     if missing == "budget":
