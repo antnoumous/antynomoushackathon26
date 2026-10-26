@@ -165,6 +165,45 @@ def test_name_only_schedule_signal_uses_pinned_resource_and_forces_wider_recheck
     finally:ctx.trace.close();ctx.state.close()
 
 
+def test_model_paraphrases_do_not_create_revisions_or_change_accounting(tmp_path):
+    import shutil
+    from tests.test_loop import build
+    from app.generator import RulesGenerator
+    from app.loop import Orchestrator
+    from app.providers.meterless import MeterlessGenerator
+    from app.providers.meterless_settings import MeterlessSettings
+    scenario=tmp_path / "undeclared"
+    shutil.copytree("data/scenarios/example_1",scenario)
+    (scenario / "iac.json").write_text(json.dumps({"declarations":[]}))
+    reports=[]
+    for changing in (False,True):
+        calls={}
+        def transport(method,url,*,headers,payload,timeout_s):
+            system=payload["messages"][0]["content"]
+            name="run_summary" if '"summary"' in system else "finding_claim" if '"claim"' in system else "verdict_reason"
+            user=payload["messages"][1]["content"];context=json.loads(user[user.index("{"):])
+            out=RulesGenerator().complete(prompt="",schema={"name":name},context=context)
+            if changing and name == "finding_claim":
+                key=(context["resource_name"],context["rule_id"])
+                calls[key]=calls.get(key,0)+1
+                out["claim"] += " Observed." if calls[key] % 2 else " Recorded."
+            return {"choices":[{"message":{"content":json.dumps(out)}}]}
+        _,ctx=build(tmp_path / str(changing),scenario=scenario)
+        ctx.generator=MeterlessGenerator(MeterlessSettings(token="paraphrase-test-only"),transport=transport)
+        try:
+            report=Orchestrator(ctx,scenario_dir=scenario).run()
+            reports.append(report)
+            batch=[f for f in report.findings if f.resource_id.endswith("bbb2") and f.finding_class == "unattributed"]
+            assert len(batch) == 1 and batch[0].status == "accepted"
+        finally:ctx.trace.close();ctx.state.close()
+    def conclusions(report):
+        return sorted((f.resource_id,f.finding_class,f.status,json.dumps(f.impact,sort_keys=True)) for f in report.findings)
+    assert conclusions(reports[0]) == conclusions(reports[1])
+    for field in ("spend_audited_usd_per_month","waste_found_usd_per_month","findings_accepted","findings_rejected"):
+        assert reports[0].summary[field] == reports[1].summary[field]
+    assert all(report.status == "success" for report in reports)
+
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:2] == ["--ipc-probe"]:_ipc_deadline_probe(sys.argv[2])

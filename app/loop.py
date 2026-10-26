@@ -19,13 +19,17 @@ from app.world_model.runtime import record_failure
 def _same_conclusion(previous: Candidate, current: Candidate) -> bool:
     """Whether a re-check re-derived the very finding it was handed.
 
-    Compared on the rules that justified it and the conclusion itself, not on the candidate id: the
-    id is new every round by design (that is what made the re-check cap unreachable once), so it can
-    never be the thing that tells two rounds apart.
+    Compare deterministic eligibility/attribution and financial conclusions, never generated
+    wording or candidate/evidence IDs. A paraphrase or a richer measurement window does not make
+    an unchanged rule outcome a new finding; a changed rule, class or impact still does.
     """
-    return (sorted(previous.matched_rule_ids) == sorted(current.matched_rule_ids)
-            and previous.claim == current.claim
-            and previous.impact == current.impact)
+    return (previous.resource_id == current.resource_id
+            and previous.resource_class == current.resource_class
+            and previous.finding_class == current.finding_class
+            and sorted(previous.matched_rule_ids) == sorted(current.matched_rule_ids)
+            and previous.impact == current.impact
+            and previous.absent_from_iac == current.absent_from_iac
+            and previous.iac_match_rule == current.iac_match_rule)
 
 
 class Orchestrator:
