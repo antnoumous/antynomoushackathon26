@@ -841,3 +841,34 @@ required the Zetaris-backed dual run (sponsor_acceptance=true) and proved the ca
 unpublishing R-1 removes exactly the `eee5/cost_waste` finding.
 **Attribution:** Cursor quota-blocked before Tasks 5–6; this work is Hermes-executed with the
 build log recording the split honestly.
+
+## 2026-10-26 — Meterless split topology approved; written design prepared, deployment gated
+
+**User decision:** follow the recommendation to keep Driftwatch, a consumed minimal Meterless
+World Model and the existing Zetaris data layer on personal OCI, with Nightshift inference on
+the personal Mac through a loopback-bound encrypted SSH reverse tunnel. No new cloud resources,
+paid licences, GPU instances or changes to audited A1 workloads are included.
+
+**Artifact:** `docs/superpowers/specs/2026-10-26-meterless-split-deployment-design.md`.
+This is the written-spec review stage, not product implementation or installation approval.
+It specifies SQLite-backed immutable observations, duplicate-safe transactional ingestion,
+Scout/Skeptic context consumption, real Nightshift provider acceptance, visible rules fallback,
+hermetic sample operation, scenario isolation and refreshed submission evidence. It concretises
+the earlier unbuilt Meterless/model follow-ons; remote IaC declarations and NVIDIA claims are
+outside this narrowed scope. The existing M1 policy adapter is preserved.
+
+**Discovery:** the signed current-region inventory confirms the four A1 lab hosts and the
+E5.Flex Zetaris host RUNNING, without GPUs. The official Mac M5+ download exists and the Mac
+meets its stated chip-generation requirement, but application installation/activation and
+model calls have not been verified. The documented DGX Linux edition is not evidence that
+the small CPU-only OCI hosts can run Nightshift.
+
+**Deployment blocker:** SSH to `zetaris-01` timed out; current VNIC discovery confirms the
+configured public address, and a separate TCP/22 probe also failed. Remote RAM/disk/Python
+readiness is therefore unverified. Do not change ingress, routes, host keys, Zetaris resources
+or host retention to make this check pass without the appropriate approval. The earlier
+7 November 00:00 UTC sponsor-host checkpoint is unchanged; billing was not revalidated here.
+
+**Not done:** no product-code edits, app/model installation, remote writes, provisioning,
+secret copying, tunnel creation, paid action, push or submission. The design and this decision
+entry are committed locally for written review; existing unrelated work remains untouched.
