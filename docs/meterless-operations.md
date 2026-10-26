@@ -53,8 +53,11 @@ ad-hoc publisher identity and Gatekeeper exit 3. It was not installed or execute
 mount was detached. `ns` was absent from PATH and no TCP/8088 listener existed at the check.
 The official CLI documentation says Web/M1 editions have no local endpoint; they are not
 an API substitute. The checked public GitHub release offered a Windows MSI, not a Mac fix.
-No supported trusted Mac replacement was identified in those checked sources. A vendor
-support request was drafted but not sent. Diagnostic metadata and captured official guidance
+No supported trusted Mac replacement was identified in those checked sources.
+The Windows edition requires an NVIDIA CUDA GPU; the free Web and M1 editions have no local
+endpoint, and the DGX Spark build requires DGX-class hardware. None is an available trusted
+runtime here. A vendor support request asking for a Developer-ID-signed/notarized M5+ build
+was sent to the vendor on 26 October 2026; no reply had been received at the last check. Diagnostic metadata and captured official guidance
 were copied to protected durable local storage; the duplicate DMG remains scratch-only.
 
 ## Prepared code is not deployment
