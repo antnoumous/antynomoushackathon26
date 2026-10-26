@@ -16,7 +16,7 @@ TEMPLATES: dict[str, str] = {
     "R-2": "{resource_name} is a reserved public IP with no assigned entity. It is billed "
            "whether or not it is attached.",
     "R-3": "{resource_name} averages {mean}% CPU with a peak of {peak}% across the "
-           "requested window, and is declared in Terraform. Nothing in the evidence attributes "
+           "requested window, {iac_statement} Nothing in the evidence attributes "
            "a purpose to it.",
     "R-4": "{resource_name} averages {mean}% CPU but peaks at {peak}%. The cost is the "
            "idle shape it holds around the clock, not the work it does.",
@@ -62,7 +62,9 @@ class RulesGenerator:
             text = template.format(resource_name=context["resource_name"],
                                    mean=context["stats"].get("mean", 0.0),
                                    peak=context["stats"].get("peak", 0.0),
-                                   size_gb=context.get("size_gb"))
+                                   size_gb=context.get("size_gb"),
+                                   iac_statement=("and is declared in Terraform." if context.get("iac_match_rule")
+                                                  else "and has no matched Terraform declaration."))
             confidence = 0.75 if context.get("iac_match_rule") == "tag" else 0.55
             return {"claim": text, "confidence": confidence}
         if name == "verdict_reason":

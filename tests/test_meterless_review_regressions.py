@@ -230,6 +230,17 @@ def test_malformed_live_namespace_input_finishes_classified_partial(tmp_path,mon
     finally:ctx.trace.close();ctx.state.close()
 
 
+def test_idle_fallback_does_not_invent_a_terraform_declaration():
+    from app.generator import RulesGenerator
+    gen=RulesGenerator()
+    context={"rule_id":"R-3","resource_name":"unmanaged-worker","stats":{"mean":0.2,"peak":0.9}}
+    absent=gen.complete(prompt="",schema={"name":"finding_claim"},context={**context,"iac_match_rule":None})
+    linked=gen.complete(prompt="",schema={"name":"finding_claim"},context={**context,"iac_match_rule":"tag"})
+    assert "is declared in Terraform" not in absent["claim"]
+    assert "no matched Terraform declaration" in absent["claim"]
+    assert "is declared in Terraform" in linked["claim"]
+
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:2] == ["--ipc-probe"]:_ipc_deadline_probe(sys.argv[2])
