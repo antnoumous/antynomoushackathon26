@@ -60,7 +60,9 @@ class WorldRuntime:
             region = os.environ.get("OCI_REGION") or (next(iter(regions)) if len(regions) == 1 else None)
             compartments = sorted(set(self.ctx.config.compartment_ids) |
                                   {r.get("compartment_id") for r in inventory.records if r.get("compartment_id")})
-            if not region or not compartments:
+            if (not region or not compartments or any(
+                    not key.startswith(("ocid1.compartment.","ocid1.tenancy.")) or "••••" in key
+                    for key in compartments)):
                 raise WorldError("configuration")
             self.namespace = "live:" + hashlib.sha256(canonical_json({"region":region,"compartments":compartments}).encode()).hexdigest()
         self.ingest = IngestPipelineService(self.store, run_id=self.ctx.config.run_id, namespace=self.namespace)

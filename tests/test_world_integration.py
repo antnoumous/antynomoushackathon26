@@ -211,3 +211,23 @@ def test_candidate_pins_cannot_be_rewritten_by_later_snapshots(tmp_path):
         assert ctx.world.pins[candidate_id] == original
     finally:
         ctx.state.close();ctx.trace.close()
+
+
+def test_live_namespace_rejects_unscoped_compartment_names(tmp_path,monkeypatch):
+    from tests.test_loop import build
+    from tests.world_helpers import fetch_fixture
+    from app.loop import Orchestrator
+    cfg,ctx=build(tmp_path)
+    cfg.sample_mode=False
+    monkeypatch.setenv("OCI_REGION","ap-batam-1")
+    class UnscopedInventory:
+        def fetch(self,scope):
+            result=fetch_fixture("inventory")
+            return result.model_copy(update={"backend":"live","records":[dict(r,compartment_id="friendly-name") for r in result.records]})
+    ctx.sources["inventory"]=UnscopedInventory()
+    try:
+        report=Orchestrator(ctx).run()
+        assert report.status == "partial" and report.findings == []
+        assert "configuration" in report.summary["integrations"]["meterless_world_model"]["failures"]
+    finally:
+        ctx.state.close();ctx.trace.close()
