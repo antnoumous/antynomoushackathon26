@@ -166,15 +166,22 @@ def main(argv=None) -> int:
     import os
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scenario", required=True, type=Path)
-    parser.add_argument("--base-settings", required=True, type=Path)
-    parser.add_argument("--variant-settings", required=True, type=Path)
+    parser.add_argument("--base-settings", type=Path)
+    parser.add_argument("--variant-settings", type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument("--stdin-env", action="store_true")
     args = parser.parse_args(argv)
     try:
-        result = run_acceptance(scenario=args.scenario,
-            base_settings=json.loads(args.base_settings.read_text()),
-            variant_settings=json.loads(args.variant_settings.read_text()),
-            output_dir=args.output_dir, env=dict(os.environ))
+        if args.stdin_env:
+            from scripts.run_meterless_remote import read_runtime_payload
+            runtime = read_runtime_payload(sys.stdin.buffer)
+            env, base, variant = runtime["env"], runtime["base_settings"], runtime["variant_settings"]
+        else:
+            if args.base_settings is None or args.variant_settings is None:
+                raise ValueError("both snapshot settings files are required")
+            env, base, variant = dict(os.environ), json.loads(args.base_settings.read_text()), json.loads(args.variant_settings.read_text())
+        result = run_acceptance(scenario=args.scenario, base_settings=base,
+            variant_settings=variant, output_dir=args.output_dir, env=env)
     except Exception as exc:
         print(json.dumps({"sponsor_acceptance":False,"error_class":type(exc).__name__}))
         return 2
