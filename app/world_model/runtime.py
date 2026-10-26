@@ -48,6 +48,14 @@ class WorldRuntime:
         return cls(ctx, scenario_dir=scenario_dir)
 
     def ingest_hydration(self, results):
+        from app.models import Resource
+        from pydantic import ValidationError
+        inventory = results.get("inventory")
+        try:
+            resources = tuple(Resource.model_validate(row) for row in inventory.records) if inventory is not None else ()
+            canonical_json([resource.model_dump() for resource in resources]).encode("utf-8", errors="strict")
+        except (ValidationError, TypeError, ValueError):
+            raise WorldError("schema") from None
         body = {k: {"records": v.records, "backend": v.backend} if v else None for k,v in results.items()}
         digest = hashlib.sha256(canonical_json(body).encode()).hexdigest()
         inventory = results.get("inventory")
@@ -55,11 +63,11 @@ class WorldRuntime:
             name = self.scenario_dir.name if self.scenario_dir else "default"
             self.namespace = "scenario:" + name + ":" + digest
         else:
-            regions = {r["resource_id"].split(".")[3] for r in inventory.records
-                       if len(r.get("resource_id", "").split(".")) > 3 and r["resource_id"].split(".")[3]}
+            regions = {resource.resource_id.split(".")[3] for resource in resources
+                       if len(resource.resource_id.split(".")) > 3 and resource.resource_id.split(".")[3]}
             region = os.environ.get("OCI_REGION") or (next(iter(regions)) if len(regions) == 1 else None)
             compartments = sorted(set(self.ctx.config.compartment_ids) |
-                                  {r.get("compartment_id") for r in inventory.records if r.get("compartment_id")})
+                                  {resource.compartment_id for resource in resources if resource.compartment_id})
             if (not region or not compartments or any(
                     not key.startswith(("ocid1.compartment.","ocid1.tenancy.")) or "••••" in key
                     for key in compartments)):

@@ -166,7 +166,7 @@ class Orchestrator:
                     self._load(name, result)
                 except Exception as exc:      # noqa: BLE001 - malformed records degrade, never crash
                     status.degraded = True
-                    status.reason = f"records could not be loaded: {type(exc).__name__}: {exc}"
+                    status.reason = "records could not be loaded: schema"
                     self.ctx.trace.emit(agent_name="Planner", action="source_degraded",
                                         input_summary=name,
                                         output_summary=status.reason,

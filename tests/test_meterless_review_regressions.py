@@ -204,6 +204,32 @@ def test_model_paraphrases_do_not_create_revisions_or_change_accounting(tmp_path
     assert all(report.status == "success" for report in reports)
 
 
+@pytest.mark.parametrize("field,bad",[("resource_id",None),("resource_id",17),
+    ("resource_id",{"private":"malformed-source-sentinel"}),("compartment_id",None),
+    ("compartment_id",17),("compartment_id",["malformed-source-sentinel"])])
+def test_malformed_live_namespace_input_finishes_classified_partial(tmp_path,monkeypatch,field,bad):
+    from tests.test_loop import build
+    from tests.world_helpers import fetch_fixture
+    from app.loop import Orchestrator
+    _,ctx=build(tmp_path)
+    ctx.config.sample_mode=False
+    monkeypatch.setenv("OCI_REGION","ap-batam-1")
+    class Malformed:
+        def fetch(self,scope):
+            result=fetch_fixture("inventory")
+            row=dict(result.records[0]);row[field]=bad
+            return result.model_copy(update={"backend":"live","records":[row]})
+    ctx.sources["inventory"]=Malformed()
+    try:
+        report=Orchestrator(ctx).run()
+        assert report.status == "partial" and not report.findings
+        assert "schema" in report.summary["integrations"]["meterless_world_model"]["failures"]
+        assert ctx.state.records()[-1]["kind"] == "report"
+        assert ctx.state.records()[-1]["status"] == "partial"
+        assert "malformed-source-sentinel" not in ctx.trace.path.read_text()+report.model_dump_json()
+    finally:ctx.trace.close();ctx.state.close()
+
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:2] == ["--ipc-probe"]:_ipc_deadline_probe(sys.argv[2])
