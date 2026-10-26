@@ -130,12 +130,13 @@ class ModelGenerator:
         if name not in self.SCHEMAS:
             raise KeyError(name)
         started = time.monotonic()
+        self._attempted = False
         try:
             result = self._complete_model(prompt=prompt, schema=schema, context=context)
         except Exception as exc:  # A fallback is visible rather than reported as model success.
             category = "schema" if isinstance(exc, (ValueError, KeyError, TypeError)) else "transport"
             self.recorder.record(GenerationOutcome(name, "openai-compatible", "rules", self.model,
-                True, True, category, max(0, time.monotonic()-started)))
+                self._attempted, True, category, max(0, time.monotonic()-started)))
             return self._fallback.complete(prompt=prompt, schema=schema, context=context)
         self.recorder.record(GenerationOutcome(name, "openai-compatible", "openai-compatible", self.model,
             True, False, None, max(0, time.monotonic()-started)))
@@ -157,6 +158,9 @@ class ModelGenerator:
         # response_format=json_object requires the word "json" to appear in the messages on
         # OpenAI-compatible endpoints (Token Plan rejects the request otherwise with a 400).
         # The schema is JSON, so saying so is also the honest instruction.
+        timeout_s = self.current_timeout()
+        self.recorder.attempt(name, self.model, timeout_s)
+        self._attempted = True
         response = requests.post(
             f"{self.base_url}/chat/completions",
             headers={"Authorization": f"Bearer {self.api_key}"},
@@ -165,7 +169,7 @@ class ModelGenerator:
                                 "content": "Respond with a single JSON object matching this "
                                            f"JSON schema, no prose around it.\n{json.dumps(full_schema)}"},
                                {"role": "user", "content": brief}]},
-            timeout=self.current_timeout(),
+            timeout=timeout_s,
         )
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]

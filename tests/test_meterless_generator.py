@@ -71,7 +71,7 @@ def test_exact_remaining_budget_and_no_requests_after_expiry(monkeypatch,remaini
     assert gen.diagnostics()["attempts"] == (0 if want is None else 1)
     if want is None:
         assert gen.recorder.outcomes()[0].category == "timeout"
-        assert gen.diagnostics()["status"] == "partial"
+        assert gen.diagnostics()["status"] == "not_used"
 
 
 def test_transport_failure_has_exactly_one_post_and_truthful_rules_outcome():
@@ -90,4 +90,4 @@ def test_configuration_failure_is_visible_without_a_remote_attempt():
     gen=MeterlessGenerator(None,configuration_error="configuration")
     out=gen.complete(prompt="",schema={"name":"verdict_reason"},context={"reason_key":"frequency_mismatch"})
     assert "duty-cycle problem" in out["reason"]
-    assert (gen.diagnostics()["attempts"],gen.diagnostics()["fallbacks"],gen.diagnostics()["status"]) == (0,1,"partial")
+    assert (gen.diagnostics()["attempts"],gen.diagnostics()["fallbacks"],gen.diagnostics()["status"]) == (0,1,"not_used")

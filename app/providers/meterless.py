@@ -39,6 +39,7 @@ class MeterlessGenerator:
             payload = {"model": model, "response_format": {"type": "json_object"},
                        "messages": [{"role": "system", "content": "Respond with a single JSON object matching this JSON schema, no prose around it.\n" + json.dumps(full_schema)},
                                     {"role": "user", "content": prompt + "\nContext: " + json.dumps(context, default=str)}]}
+            self.recorder.attempt(name, model, timeout_s)
             attempted = True
             response = self.transport("POST", self.settings.base_url + "/chat/completions", headers={
                 "Authorization": "Bearer " + self.settings.token.get_secret_value(),

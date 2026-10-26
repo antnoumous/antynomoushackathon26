@@ -46,12 +46,21 @@ class Orchestrator:
         ctx.extras["deadline"] = self.deadline
         ctx.extras["clock"] = time.monotonic
         ctx.generator.set_deadline(self.deadline)
+        from app.generation_status import GenerationRecorder
+        recorder = getattr(ctx.generator, "recorder", None)
+        if isinstance(recorder, GenerationRecorder):
+            recorder.set_observer(self._provider_event)
         from app.world_model.runtime import WorldRuntime
         if ctx.world is None:
             try:
                 ctx.world = WorldRuntime.from_context(ctx, scenario_dir=scenario_dir)
             except WorldError as error:
                 record_failure(ctx,error)
+
+    def _provider_event(self, action: str, data: dict) -> None:
+        self.ctx.trace.emit(agent_name="Generator", action=action,
+            input_summary=data["schema_name"], output_summary=json.dumps(data, sort_keys=True, allow_nan=False),
+            status="degraded" if data.get("fallback") else "started" if action == "provider_attempt" else "success")
 
     # --- source access with retry, then fixture fallback, then honest failure ---------------
     def _clock(self) -> float:

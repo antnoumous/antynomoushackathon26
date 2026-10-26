@@ -201,6 +201,17 @@ class Writer(Agent):
             if world["status"] == "failed" and status != "capped":
                 status = "partial"
 
+        # Generation is finalised after the last prose/figure check, never before Writer's call.
+        from app.generator import generator_diagnostics
+        generation = generator_diagnostics(self.ctx.generator)
+        integrations = summary.setdefault("integrations", {})
+        integrations["generation"] = generation
+        integrations["meterless_nightshift"] = (generation if generation["configured_provider"] == "meterless"
+            else {"configured_provider": generation["configured_provider"], "status": "not_used",
+                  "attempts": 0, "successes": 0, "fallbacks": 0, "models": [], "schemas": {}})
+        if (generation["fallbacks"] or generation["status"] == "partial") and status != "capped":
+            status = "partial"
+
         self._emit("synthesise", input_summary=f"{len(accepted)} accepted, {len(rejected)} rejected",
                    output_summary=summary["narrative"], confidence=1.0,
                    evidence_refs=[ref for f in findings for ref in f.evidence_refs])

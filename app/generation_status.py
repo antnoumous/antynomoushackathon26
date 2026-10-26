@@ -1,5 +1,5 @@
 """Per-run generation outcomes; no prompts, headers or raw errors enter diagnostics."""
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 import math
 
 
@@ -19,6 +19,16 @@ class GenerationRecorder:
     def __init__(self, configured_provider: str) -> None:
         self.configured_provider = configured_provider
         self._outcomes: list[GenerationOutcome] = []
+        self._observer = None
+
+    def set_observer(self, observer) -> None:
+        self._observer = observer
+
+    def attempt(self, schema_name: str, model: str | None, timeout_s: float) -> None:
+        if self._observer is not None:
+            self._observer("provider_attempt", {"schema_name": schema_name,
+                "configured_provider": self.configured_provider, "model": model,
+                "timeout_s": timeout_s})
 
     def record(self, outcome: GenerationOutcome) -> None:
         valid = (isinstance(outcome, GenerationOutcome)
@@ -37,6 +47,10 @@ class GenerationRecorder:
         if not valid:
             raise ValueError("invalid generation outcome")
         self._outcomes.append(outcome)
+        if self._observer is not None:
+            self._observer("provider_result", asdict(outcome))
+            if outcome.fallback:
+                self._observer("provider_fallback", asdict(outcome))
 
     def outcomes(self) -> tuple[GenerationOutcome, ...]:
         return tuple(self._outcomes)
@@ -48,7 +62,7 @@ class GenerationRecorder:
                     "fallbacks": sum(row.fallback for row in rows)}
         result = counts(self._outcomes)
         return {"configured_provider": self.configured_provider, **result,
-                "status": "partial" if result["fallbacks"] else "success" if result["successes"] else "not_used",
+                "status": "not_used" if not result["attempts"] else "partial" if result["fallbacks"] else "success",
                 "models": sorted({row.model for row in self._outcomes if row.model is not None}),
                 "schemas": {name: counts([r for r in self._outcomes if r.schema_name == name])
                             for name in sorted({r.schema_name for r in self._outcomes})}}
