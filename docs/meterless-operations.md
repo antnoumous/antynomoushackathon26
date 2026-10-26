@@ -5,12 +5,25 @@ is blocked. No installation, cloud deployment, tunnel or Nightshift model succes
 
 ## Existing OCI host
 
-The exact BatchMode/strict-host-key SSH probe to existing `zetaris-01` timed out (exit 255).
-Read-only OCI rediscovery confirmed RUNNING, `VM.Standard.E5.Flex`, `ap-batam-1`, and that
-the SSH hostname matches the current VNIC address. RUNNING does not establish reachability.
-Python version, available RAM/disk, user cgroup support, port 18088 and the current Zetaris
-baseline could not be checked through SSH. No ingress, route, NSG, host key, VM or service changed.
-Raw SSH/inventory diagnostics remain in ignored `logs/meterless-operations/`.
+The first strict SSH probe timed out. On 26 October the user separately approved permitting
+this Mac's current public IPv4 address for SSH. Two independent IP services agreed; signed
+OCI discovery matched `zetaris-01` and its current VNIC to the existing SSH configuration.
+The change appended exactly one stateful TCP/22 source `/32` rule to its existing security list.
+The original ingress and egress rules, tags and display name were preserved, using an ETag
+conditional update. An independent auditor-identity GET verified the exact resulting rules.
+No route, NSG, VM, host key, service or other port was changed.
+
+A new BatchMode connection with strict host-key checking and multiplexing disabled succeeded
+(exit 0). The read-only remote probe measured Python **3.12.3**, 13,123,022,848 bytes available
+RAM and 35,209,449,472 bytes free disk, exceeding the planned 2 GiB headroom checks.
+Port 18088 was unused and the user systemd manager was active. This is **not** a verified
+MemoryMax enforcement or current authenticated Zetaris baseline; those checks remain pending.
+The application was not transferred or started. Original timeout captures remain ignored;
+private before/request/after snapshots and SSH proof are retained under the existing local
+OCI deployment directory, outside expiring scratch and outside the repository.
+
+For rollback, re-read the current list and conditionally remove only the newly added Mac SSH
+rule. Do not replace the current list with an old snapshot that might discard later changes.
 
 ## Mac installer security gate
 
@@ -42,7 +55,7 @@ over strict SSH stdin, bounds it to 64 KiB, rejects command/path injection, and 
 user-scoped systemd command with a 1 GiB MemoryMax. Its real host/cgroup operation is unverified.
 No release was transferred, no reverse listener was opened and no bearer was transmitted remotely.
 
-The two independent blockers remain: SSH reachability and the rejected official installer.
+SSH reachability is restored. The rejected official installer remains a hard blocker; host cgroup enforcement and the authenticated Zetaris baseline are still unverified.
 The existing no-new-resources/spend constraints and 7 November 00:00 UTC retention checkpoint
 are unchanged. README, metadata, deck and narrated demo remain untouched pending real acceptance;
 no integration compliance, published release, clean public clone or hackathon submission is claimed.

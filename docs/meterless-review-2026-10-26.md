@@ -31,7 +31,9 @@ The earlier offline milestone proof is retained, not overwritten.
 
 ## Review exclusions and executor rulings
 
-Each item the reviewer declined was assessed rather than silently dropped:
+Each item the reviewer declined was assessed rather than silently dropped. These rulings
+record the review checkpoint; subsequent separately approved operations are recorded in
+`meterless-operations.md`:
 
 1. **D1 SSH/host state:** retain the independently measured SSH blocker. RUNNING/current address
    is not host readiness; no Python/headroom/cgroup/port or live Zetaris-baseline claim follows.
@@ -62,6 +64,9 @@ There were no reviewer-listed minor findings to defer.
 
 ## Remaining gate
 
-See `meterless-operations.md`: SSH currently times out and the official M5+ installer was rejected
-by Gatekeeper. No firewall, OS security, cloud allocation or paid service was changed. Local commits
-are not published or submitted. Keep the execution ledgers until the blocked delivery work resumes.
+At the review checkpoint SSH timed out and Gatekeeper rejected the official M5+ installer.
+Subsequently the user approved exactly one Mac `/32` TCP/22 allowance; API readback and a
+fresh strict SSH connection now verify that remedy. See `meterless-operations.md` for current
+host checks. The installer gate remains blocked; no OS-security bypass, cloud allocation or
+paid action occurred. Local commits are not published or submitted. Keep the execution ledgers
+until the incomplete delivery work resumes.

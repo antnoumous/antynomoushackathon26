@@ -47,8 +47,10 @@ or the existing dirty worktree.
 
 **User approval:** the written specification and these plans were approved on 26 October 2026;
 the user selected Native execution with “go ahead”. The two code milestones and the independent
-review fix pass are locally verified. Installation has not occurred: SSH and installer-security
-gates remain blocked, and deployment/real acceptance/final delivery are incomplete.
+review fix pass are locally verified. Installation has not occurred: the installer-security
+gate remains blocked. The user separately approved the narrow Mac `/32` SSH remedy, which
+was applied and verified by strict SSH; see `docs/meterless-operations.md`. Remaining host
+checks, deployment, real acceptance and final delivery are incomplete.
 
 **Planning baseline actually rerun:** `.venv/bin/python -m pytest -q` returned **259 passed, one
 existing Starlette/AnyIO deprecation warning**. Curated evaluation returned **3 scenarios, 0 failing**;
