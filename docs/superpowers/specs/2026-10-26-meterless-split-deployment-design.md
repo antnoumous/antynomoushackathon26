@@ -2,7 +2,7 @@
 
 Date: 26 October 2026 (Singapore time)
 
-Status: **Design for user review. Not an implementation or installation record.**
+Status: **Written specification approved by the user on 26 October 2026. Implementation-plan review and execution-method selection remain the next gate.**
 
 The user approved the recommended topology: Driftwatch, a minimal Meterless World Model,
 and Zetaris on existing personal OCI infrastructure; Nightshift inference on the personal Mac,

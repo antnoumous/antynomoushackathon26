@@ -872,3 +872,22 @@ or host retention to make this check pass without the appropriate approval. The 
 **Not done:** no product-code edits, app/model installation, remote writes, provisioning,
 secret copying, tunnel creation, paid action, push or submission. The design and this decision
 entry are committed locally for written review; existing unrelated work remains untouched.
+
+## 2026-10-26 — Meterless written specification approved; implementation plans prepared
+
+**Approval:** the builder approved the written split-deployment specification. That advances to
+implementation planning, not automatic installation or unreviewed code. Native versus subagent-driven
+execution selection and plan review are the next gate.
+
+**Plans:** `docs/superpowers/plans/2026-10-26-meterless-world-model.md`,
+`2026-10-26-meterless-nightshift-provider.md` and `2026-10-26-meterless-split-delivery.md`.
+Fifteen independently reviewable tasks cover the engine, provider and actual deployment/delivery.
+Interfaces, RED/GREEN tests, bounded failure/secret behaviour, current SSH blocker and source-backed
+installation gates are explicit. Native sequential execution with a final fresh reviewer is
+recommended because agent/context/report files overlap and the submission window is short.
+
+**Actual planning baseline:** 259 tests passed with one existing Starlette/AnyIO deprecation
+warning; all three curated scenarios and ten generated held-out tenancies returned zero failing.
+These verify the pre-integration implementation only. No new Meterless code, runtime or model has
+been installed or exercised; no remote write, firewall change, provisioning, publication or
+submission occurred. Raw baseline outputs remain under ignored `logs/meterless-planning-baseline/`.
