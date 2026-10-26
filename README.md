@@ -195,11 +195,33 @@ and worked around are in `docs/zetaris-policy-operations.md` and
 `notes/zetaris-engine-defects-2026-10-22.md`. Sample mode is unchanged: `SAMPLE_MODE=true`
 forces the file source before any sponsor variable is read, with no credentials and no network.
 
+**Meterless is mounted as two separate things, and only one of them has run against the real
+runtime.** The **World Model engine** is implemented in `app/world_model/` as a minimal Python
+adaptation of the sponsor's reference engine — not their package, and no conformance claim: an
+immutable observation store, a validated ingestion pipeline and a context builder whose selections
+are pinned to an exact run and source revision. It is not decoration: **Scout and Skeptic both read
+their context through it**, every finding carries the provenance of the observation that produced
+it, and an observation cannot be rewritten in place. `scripts/verify_world_model.py` regenerates
+that proof offline, with no credentials and no network, into
+`output_examples/world_model_review_2026-10-26/`; `tests/test_world_integration.py` fails if an
+agent stops consuming it or if a candidate's pinned context can be rewritten by a later snapshot.
+
+The **Nightshift** side is an explicit `meterless` generator behind the same interface as `rules`
+and `openai-compatible`. It implements the documented provider contract — bearer auth plus the
+`meterless-app` header, authenticated `/v1/models` discovery before selection, the three named
+JSON schemas validated on the way back, a 60-second budget bounded further by the audit deadline,
+redirects and automatic retries refused, and truthful accounting that reports zero attempts as
+`not_used` rather than pretending a configured fallback was a success. **It has not yet served a
+request.** The vendor's Mac installer is ad-hoc signed with no TeamIdentifier and macOS Gatekeeper
+rejects it, so no trusted runtime could be installed; see `docs/meterless-operations.md`. Until a
+request actually returns, every committed artifact's prose still comes from the deterministic rule
+engine, and `summary.integrations.meterless_nightshift` says so rather than implying otherwise.
+
 | Sponsor | Layer | Status in this submission |
 |---|---|---|
 | Zetaris | Data | **Mounted.** Policy snapshot published to the live engine, fetched through the two-SELECT source with end-to-end digest validation; acceptance = R-1 removal changes exactly one finding. Inventory/telemetry stay on OCI adapters — Zetaris is the governed-data seam. |
-| NVIDIA | Models/workflow | Not mounted. The model path is one OpenAI-compatible HTTP call, provider-agnostic (`app/generator.py:ModelGenerator`). |
-| Meterless | Orchestration | Not mounted. The bounded loop in `app/loop.py` implements the same discipline — capped rounds, explicit termination, no unbounded debate. |
+| Meterless | Engine + models | **World Model mounted and load-bearing; Nightshift adapter implemented but not yet exercised live.** The engine is consumed by Scout and Skeptic with pinned provenance and generated offline acceptance. The Nightshift adapter is contract-tested end to end; no live inference has succeeded yet (blocked on a trusted vendor build), so the adapter reports `not_used` in committed runs instead of claiming model output. |
+| NVIDIA | Models/workflow | Route present, not exercised. A Nightshift runtime would hold the NVIDIA key in its own Providers tab and the app would speak only OpenAI-format HTTP to it (`app/generator.py`); no NVIDIA model has answered a Driftwatch request. |
 
 ## Evidence: traces, inputs, outputs
 
@@ -306,7 +328,12 @@ python scripts/make_scenario.py --score 8                        # generate and 
   appear (claim, revised claim, verdict reason, run narrative).
 - **Agent frameworks:** none. The loop is hand-rolled in `app/loop.py` — no LangGraph, CrewAI or
   AutoGen.
-- **Partner technologies:** none mounted, as stated above.
+- **Partner technologies:** Zetaris as the governed policy source (above); a Meterless **World Model**
+  engine implemented in `app/world_model/` and consumed by Scout and Skeptic, with generated offline
+  acceptance; and a Meterless **Nightshift** provider adapter implementing the documented contract,
+  covered by contract tests, but **never served a live request** — the official Mac installer fails
+  macOS Gatekeeper and has not been installed or bypassed. No NVIDIA model has been exercised. The
+  earlier statement that no partner technology was mounted no longer describes this branch.
 - **Live path:** built and **run against a live lab tenancy** (created 28 Sep per
   `docs/lab-tenancy.md`). `app/sources/oci_inventory.py` and `oci_telemetry.py` are real OCI SDK
   adapters behind the `Source` interface, exercised offline against SDK-shaped stubs
