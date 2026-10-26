@@ -1,0 +1,58 @@
+{
+  "status": "Review cut for the Open Agent Hackathon submission (2 of 3 required sponsor integrations executed live: Zetaris live, Meterless World Model local; Nightshift implemented, not live).",
+  "source_video": "docs/demo/driftwatch-demo.mp4",
+  "output_video": "docs/demo/driftwatch-demo-narrated.mp4",
+  "output_audio": "docs/demo/driftwatch-voiceover.mp3",
+  "card_image": "docs/demo/narration/world-model-cardA.png",
+  "card_note": "Static card rendered with ffmpeg drawtext from the committed run's own summary.integrations block; it is not constructed terminal output.",
+  "scenes": [
+    {
+      "id": "01-introduction",
+      "start": 0,
+      "end": 11.5,
+      "text": "Driftwatch audits an OCI tenancy for cost waste and shadow infrastructure. Four agents \u2014 Planner, Scout, Skeptic, Writer \u2014 one bounded loop. Everything you're about to see came out of the run itself."
+    },
+    {
+      "id": "02-sample-audit",
+      "start": 11.5,
+      "end": 20.6,
+      "text": "Sample mode first: no credentials, no network, and the whole agent still runs. Scout proposes finding C-001, then withdraws it \u2014 the burst is a month-end schedule, not a missing declaration. A scanner that cannot retract a finding is not an auditor."
+    },
+    {
+      "id": "03-agent-critique",
+      "start": 20.6,
+      "end": 26.4,
+      "text": "The trace is the product. Every line names the agent, the action, the target and the status. The Skeptic's rejections are as visible as the accepted findings, because that is what makes the reasoning checkable."
+    },
+    {
+      "id": "04-zetaris-acceptance",
+      "start": 26.4,
+      "end": 43.7,
+      "text": "Then the sponsor data plane, live: policy published as immutable snapshots on the real Zetaris gateway, with digests re-verified after transport. Republish without rule R-1, and exactly one finding disappears \u2014 the detached volume \u2014 and nothing else moves. Cause and effect, not a demo branch."
+    },
+    {
+      "id": "05-recorded-evaluation",
+      "start": 43.7,
+      "end": 55.6,
+      "text": "Measured, not promised: three curated scenarios at precision and recall of one, ten held-out generated tenancies, and four hundred and fifty-six tests."
+    },
+    {
+      "id": "06-reproduction-and-status",
+      "start": 55.6,
+      "end": 64.3,
+      "text": "Inputs, reports, traces and runbooks. All in the repository, and all reproducible from a fresh clone with no keys."
+    },
+    {
+      "id": "07-world-model",
+      "kind": "card",
+      "image": "docs/demo/narration/world-model-cardA.png",
+      "text": "The Meterless World Model engine is implemented and load-bearing. Scout and Skeptic read their context through it, each selection pinned to the exact run and source revision, and the acceptance proof is generated offline from this repository."
+    },
+    {
+      "id": "08-nightshift-status",
+      "kind": "card",
+      "image": "docs/demo/narration/world-model-cardB.png",
+      "text": "The Nightshift provider is wired to the documented contract and contract-tested, but the vendor's Mac installer fails Gatekeeper, so no request has ever been served. The report says not used rather than pretending otherwise \u2014 and the repository says the same thing."
+    }
+  ]
+}
