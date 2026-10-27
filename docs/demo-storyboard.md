@@ -53,13 +53,28 @@ Editorial holds are extended for readability; nothing here measures execution ti
 
 ## Deck changes (same date)
 
-`docs/demo/driftwatch-deck.pptx` is now 11 slides. Added one slide after Zetaris —
-*"Meterless: the engine is load-bearing, the provider is honest"* — and corrected two stale claims:
-the test count (259 → **456**) on the agents and measurement slides, and the attribution slide's
-"Meterless: honestly unmounted" line. The new slide's body is set at 17 pt to stay inside the
-placeholder; the deck was edited programmatically and re-read to confirm text and order, but it was
-**not rendered to images on this machine** (no LibreOffice), so visual overflow has not been checked
-by eye.
+`docs/demo/driftwatch-deck.pptx` is 11 slides, 16:9, rebuilt from scratch by
+`scripts/build_deck.py` on an explicit grid (1 in side margins, 12.33 in content width).
+
+The old deck was built on layout placeholders from python-pptx's 4:3 default template, so on a
+16:9 canvas every slide's content occupied a 9 in column at 0.5 in and left the right third empty;
+titles were centred with no fixed baseline, one line of the title slide overflowed the canvas, and
+text sat at layout default sizes with no visual hierarchy. The rebuild places every element
+explicitly: a kicker label, a left-aligned title, a short accent rule, a body block vertically
+centred in its band, and a footer with the slide number. Two capability slides carry stat cards;
+the causal-experiment slide carries a real table; the close carries a monospaced command block.
+
+Claims were corrected at the same time: the test count is now **465** (it was 259 before the
+integration work), the attribution slide no longer says Meterless was "unmounted", and the
+Nightshift slide states `not_used` with zero attempts rather than implying a live integration.
+
+**Verified visually, not just structurally.** LibreOffice *is* installed on this machine
+(`/Applications/LibreOffice.app`), so each slide was rendered to PNG with the skill's
+`pptx_render.py` and inspected. Three defects were found and fixed this way: a 34 pt two-line stat
+value overflowed its card on the World Model slide; the attempts panel had a dead gap and text
+floating mid-box; guard rows were centre-aligned against left-aligned body copy. A second pass also
+removed theme drop shadows (a preset shape carries a `<p:style>` effect reference that survives an
+emptied `effectLst`) and set the table's borders explicitly.
 
 
 | # | Scene (screen) | ~time | Voiceover |
