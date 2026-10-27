@@ -53,7 +53,7 @@ Editorial holds are extended for readability; nothing here measures execution ti
 
 ## Deck changes (same date)
 
-`docs/demo/driftwatch-deck.pptx` is 11 slides, 16:9, rebuilt from scratch by
+`docs/demo/driftwatch-deck.pptx` is 12 slides, 16:9, rebuilt from scratch by
 `scripts/build_deck.py` on an explicit grid (1 in side margins, 12.33 in content width).
 
 The old deck was built on layout placeholders from python-pptx's 4:3 default template, so on a
@@ -62,7 +62,10 @@ titles were centred with no fixed baseline, one line of the title slide overflow
 text sat at layout default sizes with no visual hierarchy. The rebuild places every element
 explicitly: a kicker label, a left-aligned title, a short accent rule, a body block vertically
 centred in its band, and a footer with the slide number. Two capability slides carry stat cards;
-the causal-experiment slide carries a real table; the close carries a monospaced command block.
+the causal-experiment slide carries a real table; slide 8 is the retained terminal capture of the
+Zetaris acceptance run (`docs/demo/hero-frame.png`, the same screenshot the previous deck embedded),
+cropped 3 px per edge to remove its rounded-corner fringe so it reads as a clean rectangle; the close
+carries a monospaced command block.
 
 Claims were corrected at the same time: the test count is now **465** (it was 259 before the
 integration work), the attribution slide no longer says Meterless was "unmounted", and the

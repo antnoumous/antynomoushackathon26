@@ -158,6 +158,7 @@ def notes(slide, text):
 
 
 def build() -> Presentation:
+    root = Path(__file__).resolve().parents[1]
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(W), Inches(H)
 
@@ -360,9 +361,31 @@ def build() -> Presentation:
     notes(s, "Two runs, one rule removed. The delta is one finding, and the guards are shown failing "
              "closed rather than silently succeeding.")
 
+    # 8 — the acceptance run, as it printed ----------------------------------------------------
+    s = add_slide(prs)
+    chrome(s, "EVIDENCE \u00b7 ZETARIS ACCEPTANCE", "The acceptance run, as it printed", 8)
+    bullets(s, [
+        "One command re-publishes the policy without rule R-1 and diffs the resulting findings "
+        "against the base snapshot.",
+        "only_in_base carries exactly one entry \u2014 the detached-volume finding R-1 produced; "
+        "only_in_variant is empty.",
+        "The tool reports its own verdict: effect_observed true, sponsor_acceptance true.",
+        "This is the program's output, not a rendering of it."
+    ], width=4.55, size=14.5, gap=12)
+    picture = root / "docs/demo/hero-frame.png"
+    assert picture.is_file(), picture
+    shot = s.shapes.add_picture(str(picture), Inches(5.85), Inches(2.05), width=Inches(6.45))
+    # The capture carries a 3 px light fringe from its rounded window corners; crop it so the
+    # panel edge reads as a clean rectangle on the slide.
+    shot.crop_left = shot.crop_right = 3 / 786
+    shot.crop_top = shot.crop_bottom = 3 / 560
+    notes(s, "The screenshot is the actual terminal output of the Zetaris acceptance run that the "
+             "evidence directory records. It is here so a judge can read the diff without leaving "
+             "the deck.")
+
     # 8 — supplier bug ------------------------------------------------------------------------
     s = add_slide(prs)
-    chrome(s, "WHAT WENT WRONG", "Our guard caught a supplier bug in production", 8)
+    chrome(s, "WHAT WENT WRONG", "Our guard caught a supplier bug in production", 9)
     bullets(s, [
         "The live engine\u2019s CSV parser silently truncated cells at embedded quotes \u2014 row counts "
         "and headers still looked perfect.",
@@ -378,7 +401,7 @@ def build() -> Presentation:
 
     # 9 — measured ----------------------------------------------------------------------------
     s = add_slide(prs)
-    chrome(s, "MEASUREMENT", "Measured, not promised", 9)
+    chrome(s, "MEASUREMENT", "Measured, not promised", 10)
     card_w, card_gap = 3.55, 0.34
     for index, (value, label, colour) in enumerate([
             ("3 / 3", "Curated scenarios \u2014 precision, recall and verdict accuracy all 1.0, "
@@ -400,7 +423,7 @@ def build() -> Presentation:
 
     # 10 — attribution ------------------------------------------------------------------------
     s = add_slide(prs)
-    chrome(s, "DISCLOSURE", "How it was built \u2014 attributed honestly", 10)
+    chrome(s, "DISCLOSURE", "How it was built \u2014 attributed honestly", 11)
     bullets(s, [
         "Cursor drove the first two tasks before its free-tier quota ran out; the blocker was posted "
         "and the sessions are retained.",
@@ -415,7 +438,7 @@ def build() -> Presentation:
 
     # 11 — run it -----------------------------------------------------------------------------
     s = add_slide(prs)
-    chrome(s, "REPRODUCE", "Run it yourself \u2014 no keys required", 11)
+    chrome(s, "REPRODUCE", "Run it yourself \u2014 no keys required", 12)
     code = [("git clone https://github.com/antnoumous/antynomoushackathon26", ACCENT),
             ("cd antynomoushackathon26", ACCENT),
             ("python3.11 -m venv .venv && . .venv/bin/activate", ACCENT),
@@ -446,7 +469,7 @@ def build() -> Presentation:
 def main() -> None:
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "docs/demo/driftwatch-deck.pptx")
     prs = build()
-    assert len(prs.slides) == 11, len(prs.slides)
+    assert len(prs.slides) == 12, len(prs.slides)
     for index, slide in enumerate(prs.slides, start=1):
         boxes = [shape for shape in slide.shapes if shape.has_text_frame]
         assert boxes, f"slide {index} has no text"
